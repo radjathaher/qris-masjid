@@ -40,6 +40,26 @@ This file is a tiny placeholder to keep PMTiles wiring active. Replace it with r
 pmtiles convert masjids.mbtiles public/data/masjids.pmtiles
 ```
 
+## Masjid Data Source Policy (MVP)
+
+- Use OSM/Overpass only in offline ingest jobs (build-time or scheduled sync).
+- Do not let client hit Overpass directly.
+- Do not proxy end-user requests from Worker to public Overpass.
+- Runtime reads only from internal datasets: `public/data/masjids.pmtiles` and D1 `masjids`.
+
+Why:
+
+- Public Overpass has shared quotas/rate-limits; runtime proxying risks `429`/`504` and latency spikes.
+- Internal artifacts make map/API behavior deterministic and cheaper to operate.
+
+Suggested ingestion flow:
+
+1. Offline pull masjid candidates from Overpass or Indonesia OSM extract.
+2. Normalize + dedupe.
+3. Build MBTiles/PMTiles.
+4. Sync `masjids` table in D1 (`source_version` bump).
+5. Deploy refreshed PMTiles artifact.
+
 ## Local development
 
 1. Install dependencies:

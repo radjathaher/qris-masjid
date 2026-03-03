@@ -100,7 +100,18 @@ flowchart LR
   API --> R2[(R2 qris-images)]
   API --> TS[Turnstile verify]
   API --> GA[Google OAuth]
+
+  OSM[OSM source\nOverpass/Extract] --> ING[Offline ingest job]
+  ING --> PM
+  ING --> D1
 ```
+
+Data source policy:
+
+- Client never calls Overpass.
+- Worker API never proxies end-user Overpass requests.
+- Overpass/OSM is used only by offline ingest jobs (build-time or scheduled sync).
+- App runtime reads only from internal artifacts (`PMTiles`, `D1`).
 
 ## 8) ERD (Final MVP)
 
@@ -305,7 +316,26 @@ sequenceDiagram
 - Reject non-QRIS QR payloads via EMV TLV validation.
 - Enforce CRC validation for QRIS payload before D1/R2 write.
 
-## 13) PMTiles Pipeline (Mock now, real later)
+## 13) Masjid Data Source Strategy + PMTiles Pipeline
+
+Decision:
+
+- Use Overpass/OSM for bootstrap and refresh via offline ingest only.
+- Do not rely on Nominatim full import for MVP (too heavy for current scope).
+- Do not proxy user traffic to public Overpass from Worker runtime.
+
+Why:
+
+- Runtime dependency on public Overpass risks rate-limit and unstable latency.
+- PMTiles + D1 artifacts keep read path deterministic and cheap.
+- Matches MVP architecture: static map dataset + API reads from D1.
+
+Ingest modes:
+
+1. Build-time one-shot pull (fast bootstrap).
+2. Scheduled backend sync (daily/weekly) writing refreshed artifacts.
+
+Both modes must end with internal artifacts only.
 
 Current MVP:
 
@@ -313,11 +343,12 @@ Current MVP:
 
 Later handoff:
 
-1. Cofounder prepares real Indonesia masjid dataset.
-2. Convert source -> MBTiles.
-3. Convert MBTiles -> PMTiles.
-4. Replace `public/data/masjids.pmtiles`.
-5. Bump `masjids.source_version` as needed.
+1. Pull Indonesia masjid candidates from Overpass/OSM extract in offline job.
+2. Normalize + dedupe records (`osm_id`, `name`, `lat/lon`, region tags).
+3. Convert normalized source -> MBTiles.
+4. Convert MBTiles -> PMTiles.
+5. Seed/sync `masjids` in D1 and set `source_version`.
+6. Replace `public/data/masjids.pmtiles`.
 
 Example shape:
 
