@@ -9,7 +9,7 @@
     {
       "binding": "DB",
       "database_name": "qris-masjid",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "86e64e57-439e-435d-a484-aa20e189a6cf",
     },
   ],
   "r2_buckets": [
