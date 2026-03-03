@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Masjid } from "#/entities/masjid/model/types";
 import { upsertContribution } from "#/entities/qris/api/client";
 import { Button } from "#/shared/ui/button";
@@ -12,6 +12,7 @@ import {
 } from "#/shared/ui/dialog";
 import { Input } from "#/shared/ui/input";
 import { Label } from "#/shared/ui/label";
+import { TurnstileWidget } from "#/features/contribute/ui/turnstile-widget";
 
 type ContributeModalProps = {
   open: boolean;
@@ -19,6 +20,10 @@ type ContributeModalProps = {
   defaultOpenForm: boolean;
   onClose: () => void;
   onSuccess: () => void;
+};
+
+type TurnstileSiteKeyResponse = {
+  siteKey?: string;
 };
 
 async function readFileAsBase64(file: File): Promise<string> {
@@ -41,15 +46,53 @@ export function ContributeModal({
     defaultOpenForm ? "form" : "auth",
   );
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState("");
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setStep(defaultOpenForm ? "form" : "auth");
       setError(null);
+      setTurnstileToken("");
+      setTurnstileLoaded(false);
     }
   }, [open, defaultOpenForm]);
 
-  const canSubmit = useMemo(() => Boolean(masjid), [masjid]);
+  useEffect(() => {
+    if (!open || step !== "form") {
+      return;
+    }
+
+    void fetch("/api/turnstile/site-key", { credentials: "include" })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load Turnstile site key");
+        }
+
+        const json = (await response.json()) as TurnstileSiteKeyResponse;
+
+        if (!json.siteKey) {
+          throw new Error("Turnstile site key is not configured");
+        }
+
+        setTurnstileSiteKey(json.siteKey);
+        setTurnstileLoaded(true);
+      })
+      .catch((loadError) => {
+        const message = loadError instanceof Error ? loadError.message : "Turnstile setup failed";
+        setError(message);
+      });
+  }, [open, step]);
+
+  const canSubmit = useMemo(
+    () => Boolean(masjid && turnstileToken && turnstileLoaded),
+    [masjid, turnstileLoaded, turnstileToken],
+  );
+
+  const onTurnstileTokenChange = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -61,7 +104,6 @@ export function ContributeModal({
 
     const formData = new FormData(event.currentTarget);
     const file = formData.get("image");
-    const turnstileToken = String(formData.get("turnstileToken") ?? "");
 
     if (!(file instanceof File) || file.size === 0) {
       setError("Upload a QR image first.");
@@ -69,7 +111,7 @@ export function ContributeModal({
     }
 
     if (!turnstileToken) {
-      setError("Turnstile token is required.");
+      setError("Turnstile verification is required.");
       return;
     }
 
@@ -139,20 +181,24 @@ export function ContributeModal({
                 type="file"
                 accept="image/*"
                 required
-                disabled={!canSubmit}
+                disabled={!masjid}
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="turnstileToken">Turnstile token</Label>
-              <Input
-                id="turnstileToken"
-                name="turnstileToken"
-                type="text"
-                placeholder="Paste token (or use bypass mode in local)"
-                required
-              />
+              <Label>Turnstile verification</Label>
+              {turnstileSiteKey ? (
+                <TurnstileWidget
+                  siteKey={turnstileSiteKey}
+                  onTokenChange={onTurnstileTokenChange}
+                />
+              ) : (
+                <p className="text-sm text-emerald-900/70">Loading Turnstile challenge...</p>
+              )}
             </div>
+
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
             <DialogFooter>
               <Button type="submit" disabled={!canSubmit}>
                 Submit

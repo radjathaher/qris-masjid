@@ -161,7 +161,7 @@ UI blocks:
 - Fullscreen map canvas.
 - Search/filter bar.
 - Marker interaction + masjid detail modal.
-- Contribute modal flow (multi-step state machine inside one modal).
+- Contribute modal flow (multi-step state machine inside one modal, includes Turnstile challenge).
 - Toast/inline feedback for success/failure.
 
 ## 10) Backend API Contracts (MVP)

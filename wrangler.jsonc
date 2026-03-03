@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "qris-masjid",
+  "account_id": "4f26e2c3ce7b8782972595576d301f84",
   "compatibility_date": "2026-03-03",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
@@ -22,6 +23,7 @@
     "GOOGLE_OAUTH_CLIENT_ID": "REPLACE_WITH_GOOGLE_CLIENT_ID",
     "GOOGLE_OAUTH_REDIRECT_URI": "http://localhost:3000/api/auth/google/callback",
     "R2_PUBLIC_BASE_URL": "",
+    "TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY",
     "TURNSTILE_BYPASS": "true",
   },
 }

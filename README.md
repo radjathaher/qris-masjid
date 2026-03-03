@@ -111,6 +111,7 @@ wrangler secret put TURNSTILE_SECRET_KEY
 - `GOOGLE_OAUTH_REDIRECT_URI`
 - `APP_BASE_URL`
 - `R2_PUBLIC_BASE_URL` (optional public bucket URL or custom domain)
+- `TURNSTILE_SITE_KEY`
 - `TURNSTILE_BYPASS` (`false` in production)
 
 ### 4) Google OAuth setup
@@ -136,6 +137,6 @@ bun run deploy
 
 ## Notes
 
-- Turnstile widget is not embedded in UI yet; form currently expects token input and supports bypass mode (`TURNSTILE_BYPASS=true`) for local development.
+- Turnstile widget is embedded in contribute modal and posts token to backend.
 - Server rejects uploads that are not decodable QR images, non-QRIS payloads, or invalid CRC payloads.
 - To make production strict, disable bypass and pass real Turnstile token from frontend widget integration.

@@ -5,6 +5,7 @@ interface CloudflareBindings {
   GOOGLE_OAUTH_CLIENT_SECRET: string;
   GOOGLE_OAUTH_REDIRECT_URI: string;
   R2_PUBLIC_BASE_URL?: string;
+  TURNSTILE_SITE_KEY: string;
   TURNSTILE_BYPASS?: string;
   TURNSTILE_SECRET_KEY: string;
   DB: D1Database;

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTurnstileSiteKeyRouteImport } from './routes/api/turnstile.site-key'
 import { Route as ApiContributionsUpsertRouteImport } from './routes/api/contributions.upsert'
 import { Route as ApiMasjidsMasjidIdQrisRouteImport } from './routes/api/masjids.$masjidId.qris'
 import { Route as ApiAuthGoogleStartRouteImport } from './routes/api/auth.google.start'
@@ -18,6 +19,11 @@ import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth.goo
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTurnstileSiteKeyRoute = ApiTurnstileSiteKeyRouteImport.update({
+  id: '/api/turnstile/site-key',
+  path: '/api/turnstile/site-key',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiContributionsUpsertRoute = ApiContributionsUpsertRouteImport.update({
@@ -44,6 +50,7 @@ const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
+  '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
   '/api/masjids/$masjidId/qris': typeof ApiMasjidsMasjidIdQrisRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
+  '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
   '/api/masjids/$masjidId/qris': typeof ApiMasjidsMasjidIdQrisRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
+  '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
   '/api/masjids/$masjidId/qris': typeof ApiMasjidsMasjidIdQrisRoute
@@ -68,6 +77,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api/contributions/upsert'
+    | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
     | '/api/masjids/$masjidId/qris'
@@ -75,6 +85,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/contributions/upsert'
+    | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
     | '/api/masjids/$masjidId/qris'
@@ -82,6 +93,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api/contributions/upsert'
+    | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
     | '/api/masjids/$masjidId/qris'
@@ -90,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiContributionsUpsertRoute: typeof ApiContributionsUpsertRoute
+  ApiTurnstileSiteKeyRoute: typeof ApiTurnstileSiteKeyRoute
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
   ApiAuthGoogleStartRoute: typeof ApiAuthGoogleStartRoute
   ApiMasjidsMasjidIdQrisRoute: typeof ApiMasjidsMasjidIdQrisRoute
@@ -102,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/turnstile/site-key': {
+      id: '/api/turnstile/site-key'
+      path: '/api/turnstile/site-key'
+      fullPath: '/api/turnstile/site-key'
+      preLoaderRoute: typeof ApiTurnstileSiteKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/contributions/upsert': {
@@ -138,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiContributionsUpsertRoute: ApiContributionsUpsertRoute,
+  ApiTurnstileSiteKeyRoute: ApiTurnstileSiteKeyRoute,
   ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
   ApiAuthGoogleStartRoute: ApiAuthGoogleStartRoute,
   ApiMasjidsMasjidIdQrisRoute: ApiMasjidsMasjidIdQrisRoute,
