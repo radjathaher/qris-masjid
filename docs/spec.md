@@ -1,123 +1,123 @@
-# QRIS Masjid Indonesia - MVP Spec (Hackathon, 1 Day)
+# QRIS Masjid Indonesia - MVP Spec (Hackathon)
 
-Last updated: 2026-03-03
-Status: Draft v1
+Last updated: 2026-03-03  
+Status: Draft v2 (revised)
 
 ## 1) Product Goal
 
-Build a nationwide, low-friction directory of QRIS donation endpoints for mosques in Indonesia.
+Build a low-friction, nationwide directory for QRIS donation endpoints for masjid in Indonesia.
 
-- Publish-first: show candidate QRIS after first valid submission.
-- Not arbiter of truth: expose confidence metadata so users self-assess.
-- Static-first reads: map + mosque data + public QRIS index served as static assets.
-- Minimal write backend: only for submissions, reports, and anti-abuse.
+Core policy:
 
-## 2) Non-goals (MVP)
+- Publish-first.
+- Community-submitted.
+- Transparency-first confidence model.
 
-- No manual verification team workflow.
-- No mosque-ownership claim flow.
-- No bank-grade payment validation.
-- No native mobile app.
+## 2) Final Scope (MVP)
 
-## 3) Core Product Principles
+- Single-page app experience.
+- One frontend route only: `/`.
+- All interactions happen as overlays/modals on top of map.
+- Data reads from D1 via API.
+- Map source from PMTiles mock data first; real data replacement later.
 
-- Transparency over hard claims: show counts, not "verified" badge claims.
-- Fast contribution path: Google login + Turnstile + upload.
-- Operationally tiny: static read path, small Cloudflare write path.
-- Recoverable by design: conflicts visible via alternatives and report channel.
+## 3) MVP Snapshot
 
-## 4) Why PMTiles (and answer to "do I need a separate server?")
+- Single map view as the full app shell.
+- Modal-first interactions for detail and contribution.
+- Direct read path from API + D1 for masjid QRIS data.
+- Minimal write path with Turnstile and Google-authenticated user session.
+- Mock PMTiles committed now; real PMTiles swapped in during handoff.
 
-Short answer: no separate tile server required.
+## 4) Core UX Model
 
-PMTiles is a single static file. MapLibre reads only needed byte ranges over HTTP. Host it on Cloudflare R2/Pages like any static asset.
+Route:
 
-### PMTiles vs GeoJSON decision
+- `/` (Map Home)
 
-- If dataset is tiny (< 5-10 MB compressed), GeoJSON is simpler.
-- If dataset is nationwide POI and expected growth, PMTiles is better with similar ops complexity.
-- For this project: use PMTiles now.
+Overlays/modals inside `/`:
 
-## 5) Recommended Full TypeScript Stack
+- Masjid detail popover/modal (on marker click).
+- Contribute flow modal (start -> auth -> upload -> success states in one modal flow).
+- Lightweight error/info modal states.
 
-## Frontend
-- TanStack Start (React) + TanStack Router (file-based)
-- TanStack Query (cache/server-state)
-- Zod (runtime validation + typed contracts)
-- MapLibre GL JS + pmtiles
-- Tailwind CSS + shadcn/ui (fast component primitives)
+## 5) Data Artifacts
 
-## Backend (minimal)
-- TanStack Start Server Routes / Server Functions
-- Cloudflare Workers runtime
-- Cloudflare D1 (metadata)
-- Cloudflare R2 (QR images)
-- Cloudflare Turnstile (bot mitigation)
-- Google OAuth (identity)
+Static assets:
 
-## Data + Migrations
-- Drizzle ORM + drizzle-kit (recommended default)
+- `public/data/masjids.pmtiles` -> **mock dataset for now**.
+- OpenFreeMap style/basemap from external provider.
 
-## Observability
-- Sentry (errors)
-- Basic analytics (OpenPanel or PostHog)
+Runtime persisted assets:
 
-## Tooling
-- Bun (runtime/package manager)
-- TypeScript strict mode
-- Biome (format/lint)
-- Vitest (unit)
-- Playwright (e2e)
+- `R2 qris-images/*` for uploaded QR images.
 
-## 6) Drizzle vs Atlas (Migration decision)
+## 6) Tech Stack
 
-Recommendation: start with **Drizzle + drizzle-kit**.
+Frontend:
 
-Why for MVP:
-- Native TypeScript schema in app repo.
-- Direct D1 support and D1 HTTP workflow.
-- Fewer moving parts for day-1 shipping.
+- TanStack Start + TanStack Router
+- TanStack Query
+- Zod
+- MapLibre GL + PMTiles
+- Tailwind CSS + shadcn/ui patterns
 
-When Atlas becomes useful:
-- Multi-service DB ownership.
-- Stronger migration governance/linting/check policies in CI.
-- Cross-language schema pipelines.
+Backend/runtime:
 
-Pragmatic path:
-- Day 1: Drizzle migrations.
-- Later: optionally layer Atlas in CI using Drizzle export/integration workflow.
+- Cloudflare Workers (TanStack Start server routes/functions)
+- Cloudflare D1
+- Cloudflare R2
+- Google OAuth callback flow
+- Cloudflare Turnstile
 
-## 7) High-level Architecture
+Data/migrations:
+
+- Drizzle ORM + drizzle-kit (default)
+- Atlas deferred (optional later for CI governance)
+
+Tooling:
+
+- Bun
+- TypeScript strict
+- oxlint + oxfmt
+- Vitest
+
+Architecture style:
+
+- FSD-inspired structure (`app`, `pages`, `features`, `entities`, `shared`)
+
+## 7) Architecture
 
 ```mermaid
 flowchart LR
-  U[Donor User] --> FE[Web App\nTanStack Start + MapLibre]
-  C[Contributor] --> FE
+  U[User] --> FE[Single View Map UI\nTanStack Start]
 
-  FE -->|Static reads| CDN[Cloudflare Pages/CDN]
-  CDN --> PM[mosques.pmtiles]
-  CDN --> QJ[qris-public.json]
+  FE -->|Map tiles| PM[public/data/masjids.pmtiles\nmock for now]
+  FE -->|Basemap style| OFM[OpenFreeMap]
 
-  FE -->|Submit QRIS + Turnstile token + OAuth session| API[Cloudflare Worker API]
-  API --> D1[(Cloudflare D1)]
-  API --> R2[(Cloudflare R2)]
-  API --> TS[Turnstile Siteverify]
-
-  CRON[Scheduled job/manual trigger] --> API
-  API -->|rebuild public index| QJ
+  FE -->|Auth callback / contribution / detail reads| API[Cloudflare Worker API]
+  API --> D1[(D1)]
+  API --> R2[(R2 qris-images)]
+  API --> TS[Turnstile verify]
+  API --> GA[Google OAuth]
 ```
 
-## 8) Data Artifacts
+## 8) ERD (Final MVP)
 
-- `public/data/mosques.pmtiles` (static, versioned)
-- `public/data/qris-public.json` (static, rebuilt periodically)
-- `r2://qris-images/<sha256>.jpg` (private/public policy per implementation)
-
-## 9) Domain Model + ERD
+Tables: `users`, `masjids`, `qris`
 
 ```mermaid
 erDiagram
-  mosques {
+  users {
+    text id PK
+    text google_sub UNIQUE
+    text email
+    datetime created_at
+    datetime last_seen_at
+    integer is_blocked
+  }
+
+  masjids {
     text id PK
     text osm_id
     text name
@@ -127,300 +127,225 @@ erDiagram
     text province
     text source_version
     datetime created_at
+    datetime updated_at
   }
 
-  contributors {
+  qris {
     text id PK
-    text google_sub UNIQUE
-    text email_hash
-    datetime created_at
-    datetime last_seen_at
-    integer trust_score
-    integer is_blocked
-  }
-
-  qris_candidates {
-    text id PK
-    text mosque_id FK
+    text masjid_id FK
     text payload_hash
-    text merchant_name
-    text city_hint
-    text r2_key
-    integer crc_ok
-    integer first_seen_by_contributor_count
-    integer total_submission_count
-    integer report_count
-    datetime first_seen_at
-    datetime last_seen_at
-    integer is_public
-  }
-
-  qris_submissions {
-    text id PK
-    text mosque_id FK
-    text candidate_id FK
+    text image_r2_key
     text contributor_id FK
-    text payload_hash
-    text turnstile_action
-    text source_ip_hash
-    text user_agent_hash
     datetime created_at
-    integer accepted
-    text reject_reason
+    datetime updated_at
+    integer is_active
   }
 
-  qris_reports {
-    text id PK
-    text mosque_id FK
-    text candidate_id FK
-    text reporter_contributor_id FK
-    text reason
-    text note
-    datetime created_at
-    integer resolved
-  }
-
-  mosques ||--o{ qris_candidates : has
-  mosques ||--o{ qris_submissions : receives
-  contributors ||--o{ qris_submissions : sends
-  contributors ||--o{ qris_reports : files
-  qris_candidates ||--o{ qris_submissions : grouped_by
-  qris_candidates ||--o{ qris_reports : reported_as
+  users ||--o{ qris : submits
+  masjids ||--o{ qris : has
 ```
 
-## 10) Candidate Ranking Logic (public, not truth claim)
+Notes:
 
-For each mosque:
-- Group submissions by `payload_hash` => candidate.
-- Candidate becomes public immediately on first valid submission.
-- Sort by:
-  1. `unique contributor count` (desc)
-  2. `total submission count` (desc)
-  3. `last_seen_at` (desc)
+- `users.id` is internal UUID.
+- Google `sub` is used only for identity mapping at auth boundary.
+- `masjids` seeded from PMTiles source pipeline.
+- `qris` supports 1-to-many history/future extension; MVP UI can read only active/latest.
 
-UI always shows:
-- `X matching submissions`
-- `Y unique contributors`
-- `updated <time>`
-- `Community-submitted, verify before donating`
+## 9) Frontend Features
+
+Count: 1 route, 5 primary UI blocks.
+
+UI blocks:
+
+- Fullscreen map canvas.
+- Search/filter bar.
+- Marker interaction + masjid detail modal.
+- Contribute modal flow (multi-step state machine inside one modal).
+- Toast/inline feedback for success/failure.
+
+## 10) Backend API Contracts (MVP)
+
+### 10.1 Google auth start
+
+`GET /api/auth/google/start`
+
+Behavior:
+
+- Generate OAuth state.
+- Set short-lived state cookie.
+- Redirect browser to Google OAuth consent URL.
+
+### 10.2 Google auth callback
+
+`GET /api/auth/google/callback?code=...&state=...`
+
+Behavior:
+
+- Exchange code with Google.
+- Verify identity.
+- Upsert `users` by `google_sub`.
+- Create app session (cookie/token).
+- Redirect to `/?contribute=1&auth=ok`.
+
+### 10.3 Read QRIS for a masjid
+
+`GET /api/masjids/:masjidId/qris`
+
+Response (example):
+
+```json
+{
+  "masjidId": "masjid_123",
+  "items": [
+    {
+      "id": "qris_abc",
+      "payloadHash": "sha256:...",
+      "imageUrl": "https://<r2-public-or-signed-url>",
+      "isActive": true,
+      "updatedAt": "2026-03-03T12:00:00Z"
+    }
+  ]
+}
+```
+
+### 10.4 Upsert contribution
+
+`POST /api/contributions/upsert`
+
+Request:
+
+```json
+{
+  "masjidId": "masjid_123",
+  "imageBase64": "...",
+  "turnstileToken": "..."
+}
+```
+
+Response:
+
+```json
+{
+  "ok": true,
+  "qrisId": "qris_abc",
+  "masjidId": "masjid_123"
+}
+```
 
 ## 11) Core Flows (Sequence)
 
-### A) Submit QRIS
+### A) Browse map and view masjid QRIS
 
 ```mermaid
 sequenceDiagram
-  participant C as Contributor
-  participant FE as Web App
+  participant U as User
+  participant FE as Map UI (/)
+  participant API as Worker API
+  participant D1 as D1
+
+  U->>FE: Open app
+  FE->>FE: Load masjids.pmtiles (mock)
+  U->>FE: Click marker
+  FE->>API: GET /api/masjids/:masjidId/qris
+  API->>D1: Query qris by masjid_id
+  API-->>FE: QRIS items
+  FE-->>U: Show masjid detail modal + QRIS
+```
+
+### B) Login via Google callback
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant FE as Map UI
+  participant GA as Google OAuth
+  participant API as Worker API
+  participant D1 as D1
+
+  U->>FE: Click contribute
+  FE->>API: GET /api/auth/google/start
+  API->>GA: Redirect OAuth consent
+  GA-->>API: Callback with code
+  API->>GA: Exchange + verify token
+  API->>D1: Upsert users(google_sub -> internal UUID)
+  API-->>FE: Auth session established
+  FE-->>U: Continue modal flow
+```
+
+### C) Contribute via modal
+
+```mermaid
+sequenceDiagram
+  participant U as Contributor
+  participant FE as Contribute Modal
   participant API as Worker API
   participant TS as Turnstile
   participant D1 as D1
   participant R2 as R2
 
-  C->>FE: Login (Google) + upload QR image
-  FE->>FE: Read Turnstile token
-  FE->>API: POST /api/contributions
-  API->>TS: Siteverify(token)
-  TS-->>API: success/fail
-  API->>API: Decode QRIS + CRC + payload_hash
-  API->>R2: Store image
-  API->>D1: Insert submission + upsert candidate
-  API-->>FE: 200 with candidate stats
-  FE-->>C: Show "Published" + confidence counts
+  U->>FE: Upload QR image + submit
+  FE->>API: POST /api/contributions/upsert
+  API->>TS: Verify token
+  TS-->>API: pass/fail
+  API->>API: Decode QR payload + hash
+  API->>R2: Store image object
+  API->>D1: Insert qris row, update previous active if needed
+  API-->>FE: ok + qrisId
+  FE-->>U: Show success state in modal
 ```
 
-### B) Donor Browse + Donate
+## 12) Anti-abuse Controls
 
-```mermaid
-sequenceDiagram
-  participant U as Donor
-  participant FE as Web App
-  participant CDN as CDN
+- Turnstile required for contribution write path.
+- Server-side token validation.
+- Basic rate limiting (IP + user).
+- Blocked users check (`users.is_blocked`).
+- Reject invalid/non-decodable QR payloads.
 
-  U->>FE: Open map
-  FE->>CDN: GET mosques.pmtiles
-  FE->>CDN: GET qris-public.json
-  FE-->>U: Render mosque markers
-  U->>FE: Tap mosque
-  FE-->>U: Show top candidate + alternatives + confidence counts
-  U->>FE: Open QR image to scan/pay
-```
+## 13) PMTiles Pipeline (Mock now, real later)
 
-### C) Report Incorrect QRIS
+Current MVP:
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant FE as Web App
-  participant API as Worker API
-  participant D1 as D1
+- Commit mock `public/data/masjids.pmtiles` so app runs immediately.
 
-  U->>FE: Click "Report incorrect"
-  FE->>API: POST /api/reports
-  API->>D1: Insert report
-  API-->>FE: ack
-  FE-->>U: "Thanks, report recorded"
-```
+Later handoff:
 
-## 12) Routes + Screens
+1. Cofounder prepares real Indonesia masjid dataset.
+2. Convert source -> MBTiles.
+3. Convert MBTiles -> PMTiles.
+4. Replace `public/data/masjids.pmtiles`.
+5. Bump `masjids.source_version` as needed.
 
-Total MVP screens: **8**
+Example shape:
 
-| # | Route | Screen | Purpose |
-|---|---|---|---|
-| 1 | `/` | Map Home | Browse mosques + search |
-| 2 | `/mosque/$mosqueId` | Mosque Detail Drawer/Page | Show top QRIS, counts, alternatives |
-| 3 | `/contribute` | Contribute Intro | Explain caveat + start flow |
-| 4 | `/contribute/upload` | Upload QRIS | Upload image, mosque match, note |
-| 5 | `/contribute/success` | Contribution Result | Show published stats |
-| 6 | `/report` | Report Form | Report wrong/expired QRIS |
-| 7 | `/about` | Methodology & Caveats | Explain confidence model |
-| 8 | `/admin-lite` | Ops Lite (optional) | Basic queue/abuse flags (can defer) |
-
-## 13) UI Screen Specs
-
-## Screen 1: Map Home
-- Fullscreen map.
-- Search bar (mosque name/city).
-- Filter chips: `Has QRIS`, `Recent`, `High confidence`.
-- Marker tap => quick card with top candidate stats.
-
-## Screen 2: Mosque Detail
-- Mosque name + location.
-- Top QRIS card:
-  - image preview
-  - contributor counts
-  - update time
-  - copyable merchant/name hint
-- Alternatives accordion: `N alternatives`.
-- Actions: `Donate`, `Report`, `Contribute better data`.
-
-## Screen 3-5: Contribute Flow
-- Authenticate with Google.
-- Turnstile challenge.
-- Upload QR image + select mosque + optional note.
-- Immediate publish feedback + confidence baseline.
-
-## Screen 6: Report
-- Report reason enum (`wrong mosque`, `invalid`, `expired`, `fraud risk`, `other`).
-- Optional note.
-
-## Screen 7: About
-- Explain "community-submitted" model.
-- Explain how to interpret counts.
-
-## 14) API Contracts (MVP)
-
-## `POST /api/contributions`
-Request:
-```json
-{
-  "mosqueId": "mosq_...",
-  "imageBase64": "...",
-  "turnstileToken": "...",
-  "note": "optional"
-}
-```
-Response:
-```json
-{
-  "candidateId": "cand_...",
-  "payloadHash": "sha256:...",
-  "isPublic": true,
-  "stats": {
-    "matchingSubmissions": 1,
-    "uniqueContributors": 1
-  }
-}
-```
-
-## `POST /api/reports`
-Request:
-```json
-{
-  "mosqueId": "mosq_...",
-  "candidateId": "cand_...",
-  "reason": "invalid",
-  "note": "optional"
-}
-```
-Response:
-```json
-{ "ok": true }
-```
-
-## `GET /api/public-index` (build/export job)
-- Produces `public/data/qris-public.json`.
-
-## 15) PMTiles Data Pipeline
-
-Input options:
-- Preferred: your existing Indonesia OSM extract.
-- Fallback: Overpass fetch for mosque POI only.
-
-Pipeline:
-1. Extract mosque features from OSM (`amenity=place_of_worship` + muslim/mosque tags).
-2. Normalize properties (`id`, `name`, `city`, `province`).
-3. Convert to vector tiles (MBTiles).
-4. Convert MBTiles -> PMTiles.
-5. Publish `mosques.pmtiles` to static hosting.
-
-Example command shape:
 ```bash
-# Build mbtiles from normalized geojson (tool choice flexible)
-# e.g. tippecanoe -> mosques.mbtiles
-
-# Convert to pmtiles
-pmtiles convert mosques.mbtiles mosques.pmtiles
+pmtiles convert masjids.mbtiles public/data/masjids.pmtiles
 ```
 
-## 16) Anti-abuse + Safety Guardrails
+## 14) Performance Targets (MVP)
 
-- Must validate Turnstile token server-side.
-- Token single-use and short TTL; reject reused tokens.
-- Require Google-authenticated contributor identity.
-- Rate limit by contributor + IP hash.
-- Store only hashed sensitive request metadata.
-- Automatic reject for non-decodable/CRC-invalid QRIS payload.
-- Report threshold can trigger soft-hide flag for low-support candidates.
+- First map render < 2.5s on mid-tier mobile.
+- Marker click to modal data < 500ms p95.
+- Contribution submit < 2s p95 excluding upload network variance.
 
-## 17) Performance + Scale Targets (MVP)
+## 15) Implementation Plan Snapshot
 
-- Initial map render < 2.5s on mid-tier mobile.
-- Mosque detail open < 300ms from local cache.
-- Contribution submit p95 < 2s (excluding upload latency).
-- Static asset cache hit ratio > 95%.
+1. Scaffold TanStack Start (Cloudflare target).
+2. Build single-route map shell.
+3. Add PMTiles integration with mock file.
+4. Implement modal-only masjid detail + contribute flow.
+5. Add D1 schema (`users`, `masjids`, `qris`) + Drizzle migration.
+6. Implement 3 APIs above.
+7. Wire auth callback and session.
+8. Ship MVP and handoff real PMTiles replacement to cofounder.
 
-## 18) One-day Build Plan
+## 16) Source References
 
-1. Scaffold TanStack Start + Router + TS strict.
-2. Add map page with OpenFreeMap style.
-3. Integrate PMTiles source for mosque layer.
-4. Add mosque detail card + confidence counters.
-5. Build contribute flow (Google login + Turnstile + upload).
-6. Worker API: parse QRIS, hash, persist D1/R2.
-7. Build static index exporter and wire frontend reads.
-8. Add report flow + basic rate limits + disclaimers.
-
-## 19) Future Extensions (post-MVP)
-
-- Mosque-verified claim flow (official admin account).
-- Signed attestations by local community leaders.
-- Reputation scoring and contributor trust decay.
-- Region-based moderation delegation.
-- Mobile app wrappers.
-
-## 20) Source References (primary docs)
-
-- TanStack Start overview: https://tanstack.com/start/docs/overview
+- TanStack Start: https://tanstack.com/start/docs/overview
 - TanStack Router file-based routing: https://tanstack.com/router/v1/docs/framework/react/routing/file-based-routing
-- TanStack Start server functions: https://tanstack.com/start/latest/docs/framework/react/guide/server-functions
 - OpenFreeMap quick start: https://openfreemap.org/quick_start/
-- PMTiles + MapLibre integration: https://docs.protomaps.com/pmtiles/maplibre
+- PMTiles + MapLibre: https://docs.protomaps.com/pmtiles/maplibre
 - MapLibre PMTiles example: https://maplibre.org/maplibre-gl-js/docs/examples/pmtiles-source-and-protocol/
-- Drizzle + D1 connection: https://orm.drizzle.team/docs/connect-cloudflare-d1
-- Drizzle D1 HTTP + drizzle-kit: https://orm.drizzle.team/docs/guides/d1-http-with-drizzle-kit
-- Atlas docs: https://atlasgo.io/docs
-- Atlas feature availability: https://atlasgo.io/features
-- Atlas Drizzle support announcement: https://atlasgo.io/blog/2025/01/06/schema-monitoring-and-drizzle-support
+- Drizzle + D1: https://orm.drizzle.team/docs/connect-cloudflare-d1
 - Cloudflare Turnstile server validation: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/

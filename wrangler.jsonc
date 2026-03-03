@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "qris-masjid",
+  "compatibility_date": "2026-03-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "qris-masjid",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "QRIS_IMAGES",
+      "bucket_name": "qris-masjid-qris-images",
+    },
+  ],
+  "vars": {
+    "APP_BASE_URL": "http://localhost:3000",
+    "GOOGLE_OAUTH_CLIENT_ID": "REPLACE_WITH_GOOGLE_CLIENT_ID",
+    "GOOGLE_OAUTH_REDIRECT_URI": "http://localhost:3000/api/auth/google/callback",
+    "R2_PUBLIC_BASE_URL": "",
+    "TURNSTILE_BYPASS": "true",
+  },
+}

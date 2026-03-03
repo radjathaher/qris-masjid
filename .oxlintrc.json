@@ -1,0 +1,40 @@
+{
+  "plugins": ["react", "import"],
+  "rules": {
+    "eslint/max-lines": [
+      "error",
+      {
+        "max": 300,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "eslint/max-lines-per-function": [
+      "error",
+      {
+        "max": 300,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "eslint/complexity": ["error", 12],
+    "eslint/max-depth": ["error", 4],
+    "eslint/max-params": ["error", 4],
+    "eslint/max-statements": ["error", 25],
+    "react/no-multi-comp": [
+      "error",
+      {
+        "ignoreStateless": false
+      }
+    ],
+    "react/exhaustive-deps": "error",
+    "react/only-export-components": [
+      "error",
+      {
+        "allowConstantExport": true
+      }
+    ],
+    "import/no-cycle": "error"
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**", "src/routeTree.gen.ts", "src/shared/ui/**"]
+}

@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #ecfdf5 0%, #f0fdfa 100%);
+  color: #042f2e;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.map-page {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+}
+
+.map-canvas {
+  height: 100%;
+  width: 100%;
+}
+
+.map-toolbar {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  top: 1rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid color-mix(in oklab, #115e59 14%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, white 86%, transparent);
+  backdrop-filter: blur(12px);
+  padding: 0.875rem;
+  box-shadow: 0 10px 32px color-mix(in oklab, #134e4a 16%, transparent);
+}
