@@ -301,7 +301,9 @@ sequenceDiagram
 - Server-side token validation.
 - Basic rate limiting (IP + user).
 - Blocked users check (`users.is_blocked`).
-- Reject invalid/non-decodable QR payloads.
+- Reject invalid/non-decodable QR images.
+- Reject non-QRIS QR payloads via EMV TLV validation.
+- Enforce CRC validation for QRIS payload before D1/R2 write.
 
 ## 13) PMTiles Pipeline (Mock now, real later)
 

@@ -137,4 +137,5 @@ bun run deploy
 ## Notes
 
 - Turnstile widget is not embedded in UI yet; form currently expects token input and supports bypass mode (`TURNSTILE_BYPASS=true`) for local development.
+- Server rejects uploads that are not decodable QR images, non-QRIS payloads, or invalid CRC payloads.
 - To make production strict, disable bypass and pass real Turnstile token from frontend widget integration.
