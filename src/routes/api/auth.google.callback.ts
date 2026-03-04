@@ -1,13 +1,11 @@
 import { eq } from "drizzle-orm";
 import { createFileRoute } from "@tanstack/react-router";
-import { deleteCookie, getCookie } from "@tanstack/react-start/server";
 import { createDb } from "#/shared/db/client";
 import { users } from "#/shared/db/schema";
 import { setUserSession } from "#/shared/lib/server/auth";
 import { getEnv } from "#/shared/lib/server/env";
 import { exchangeCodeForIdToken, verifyIdToken } from "#/shared/lib/server/google-oauth";
-
-const STATE_COOKIE_NAME = "qris_oauth_state";
+import { verifyOauthState } from "#/shared/lib/server/oauth-state";
 
 export const Route = createFileRoute("/api/auth/google/callback")({
   server: {
@@ -17,9 +15,13 @@ export const Route = createFileRoute("/api/auth/google/callback")({
         const requestUrl = new URL(request.url);
         const code = requestUrl.searchParams.get("code");
         const incomingState = requestUrl.searchParams.get("state");
-        const storedState = getCookie(STATE_COOKIE_NAME);
 
-        if (!code || !incomingState || !storedState || incomingState !== storedState) {
+        if (!code || !incomingState) {
+          return new Response("OAuth callback is invalid or expired", { status: 400 });
+        }
+
+        const isValidState = await verifyOauthState(incomingState, env.APP_SESSION_SECRET);
+        if (!isValidState) {
           return new Response("OAuth callback is invalid or expired", { status: 400 });
         }
 
@@ -56,7 +58,6 @@ export const Route = createFileRoute("/api/auth/google/callback")({
           }
 
           await setUserSession(env, userId, requestUrl.protocol === "https:");
-          deleteCookie(STATE_COOKIE_NAME, { path: "/" });
 
           return Response.redirect("/?auth=ok", 302);
         } catch {

@@ -1,7 +1,7 @@
 # QRIS Masjid Indonesia - MVP Spec (Hackathon)
 
 Last updated: 2026-03-04  
-Status: Draft v5 (idempotent upload + report-gated replacement)
+Status: Draft v6 (implemented idempotent upload + moderation APIs)
 
 ## 1) Product Goal
 
@@ -69,6 +69,7 @@ Backend/runtime:
 - Cloudflare R2
 - Google OAuth callback flow
 - Cloudflare Turnstile
+- Admin route access via `APP_ADMIN_EMAILS` allowlist
 
 Data/migrations:
 
@@ -348,6 +349,11 @@ Response:
 
 `POST /api/admin/reports/:reportId/resolve`
 
+Auth:
+
+- Login required.
+- Caller email must be in `APP_ADMIN_EMAILS` (comma-separated allowlist).
+
 Resolve payload:
 
 ```json
@@ -363,6 +369,7 @@ Hard delete policy:
 
 - No delete operation in routine moderation API.
 - Hard delete is reserved for explicit compliance/privacy purge workflow only.
+- If `APP_ADMIN_EMAILS` is unset/empty, admin endpoints return `403`.
 
 ## 11) Core Flows (Sequence)
 
@@ -446,7 +453,7 @@ sequenceDiagram
   API->>D1: Insert qris_reports(status=open)
   API-->>FE: ok
   A->>API: GET /api/admin/reports?status=open
-  A->>API: Resolve(reportId, decision, action)
+  A->>API: Resolve(reportId, decision, qrisAction, userAction)
   API->>D1: Update report + apply action (optional)
 ```
 
@@ -461,6 +468,7 @@ sequenceDiagram
 - Enforce CRC validation for QRIS payload before D1/R2 write.
 - Report path is login-only and rate-limited.
 - Deduplicate open report per user per qris item.
+- Admin moderation endpoints are protected by login + `APP_ADMIN_EMAILS`.
 
 ## 13) Governance Model (Simple, YAGNI)
 
