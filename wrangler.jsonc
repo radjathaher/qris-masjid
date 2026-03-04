@@ -4,6 +4,21 @@
   "account_id": "4f26e2c3ce7b8782972595576d301f84",
   "compatibility_date": "2026-03-03",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true,
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1,
+    },
+  },
   "main": "./src/server.ts",
   "assets": {
     "directory": "./dist/client",
