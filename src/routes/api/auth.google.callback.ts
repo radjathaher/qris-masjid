@@ -58,7 +58,7 @@ export const Route = createFileRoute("/api/auth/google/callback")({
           await setUserSession(env, userId, requestUrl.protocol === "https:");
           deleteCookie(STATE_COOKIE_NAME, { path: "/" });
 
-          return Response.redirect("/?contribute=1&auth=ok", 302);
+          return Response.redirect("/?auth=ok", 302);
         } catch {
           return new Response("Google authentication failed", { status: 500 });
         }

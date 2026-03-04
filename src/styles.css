@@ -29,19 +29,84 @@ body {
   width: 100%;
 }
 
-.map-toolbar {
-  position: absolute;
-  left: 1rem;
-  right: 1rem;
-  top: 1rem;
-  z-index: 10;
+.masjid-marker {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  border: 1px solid color-mix(in oklab, #115e59 14%, transparent);
-  border-radius: 0.75rem;
-  background: color-mix(in oklab, white 86%, transparent);
-  backdrop-filter: blur(12px);
-  padding: 0.875rem;
-  box-shadow: 0 10px 32px color-mix(in oklab, #134e4a 16%, transparent);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.masjid-marker-core {
+  display: flex;
+  height: 2.15rem;
+  width: 2.15rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, #042f2e 20%, transparent);
+  background: radial-gradient(circle at 30% 20%, #14b8a6 0%, #0f766e 70%);
+  box-shadow:
+    0 8px 18px color-mix(in oklab, #042f2e 32%, transparent),
+    0 0 0 3px color-mix(in oklab, white 78%, transparent);
+  transition: transform 120ms ease;
+}
+
+.masjid-marker:hover .masjid-marker-core {
+  transform: translateY(-1px) scale(1.03);
+}
+
+.masjid-marker svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: #f0fdfa;
+}
+
+.masjid-marker-tail {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: -0.22rem;
+  border-radius: 0.1rem;
+  transform: rotate(45deg);
+  background: #0f766e;
+  box-shadow: 0 4px 10px color-mix(in oklab, #042f2e 28%, transparent);
+}
+
+.maplibregl-popup.masjid-popup .maplibregl-popup-content {
+  border-radius: 1.15rem;
+  border: 1px solid color-mix(in oklab, #115e59 20%, transparent);
+  background: linear-gradient(160deg, #ffffff 0%, #ecfdf5 100%);
+  box-shadow:
+    0 14px 34px color-mix(in oklab, #022c22 20%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 88%, transparent);
+  padding: 0.65rem 0.8rem;
+}
+
+.maplibregl-popup.masjid-popup .maplibregl-popup-tip {
+  border-top-color: #ecfdf5;
+}
+
+.masjid-popup-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 11rem;
+}
+
+.masjid-popup-title {
+  margin: 0;
+  font-size: 0.87rem;
+  line-height: 1.2rem;
+  font-weight: 700;
+  color: #042f2e;
+}
+
+.masjid-popup-subtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #0f766e;
 }

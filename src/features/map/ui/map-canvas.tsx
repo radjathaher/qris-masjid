@@ -11,6 +11,22 @@ type MapCanvasProps = {
   onSelectMasjid: (masjid: Masjid) => void;
 };
 
+function createMarkerElement(name: string): HTMLButtonElement {
+  const marker = document.createElement("button");
+  marker.type = "button";
+  marker.className = "masjid-marker";
+  marker.setAttribute("aria-label", `Open details for ${name}`);
+  marker.innerHTML = `
+    <span class="masjid-marker-core">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 20h12v-2H6v2Zm1-3h10v-7.5l-2-1.5V5h-2v1.5L12 5 11 6.5V5H9v3L7 9.5V17Z" />
+      </svg>
+    </span>
+    <span class="masjid-marker-tail" />
+  `;
+  return marker;
+}
+
 export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
@@ -58,11 +74,11 @@ export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
       });
 
       for (const masjid of masjids) {
-        const marker = new maplibregl.Marker({ color: "#0f766e" })
+        const marker = new maplibregl.Marker({ element: createMarkerElement(masjid.name) })
           .setLngLat([masjid.lon, masjid.lat])
           .setPopup(
-            new maplibregl.Popup({ offset: 24 }).setHTML(
-              `<strong>${masjid.name}</strong><br/>${masjid.city}, ${masjid.province}`,
+            new maplibregl.Popup({ offset: 20, className: "masjid-popup" }).setHTML(
+              `<div class="masjid-popup-card"><p class="masjid-popup-title">${masjid.name}</p><p class="masjid-popup-subtitle">${masjid.city}, ${masjid.province}</p></div>`,
             ),
           )
           .addTo(map);

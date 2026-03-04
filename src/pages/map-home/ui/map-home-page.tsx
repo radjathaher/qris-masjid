@@ -6,7 +6,6 @@ import { fetchMasjidQris } from "#/entities/qris/api/client";
 import { ContributeModal } from "#/features/contribute/ui/contribute-modal";
 import { MapCanvas } from "#/features/map/ui/map-canvas";
 import { MasjidDetailModal } from "#/features/masjid-detail/ui/masjid-detail-modal";
-import { Button } from "#/shared/ui/button";
 
 export function MapHomePage() {
   const [selectedMasjid, setSelectedMasjid] = useState<Masjid | null>(null);
@@ -19,18 +18,10 @@ export function MapHomePage() {
     }
 
     const params = new URLSearchParams(window.location.search);
-    const shouldOpenContribute = params.get("contribute") === "1";
     const authOk = params.get("auth") === "ok";
-
-    if (shouldOpenContribute) {
-      setContributeOpen(true);
-    }
 
     if (authOk) {
       setAuthReturnDetected(true);
-    }
-
-    if (shouldOpenContribute || authOk) {
       window.history.replaceState({}, "", "/");
     }
   }, []);
@@ -40,22 +31,9 @@ export function MapHomePage() {
     queryFn: () => fetchMasjidQris(selectedMasjid?.id ?? ""),
     enabled: Boolean(selectedMasjid?.id),
   });
-  const contributeDisabled =
-    !selectedMasjid || qrisQuery.isLoading || qrisQuery.data?.canUpload === false;
 
   return (
     <main className="map-page">
-      <header className="map-toolbar">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Button onClick={() => setContributeOpen(true)} disabled={contributeDisabled}>
-            Contribute
-          </Button>
-        </div>
-        <p className="text-xs text-emerald-950/80">
-          Single-map MVP. PMTiles wired with mock `public/data/masjids.pmtiles`.
-        </p>
-      </header>
-
       <MapCanvas masjids={mockMasjids} onSelectMasjid={setSelectedMasjid} />
 
       <MasjidDetailModal
