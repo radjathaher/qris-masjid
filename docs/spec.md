@@ -1,7 +1,7 @@
 # QRIS Masjid Indonesia - MVP Spec (Hackathon)
 
 Last updated: 2026-03-04  
-Status: Draft v3 (trust-governance revised)
+Status: Draft v4 (ops-first exceptions revised)
 
 ## 1) Product Goal
 
@@ -113,7 +113,7 @@ Data source policy:
 - Overpass/OSM is used only by offline ingest jobs (build-time or scheduled sync).
 - App runtime reads only from internal artifacts (`PMTiles`, `D1`).
 
-## 8) ERD (Trust-enabled MVP)
+## 8) ERD (Ops-first MVP)
 
 Tables: `users`, `masjids`, `qris`
 
@@ -149,11 +149,6 @@ erDiagram
     text merchant_city
     text point_of_initiation_method
     text nmid_nullable
-    text merchant_account_template_tag
-    integer confidence_score
-    text confidence_status
-    integer conflict_count
-    text confidence_reasons_json
     text image_r2_key
     text contributor_id FK
     datetime created_at
@@ -161,8 +156,26 @@ erDiagram
     integer is_active
   }
 
+  qris_reports {
+    text id PK
+    text qris_id FK
+    text masjid_id FK
+    text reporter_id FK
+    text reason_code
+    text reason_text
+    text status
+    text reviewed_by_nullable
+    text resolution_note_nullable
+    datetime reviewed_at_nullable
+    datetime created_at
+    datetime updated_at
+  }
+
   users ||--o{ qris : submits
+  users ||--o{ qris_reports : reports
   masjids ||--o{ qris : has
+  masjids ||--o{ qris_reports : receives
+  qris ||--o{ qris_reports : flagged_by
 ```
 
 Notes:
@@ -173,6 +186,8 @@ Notes:
 - `qris` supports 1-to-many history; only one row is `is_active=1` per masjid.
 - Raw payload is not persisted in cleartext; parse + validate at ingest, then store normalized derivatives only.
 - `nmid_nullable` is optional because not all decoded payload variants expose it consistently.
+- `qris_reports.status`: `open` | `dismissed` | `confirmed`.
+- Enforce one open report per (`reporter_id`, `qris_id`) to reduce spam duplicates.
 
 ## 9) Frontend Features
 
@@ -227,9 +242,6 @@ Response (example):
       "merchantCity": "KUDUS",
       "pointOfInitiationMethod": "11",
       "nmid": "ID1021117325659",
-      "confidenceScore": 78,
-      "confidenceStatus": "likely",
-      "confidenceReasons": ["crc-valid", "qris-gui-valid", "same-hash-seen-multiple-times"],
       "imageUrl": "https://<r2-public-or-signed-url>",
       "isActive": true,
       "updatedAt": "2026-03-03T12:00:00Z"
@@ -259,6 +271,49 @@ Response:
   "ok": true,
   "qrisId": "qris_abc",
   "masjidId": "masjid_123"
+}
+```
+
+### 10.5 Report a QRIS item (exception path)
+
+`POST /api/qris/:qrisId/reports`
+
+Auth:
+
+- Login required.
+
+Request:
+
+```json
+{
+  "reasonCode": "merchant-name-mismatch",
+  "reasonText": "App shows personal name, not masjid operator."
+}
+```
+
+Response:
+
+```json
+{
+  "ok": true,
+  "reportId": "report_123",
+  "status": "open"
+}
+```
+
+### 10.6 Admin review queue (minimal ops API)
+
+`GET /api/admin/reports?status=open`
+
+`POST /api/admin/reports/:reportId/resolve`
+
+Resolve payload:
+
+```json
+{
+  "decision": "dismissed | confirmed",
+  "action": "none | deactivate_qris | block_user",
+  "resolutionNote": "optional audit note"
 }
 ```
 
@@ -317,11 +372,30 @@ sequenceDiagram
   FE->>API: POST /api/contributions/upsert
   API->>TS: Verify token
   TS-->>API: pass/fail
-  API->>API: Decode QR payload + extract fields + hash + score
+  API->>API: Decode QR payload + extract deterministic fields + hash
   API->>R2: Store image object
   API->>D1: Insert qris row, update previous active if needed
   API-->>FE: ok + qrisId
   FE-->>U: Show success state in modal
+```
+
+### D) Report and admin moderation (exception)
+
+```mermaid
+sequenceDiagram
+  participant U as Logged-in User
+  participant FE as Masjid Detail Modal
+  participant API as Worker API
+  participant D1 as D1
+  participant A as Admin
+
+  U->>FE: Click "Report this QRIS"
+  FE->>API: POST /api/qris/:qrisId/reports
+  API->>D1: Insert qris_reports(status=open)
+  API-->>FE: ok
+  A->>API: GET /api/admin/reports?status=open
+  A->>API: Resolve(reportId, decision, action)
+  API->>D1: Update report + apply action (optional)
 ```
 
 ## 12) Anti-abuse Controls
@@ -333,20 +407,26 @@ sequenceDiagram
 - Reject invalid/non-decodable QR images.
 - Reject non-QRIS QR payloads via EMV TLV validation.
 - Enforce CRC validation for QRIS payload before D1/R2 write.
-- Publish-first policy remains active; anti-abuse controls reduce spam, not semantic risk to zero.
+- Report path is login-only and rate-limited.
+- Deduplicate open report per user per qris item.
 
-## 13) Trust and Governance Layer (Revised)
+## 13) Governance Model (Simple, YAGNI)
 
 Objective:
 
-- Hybrid model with publish-first UX.
-- Every accepted QRIS is shown immediately (`2b`) with confidence badge.
-- Governance focuses on confidence scoring + conflict surfacing, not hard pre-publication blocking.
+- Deterministic ingest + exception handling.
+- Publish-first remains (`2b`), without heavy probabilistic trust scoring.
+- Human (or AI agent) admin reviews only reported exceptions.
 
 Decision note (`1a` vs `1b`):
 
 - `1a` (recommended): trust scoring + targeted review path for anomalies.
 - `1b`: full autopublish without governance signal; simpler, but weak incident handling.
+
+Selected direction now:
+
+- Operationally closer to `1b` (no scoring engine) plus report escalation path.
+- Keep architecture open for future `1a` if data volume/risk requires it.
 
 ### 13.1 Deterministic Checks (Hard Validation)
 
@@ -363,63 +443,44 @@ Hard checks (must pass):
 Output:
 
 - If any hard check fails: reject contribution.
-- If hard checks pass: compute payload hash and continue scoring.
+- If hard checks pass: accept and publish latest active payload.
 
-### 13.2 Extracted Fields (from Payload)
+### 13.2 Report-driven Exceptions
 
-Store these parsed fields:
+Principle:
 
-- `merchant_name` (EMV tag `59`).
-- `merchant_city` (EMV tag `60`).
-- `point_of_initiation_method` (tag `01`, dynamic/static hint).
-- `merchant_account_template_tag` (first tag in `26..51` carrying QRIS GUI).
-- `nmid_nullable` (when inferable from QRIS merchant account/additional data object; else null).
+- Do not overfit with inferred trust rules early.
+- Accept deterministic-valid data by default.
+- Escalate exceptions via explicit reports.
 
-### 13.3 Confidence Score and Badge
+Report metadata:
 
-Range:
+- `reason_code` required.
+- `reason_text` optional.
+- Reporter identity always known (authenticated user only).
 
-- `0..100` integer score.
+### 13.3 Admin Resolution
 
-Status mapping:
+Admin decisions:
 
-- `verified` (`>=85`)
-- `likely` (`60..84`)
-- `low` (`35..59`)
-- `disputed` (`<35` or conflict-triggered)
+- `dismissed`: report is not actionable.
+- `confirmed`: report valid; optional enforcement action.
 
-Rules:
+Enforcement actions:
 
-- Always publish latest active payload.
-- UI always shows confidence badge and reasons.
-- `low` and `disputed` show warning copy in detail modal.
+- `none`
+- `deactivate_qris`
+- `block_user`
 
-### 13.4 Signals for Score
+### 13.4 Future Evolution (keep path open)
 
-Positive (examples):
+Deferred capabilities:
 
-- Hard validation passed.
-- Same payload hash repeated across independent contributors/time windows.
-- Merchant name/token overlap with masjid name.
-- NMID present and stable across repeated sightings.
-- Contributor reputation (historical accepted submissions).
+- Confidence scoring and badges.
+- Multi-contributor consensus.
+- External verifier adapters (SNAP/PJP or bilateral partnerships).
 
-Negative (examples):
-
-- High payload churn for same masjid in rolling window.
-- Merchant name strongly mismatched with masjid canonical name.
-- Low-trust contributor or bursty submission pattern.
-
-### 13.5 Conflict Rule (`4a`)
-
-Policy:
-
-- Keep newest payload as `is_active=1`.
-- Increment conflict counters/history if payload hash changes.
-- Auto-mark `disputed` when churn threshold crossed (example: `>=3` distinct hashes in 30 days).
-- Keep previous rows for audit trail and rollback.
-
-### 13.6 External Verifier Path (Future `3b`)
+### 13.5 External Verifier Path (Future `3b`)
 
 Current (`3a`):
 
@@ -429,7 +490,7 @@ Future extension (`3b`) without architecture break:
 
 - Add optional `ExternalVerifierAdapter` stage after hard validation.
 - Adapter can consume bilateral/B2B rails (for example SNAP/PJP integrations) when available.
-- Adapter result becomes another scoring signal, not a hard dependency for app uptime.
+- Adapter result can enrich admin review context without becoming a hard runtime dependency.
 
 ## 14) Masjid Data Source Strategy + PMTiles Pipeline
 
@@ -483,13 +544,14 @@ pmtiles convert masjids.mbtiles public/data/masjids.pmtiles
 2. Build single-route map shell.
 3. Add PMTiles integration with mock file.
 4. Implement modal-only masjid detail + contribute flow.
-5. Extend D1 schema for confidence/extracted fields in `qris`.
-6. Extend QRIS parser to extract merchant fields + optional NMID.
-7. Add confidence scoring service + conflict detector.
-8. Expose confidence/badge data in read API.
-9. Wire UI badge + warning states in detail modal.
-10. Wire auth callback and session.
-11. Ship MVP and handoff real PMTiles replacement to cofounder.
+5. Extend D1 schema for extracted QRIS fields in `qris`.
+6. Add `qris_reports` table + moderation states.
+7. Extend QRIS parser to extract merchant fields + optional NMID.
+8. Implement report API (`POST /api/qris/:qrisId/reports`) with auth + dedupe.
+9. Implement minimal admin moderation APIs (`GET/POST /api/admin/reports...`).
+10. Add report button in masjid detail modal.
+11. Wire auth callback and session.
+12. Ship MVP and handoff real PMTiles replacement to cofounder.
 
 ## 17) Source References
 
