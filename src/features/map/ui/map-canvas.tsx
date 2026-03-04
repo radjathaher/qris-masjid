@@ -35,6 +35,21 @@ export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
     });
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+    map.addControl(
+      new maplibregl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+          timeout: 10_000,
+        },
+        trackUserLocation: false,
+        showUserLocation: true,
+        showAccuracyCircle: true,
+        fitBoundsOptions: {
+          maxZoom: 16,
+        },
+      }),
+      "top-right",
+    );
 
     map.on("load", () => {
       map.addSource("masjids-pmtiles", {

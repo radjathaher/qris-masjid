@@ -1,6 +1,7 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { Agentation } from "agentation";
 import { QueryProvider } from "#/app/providers/query-provider";
 
 import appCss from "#/styles.css?url";
@@ -42,6 +43,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <QueryProvider>{children}</QueryProvider>
+        {import.meta.env.DEV ? <Agentation /> : null}
         <TanStackDevtools
           config={{
             position: "bottom-right",

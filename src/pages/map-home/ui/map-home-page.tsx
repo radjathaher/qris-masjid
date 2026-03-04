@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { mockMasjids } from "#/entities/masjid/model/mock-masjids";
 import type { Masjid } from "#/entities/masjid/model/types";
 import { fetchMasjidQris } from "#/entities/qris/api/client";
@@ -7,26 +7,11 @@ import { ContributeModal } from "#/features/contribute/ui/contribute-modal";
 import { MapCanvas } from "#/features/map/ui/map-canvas";
 import { MasjidDetailModal } from "#/features/masjid-detail/ui/masjid-detail-modal";
 import { Button } from "#/shared/ui/button";
-import { Input } from "#/shared/ui/input";
 
 export function MapHomePage() {
-  const [query, setQuery] = useState("");
   const [selectedMasjid, setSelectedMasjid] = useState<Masjid | null>(null);
   const [contributeOpen, setContributeOpen] = useState(false);
   const [authReturnDetected, setAuthReturnDetected] = useState(false);
-
-  const filteredMasjids = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-
-    if (!normalized) {
-      return mockMasjids;
-    }
-
-    return mockMasjids.filter((masjid) => {
-      const haystack = `${masjid.name} ${masjid.city} ${masjid.province}`.toLowerCase();
-      return haystack.includes(normalized);
-    });
-  }, [query]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -60,13 +45,6 @@ export function MapHomePage() {
     <main className="map-page">
       <header className="map-toolbar">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Input
-            type="search"
-            placeholder="Search masjid by name or city"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            className="w-full sm:w-96"
-          />
           <Button onClick={() => setContributeOpen(true)} disabled={!selectedMasjid}>
             Contribute
           </Button>
@@ -76,7 +54,7 @@ export function MapHomePage() {
         </p>
       </header>
 
-      <MapCanvas masjids={filteredMasjids} onSelectMasjid={setSelectedMasjid} />
+      <MapCanvas masjids={mockMasjids} onSelectMasjid={setSelectedMasjid} />
 
       <MasjidDetailModal
         masjid={selectedMasjid}
