@@ -1,3 +1,4 @@
 APP_SESSION_SECRET=replace-with-long-random-secret
+APP_ADMIN_EMAILS=admin@example.com
 GOOGLE_OAUTH_CLIENT_SECRET=replace-me
 TURNSTILE_SECRET_KEY=replace-me

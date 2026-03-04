@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  contributionConflictResponseSchema,
   contributionRequestSchema,
   contributionResponseSchema,
   type ContributionRequest,
@@ -36,27 +37,63 @@ async function ensureMasjidExists(env: AppEnv, masjidId: string): Promise<boolea
 function decodeAndValidateQris(imageBase64: string): {
   image: DecodedBase64Image;
   normalizedPayload: string;
+  merchantName: string;
+  merchantCity: string;
+  pointOfInitiationMethod: string | null;
+  nmid: string | null;
 } {
   const image = decodeBase64Image(imageBase64);
-  const qrText = decodeQrTextFromImage(image);
-  const normalizedPayload = validateQrisPayload(qrText).normalizedPayload;
+  const validatedPayload = validateQrisPayload(decodeQrTextFromImage(image));
 
-  return { image, normalizedPayload };
+  return {
+    image,
+    normalizedPayload: validatedPayload.normalizedPayload,
+    merchantName: validatedPayload.merchantName,
+    merchantCity: validatedPayload.merchantCity,
+    pointOfInitiationMethod: validatedPayload.pointOfInitiationMethod,
+    nmid: validatedPayload.nmid,
+  };
 }
 
-async function saveQris(
+type SaveQrisResult =
+  | { kind: "created"; qrisId: string }
+  | { kind: "duplicate"; qrisId: string }
+  | { kind: "conflict"; activeQrisId: string };
+
+async function saveQrisIfAllowed(
   env: AppEnv,
   input: {
     contributorId: string;
     masjidId: string;
     payloadHash: string;
     image: DecodedBase64Image;
+    merchantName: string;
+    merchantCity: string;
+    pointOfInitiationMethod: string | null;
+    nmid: string | null;
   },
-): Promise<string> {
+): Promise<SaveQrisResult> {
   const db = createDb(env.DB);
+  const activeRow = await db
+    .select({
+      id: qris.id,
+      payloadHash: qris.payloadHash,
+    })
+    .from(qris)
+    .where(and(eq(qris.masjidId, input.masjidId), eq(qris.isActive, 1)))
+    .limit(1);
+
+  if (activeRow[0]) {
+    if (activeRow[0].payloadHash === input.payloadHash) {
+      return { kind: "duplicate", qrisId: activeRow[0].id };
+    }
+
+    return { kind: "conflict", activeQrisId: activeRow[0].id };
+  }
+
   const now = new Date().toISOString();
   const qrisId = crypto.randomUUID();
-  const imageKey = `qris/${input.masjidId}/${input.payloadHash}.${input.image.extension}`;
+  const imageKey = `qris/${input.masjidId}/${input.payloadHash}`;
 
   await env.QRIS_IMAGES.put(imageKey, input.image.bytes, {
     httpMetadata: {
@@ -64,23 +101,50 @@ async function saveQris(
     },
   });
 
-  await db
-    .update(qris)
-    .set({ isActive: 0, updatedAt: now })
-    .where(and(eq(qris.masjidId, input.masjidId), eq(qris.isActive, 1)));
+  try {
+    await db.insert(qris).values({
+      id: qrisId,
+      masjidId: input.masjidId,
+      payloadHash: input.payloadHash,
+      merchantName: input.merchantName,
+      merchantCity: input.merchantCity,
+      pointOfInitiationMethod: input.pointOfInitiationMethod,
+      nmidNullable: input.nmid,
+      imageR2Key: imageKey,
+      contributorId: input.contributorId,
+      createdAt: now,
+      updatedAt: now,
+      isActive: 1,
+    });
+  } catch {
+    const existingSameHash = await db
+      .select({
+        id: qris.id,
+      })
+      .from(qris)
+      .where(and(eq(qris.masjidId, input.masjidId), eq(qris.payloadHash, input.payloadHash)))
+      .limit(1);
 
-  await db.insert(qris).values({
-    id: qrisId,
-    masjidId: input.masjidId,
-    payloadHash: input.payloadHash,
-    imageR2Key: imageKey,
-    contributorId: input.contributorId,
-    createdAt: now,
-    updatedAt: now,
-    isActive: 1,
-  });
+    if (existingSameHash[0]) {
+      return { kind: "duplicate", qrisId: existingSameHash[0].id };
+    }
 
-  return qrisId;
+    const existingActive = await db
+      .select({
+        id: qris.id,
+      })
+      .from(qris)
+      .where(and(eq(qris.masjidId, input.masjidId), eq(qris.isActive, 1)))
+      .limit(1);
+
+    if (existingActive[0]) {
+      return { kind: "conflict", activeQrisId: existingActive[0].id };
+    }
+
+    throw new Error("Failed to persist QRIS payload");
+  }
+
+  return { kind: "created", qrisId };
 }
 
 export const Route = createFileRoute("/api/contributions/upsert")({
@@ -116,17 +180,42 @@ export const Route = createFileRoute("/api/contributions/upsert")({
         try {
           const validated = decodeAndValidateQris(input.imageBase64);
           const payloadHash = await sha256HexText(validated.normalizedPayload);
-          const qrisId = await saveQris(env, {
+          const saveResult = await saveQrisIfAllowed(env, {
             contributorId: userId,
             masjidId: input.masjidId,
             payloadHash,
             image: validated.image,
+            merchantName: validated.merchantName,
+            merchantCity: validated.merchantCity,
+            pointOfInitiationMethod: validated.pointOfInitiationMethod,
+            nmid: validated.nmid,
           });
+
+          if (saveResult.kind === "conflict") {
+            return new Response(
+              JSON.stringify(
+                contributionConflictResponseSchema.parse({
+                  ok: false,
+                  code: "ACTIVE_QRIS_EXISTS_REPORT_REQUIRED",
+                  masjidId: input.masjidId,
+                  activeQrisId: saveResult.activeQrisId,
+                }),
+              ),
+              {
+                status: 409,
+                headers: {
+                  "content-type": "application/json",
+                },
+              },
+            );
+          }
 
           return Response.json(
             contributionResponseSchema.parse({
               ok: true,
-              qrisId,
+              duplicate: saveResult.kind === "duplicate",
+              created: saveResult.kind === "created",
+              qrisId: saveResult.qrisId,
               masjidId: input.masjidId,
             }),
           );

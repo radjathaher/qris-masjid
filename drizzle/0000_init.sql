@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS qris (
   id TEXT PRIMARY KEY NOT NULL,
   masjid_id TEXT NOT NULL,
   payload_hash TEXT NOT NULL,
+  merchant_name TEXT NOT NULL,
+  merchant_city TEXT NOT NULL,
+  point_of_initiation_method TEXT,
+  nmid_nullable TEXT,
   image_r2_key TEXT NOT NULL,
   contributor_id TEXT NOT NULL,
   created_at TEXT NOT NULL,
@@ -33,8 +37,33 @@ CREATE TABLE IF NOT EXISTS qris (
   FOREIGN KEY (contributor_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS qris_reports (
+  id TEXT PRIMARY KEY NOT NULL,
+  qris_id TEXT NOT NULL,
+  masjid_id TEXT NOT NULL,
+  reporter_id TEXT NOT NULL,
+  reason_code TEXT NOT NULL,
+  reason_text TEXT,
+  status TEXT NOT NULL,
+  reviewed_by_nullable TEXT,
+  resolution_note_nullable TEXT,
+  reviewed_at_nullable TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (qris_id) REFERENCES qris(id),
+  FOREIGN KEY (masjid_id) REFERENCES masjids(id),
+  FOREIGN KEY (reporter_id) REFERENCES users(id),
+  FOREIGN KEY (reviewed_by_nullable) REFERENCES users(id)
+);
+
 CREATE INDEX IF NOT EXISTS qris_masjid_id_idx ON qris (masjid_id);
 CREATE INDEX IF NOT EXISTS qris_is_active_idx ON qris (is_active);
+CREATE UNIQUE INDEX IF NOT EXISTS qris_masjid_payload_unique_idx ON qris (masjid_id, payload_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS qris_active_masjid_unique_idx ON qris (masjid_id) WHERE is_active = 1;
+
+CREATE INDEX IF NOT EXISTS qris_reports_qris_id_idx ON qris_reports (qris_id);
+CREATE INDEX IF NOT EXISTS qris_reports_masjid_id_idx ON qris_reports (masjid_id);
+CREATE INDEX IF NOT EXISTS qris_reports_status_idx ON qris_reports (status);
 
 INSERT OR IGNORE INTO masjids (id, osm_id, name, lat, lon, city, province, source_version, created_at, updated_at)
 VALUES

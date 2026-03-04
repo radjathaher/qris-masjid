@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { Masjid } from "#/entities/masjid/model/types";
+import { createQrisReport } from "#/entities/qris/api/client";
 import type { MasjidQrisResponse } from "#/entities/qris/model/contracts";
 import { QrisItemsList } from "#/features/masjid-detail/ui/qris-items-list";
 import { Button } from "#/shared/ui/button";
@@ -17,6 +19,15 @@ type MasjidDetailModalProps = {
   loading: boolean;
   error: string | null;
   onClose: () => void;
+  onOpenContribute: () => void;
+};
+
+type ActionSectionProps = {
+  activeQrisItemId: string | null;
+  canUpload: boolean;
+  loading: boolean;
+  reportPending: boolean;
+  onReportQris: () => void;
   onOpenContribute: () => void;
 };
 
@@ -50,6 +61,35 @@ function renderQrisContent(
   return null;
 }
 
+async function submitManualReport(qrisId: string): Promise<string> {
+  const reasonText = window.prompt("Describe the issue (optional).") ?? "";
+  await createQrisReport(qrisId, {
+    reasonCode: "manual-review",
+    reasonText: reasonText.length > 0 ? reasonText : undefined,
+  });
+  return "Report submitted. Admin review is queued.";
+}
+
+function renderActionSection({
+  activeQrisItemId,
+  canUpload,
+  loading,
+  reportPending,
+  onReportQris,
+  onOpenContribute,
+}: ActionSectionProps) {
+  return (
+    <div className="flex justify-end gap-2">
+      {activeQrisItemId && !loading ? (
+        <Button variant="outline" disabled={reportPending} onClick={onReportQris}>
+          {reportPending ? "Submitting report..." : "Report QRIS"}
+        </Button>
+      ) : null}
+      {canUpload ? <Button onClick={onOpenContribute}>Contribute QRIS</Button> : null}
+    </div>
+  );
+}
+
 export function MasjidDetailModal({
   masjid,
   qrisData,
@@ -58,6 +98,29 @@ export function MasjidDetailModal({
   onClose,
   onOpenContribute,
 }: MasjidDetailModalProps) {
+  const [reportMessage, setReportMessage] = useState<string | null>(null);
+  const [reportPending, setReportPending] = useState(false);
+  const activeQrisItem = qrisData?.items.find((item) => item.isActive) ?? null;
+  const canUpload = !loading && (qrisData?.canUpload ?? true);
+
+  const onReportQris = async () => {
+    if (!activeQrisItem) {
+      return;
+    }
+
+    try {
+      setReportPending(true);
+      setReportMessage(null);
+      setReportMessage(await submitManualReport(activeQrisItem.id));
+    } catch (reportError) {
+      setReportMessage(
+        reportError instanceof Error ? reportError.message : "Failed to submit report",
+      );
+    } finally {
+      setReportPending(false);
+    }
+  };
+
   return (
     <Dialog open={Boolean(masjid)} onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent>
@@ -72,9 +135,16 @@ export function MasjidDetailModal({
 
         {renderQrisContent(loading, error, qrisData)}
 
-        <div className="flex justify-end">
-          <Button onClick={onOpenContribute}>Contribute QRIS</Button>
-        </div>
+        {reportMessage ? <p className="text-sm text-emerald-900/80">{reportMessage}</p> : null}
+
+        {renderActionSection({
+          activeQrisItemId: activeQrisItem?.id ?? null,
+          canUpload,
+          loading,
+          reportPending,
+          onReportQris,
+          onOpenContribute,
+        })}
       </DialogContent>
     </Dialog>
   );

@@ -40,12 +40,14 @@ export function MapHomePage() {
     queryFn: () => fetchMasjidQris(selectedMasjid?.id ?? ""),
     enabled: Boolean(selectedMasjid?.id),
   });
+  const contributeDisabled =
+    !selectedMasjid || qrisQuery.isLoading || qrisQuery.data?.canUpload === false;
 
   return (
     <main className="map-page">
       <header className="map-toolbar">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Button onClick={() => setContributeOpen(true)} disabled={!selectedMasjid}>
+          <Button onClick={() => setContributeOpen(true)} disabled={contributeDisabled}>
             Contribute
           </Button>
         </div>
@@ -68,6 +70,7 @@ export function MapHomePage() {
       <ContributeModal
         open={contributeOpen}
         masjid={selectedMasjid}
+        uploadAllowed={qrisQuery.data?.canUpload ?? true}
         defaultOpenForm={authReturnDetected}
         onClose={() => {
           setContributeOpen(false);

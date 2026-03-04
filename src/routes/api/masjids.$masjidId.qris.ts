@@ -15,6 +15,10 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
           .select({
             id: qris.id,
             payloadHash: qris.payloadHash,
+            merchantName: qris.merchantName,
+            merchantCity: qris.merchantCity,
+            pointOfInitiationMethod: qris.pointOfInitiationMethod,
+            nmid: qris.nmidNullable,
             imageR2Key: qris.imageR2Key,
             isActive: qris.isActive,
             updatedAt: qris.updatedAt,
@@ -28,9 +32,16 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
         return Response.json(
           masjidQrisResponseSchema.parse({
             masjidId: params.masjidId,
+            hasActiveQris: rows.some((row) => row.isActive === 1),
+            canUpload: rows.every((row) => row.isActive !== 1),
+            uploadPolicy: "report-first",
             items: rows.map((row) => ({
               id: row.id,
               payloadHash: row.payloadHash,
+              merchantName: row.merchantName,
+              merchantCity: row.merchantCity,
+              pointOfInitiationMethod: row.pointOfInitiationMethod,
+              nmid: row.nmid,
               imageUrl: baseUrl ? `${baseUrl}/${row.imageR2Key}` : null,
               isActive: row.isActive === 1,
               updatedAt: row.updatedAt,

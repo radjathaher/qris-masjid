@@ -17,6 +17,7 @@ import { TurnstileWidget } from "#/features/contribute/ui/turnstile-widget";
 type ContributeModalProps = {
   open: boolean;
   masjid: Masjid | null;
+  uploadAllowed: boolean;
   defaultOpenForm: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -38,6 +39,7 @@ async function readFileAsBase64(file: File): Promise<string> {
 export function ContributeModal({
   open,
   masjid,
+  uploadAllowed,
   defaultOpenForm,
   onClose,
   onSuccess,
@@ -86,8 +88,8 @@ export function ContributeModal({
   }, [open, step]);
 
   const canSubmit = useMemo(
-    () => Boolean(masjid && turnstileToken && turnstileLoaded),
-    [masjid, turnstileLoaded, turnstileToken],
+    () => Boolean(masjid && uploadAllowed && turnstileToken && turnstileLoaded),
+    [masjid, turnstileLoaded, turnstileToken, uploadAllowed],
   );
 
   const onTurnstileTokenChange = useCallback((token: string) => {
@@ -99,6 +101,11 @@ export function ContributeModal({
 
     if (!masjid) {
       setError("Select a masjid before submitting.");
+      return;
+    }
+
+    if (!uploadAllowed) {
+      setError("Active QRIS exists. Use report flow instead of uploading a replacement.");
       return;
     }
 
@@ -173,6 +180,12 @@ export function ContributeModal({
 
         {step === "form" ? (
           <form className="space-y-4" onSubmit={onSubmit}>
+            {!uploadAllowed ? (
+              <p className="text-sm text-emerald-900/70">
+                This masjid already has an active QRIS. Report the current QRIS first if it is
+                incorrect.
+              </p>
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="image">QR image</Label>
               <Input
@@ -181,7 +194,7 @@ export function ContributeModal({
                 type="file"
                 accept="image/*"
                 required
-                disabled={!masjid}
+                disabled={!masjid || !uploadAllowed}
               />
             </div>
 

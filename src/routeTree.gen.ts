@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTurnstileSiteKeyRouteImport } from './routes/api/turnstile.site-key'
 import { Route as ApiContributionsUpsertRouteImport } from './routes/api/contributions.upsert'
+import { Route as ApiAdminReportsRouteImport } from './routes/api/admin.reports'
+import { Route as ApiQrisQrisIdReportsRouteImport } from './routes/api/qris.$qrisId.reports'
 import { Route as ApiMasjidsMasjidIdQrisRouteImport } from './routes/api/masjids.$masjidId.qris'
 import { Route as ApiAuthGoogleStartRouteImport } from './routes/api/auth.google.start'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth.google.callback'
+import { Route as ApiAdminReportsReportIdResolveRouteImport } from './routes/api/admin.reports.$reportId.resolve'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,6 +32,16 @@ const ApiTurnstileSiteKeyRoute = ApiTurnstileSiteKeyRouteImport.update({
 const ApiContributionsUpsertRoute = ApiContributionsUpsertRouteImport.update({
   id: '/api/contributions/upsert',
   path: '/api/contributions/upsert',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminReportsRoute = ApiAdminReportsRouteImport.update({
+  id: '/api/admin/reports',
+  path: '/api/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiQrisQrisIdReportsRoute = ApiQrisQrisIdReportsRouteImport.update({
+  id: '/api/qris/$qrisId/reports',
+  path: '/api/qris/$qrisId/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMasjidsMasjidIdQrisRoute = ApiMasjidsMasjidIdQrisRouteImport.update({
@@ -46,66 +59,92 @@ const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
   path: '/api/auth/google/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminReportsReportIdResolveRoute =
+  ApiAdminReportsReportIdResolveRouteImport.update({
+    id: '/$reportId/resolve',
+    path: '/$reportId/resolve',
+    getParentRoute: () => ApiAdminReportsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
   '/api/masjids/$masjidId/qris': typeof ApiMasjidsMasjidIdQrisRoute
+  '/api/qris/$qrisId/reports': typeof ApiQrisQrisIdReportsRoute
+  '/api/admin/reports/$reportId/resolve': typeof ApiAdminReportsReportIdResolveRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
   '/api/masjids/$masjidId/qris': typeof ApiMasjidsMasjidIdQrisRoute
+  '/api/qris/$qrisId/reports': typeof ApiQrisQrisIdReportsRoute
+  '/api/admin/reports/$reportId/resolve': typeof ApiAdminReportsReportIdResolveRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
   '/api/masjids/$masjidId/qris': typeof ApiMasjidsMasjidIdQrisRoute
+  '/api/qris/$qrisId/reports': typeof ApiQrisQrisIdReportsRoute
+  '/api/admin/reports/$reportId/resolve': typeof ApiAdminReportsReportIdResolveRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/api/admin/reports'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
     | '/api/masjids/$masjidId/qris'
+    | '/api/qris/$qrisId/reports'
+    | '/api/admin/reports/$reportId/resolve'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api/admin/reports'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
     | '/api/masjids/$masjidId/qris'
+    | '/api/qris/$qrisId/reports'
+    | '/api/admin/reports/$reportId/resolve'
   id:
     | '__root__'
     | '/'
+    | '/api/admin/reports'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
     | '/api/masjids/$masjidId/qris'
+    | '/api/qris/$qrisId/reports'
+    | '/api/admin/reports/$reportId/resolve'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiAdminReportsRoute: typeof ApiAdminReportsRouteWithChildren
   ApiContributionsUpsertRoute: typeof ApiContributionsUpsertRoute
   ApiTurnstileSiteKeyRoute: typeof ApiTurnstileSiteKeyRoute
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
   ApiAuthGoogleStartRoute: typeof ApiAuthGoogleStartRoute
   ApiMasjidsMasjidIdQrisRoute: typeof ApiMasjidsMasjidIdQrisRoute
+  ApiQrisQrisIdReportsRoute: typeof ApiQrisQrisIdReportsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -131,6 +170,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiContributionsUpsertRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/reports': {
+      id: '/api/admin/reports'
+      path: '/api/admin/reports'
+      fullPath: '/api/admin/reports'
+      preLoaderRoute: typeof ApiAdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/qris/$qrisId/reports': {
+      id: '/api/qris/$qrisId/reports'
+      path: '/api/qris/$qrisId/reports'
+      fullPath: '/api/qris/$qrisId/reports'
+      preLoaderRoute: typeof ApiQrisQrisIdReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/masjids/$masjidId/qris': {
       id: '/api/masjids/$masjidId/qris'
       path: '/api/masjids/$masjidId/qris'
@@ -152,16 +205,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthGoogleCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/reports/$reportId/resolve': {
+      id: '/api/admin/reports/$reportId/resolve'
+      path: '/$reportId/resolve'
+      fullPath: '/api/admin/reports/$reportId/resolve'
+      preLoaderRoute: typeof ApiAdminReportsReportIdResolveRouteImport
+      parentRoute: typeof ApiAdminReportsRoute
+    }
   }
 }
 
+interface ApiAdminReportsRouteChildren {
+  ApiAdminReportsReportIdResolveRoute: typeof ApiAdminReportsReportIdResolveRoute
+}
+
+const ApiAdminReportsRouteChildren: ApiAdminReportsRouteChildren = {
+  ApiAdminReportsReportIdResolveRoute: ApiAdminReportsReportIdResolveRoute,
+}
+
+const ApiAdminReportsRouteWithChildren = ApiAdminReportsRoute._addFileChildren(
+  ApiAdminReportsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiAdminReportsRoute: ApiAdminReportsRouteWithChildren,
   ApiContributionsUpsertRoute: ApiContributionsUpsertRoute,
   ApiTurnstileSiteKeyRoute: ApiTurnstileSiteKeyRoute,
   ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
   ApiAuthGoogleStartRoute: ApiAuthGoogleStartRoute,
   ApiMasjidsMasjidIdQrisRoute: ApiMasjidsMasjidIdQrisRoute,
+  ApiQrisQrisIdReportsRoute: ApiQrisQrisIdReportsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,6 +1,7 @@
 export type AppEnv = {
   APP_BASE_URL: string;
   APP_SESSION_SECRET: string;
+  APP_ADMIN_EMAILS?: string;
   GOOGLE_OAUTH_CLIENT_ID: string;
   GOOGLE_OAUTH_CLIENT_SECRET: string;
   GOOGLE_OAUTH_REDIRECT_URI: string;

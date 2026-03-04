@@ -15,6 +15,12 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>
+              <strong>Merchant:</strong> {item.merchantName}
+            </p>
+            <p>
+              <strong>City:</strong> {item.merchantCity}
+            </p>
+            <p>
               <strong>Payload hash:</strong> {item.payloadHash}
             </p>
             <p>

@@ -5,6 +5,14 @@ type TlvEntry = {
   offset: number;
 };
 
+type ValidatedQrisPayload = {
+  normalizedPayload: string;
+  merchantName: string;
+  merchantCity: string;
+  pointOfInitiationMethod: string | null;
+  nmid: string | null;
+};
+
 function isTwoDigitNumber(value: string): boolean {
   return /^\d{2}$/.test(value);
 }
@@ -89,27 +97,68 @@ function assertCountryAndCurrency(entries: TlvEntry[]) {
   }
 }
 
-function assertMerchantAccount(entries: TlvEntry[]) {
+function findQrisMerchantTemplate(entries: TlvEntry[]): { tag: string; nested: TlvEntry[] } | null {
+  const merchantEntries = entries.filter((entry) => isMerchantAccountTag(entry.tag));
+
+  if (merchantEntries.length === 0) {
+    return null;
+  }
+
+  for (const entry of merchantEntries) {
+    try {
+      const nested = parseTlv(entry.value);
+      const hasQrisGui = nested.some(
+        (nestedEntry) => nestedEntry.tag === "00" && nestedEntry.value === "ID.CO.QRIS.WWW",
+      );
+
+      if (hasQrisGui) {
+        return { tag: entry.tag, nested };
+      }
+    } catch {
+      // Ignore malformed nested merchant templates and continue scanning.
+    }
+  }
+
+  return null;
+}
+
+function assertMerchantAccount(entries: TlvEntry[]): { tag: string; nested: TlvEntry[] } {
   const merchantEntries = entries.filter((entry) => isMerchantAccountTag(entry.tag));
 
   if (merchantEntries.length === 0) {
     throw new Error("Missing merchant account information");
   }
 
-  const hasQrisGui = merchantEntries.some((entry) => {
-    try {
-      const nested = parseTlv(entry.value);
-      return nested.some(
-        (nestedEntry) => nestedEntry.tag === "00" && nestedEntry.value === "ID.CO.QRIS.WWW",
-      );
-    } catch {
-      return false;
-    }
-  });
+  const template = findQrisMerchantTemplate(entries);
 
-  if (!hasQrisGui) {
+  if (!template) {
     throw new Error("Merchant account is not recognized as QRIS");
   }
+
+  return template;
+}
+
+function collectPotentialNmidValues(entries: TlvEntry[], templateNested: TlvEntry[]): string[] {
+  const additionalDataEntry = findSingleEntry(entries, "62");
+  const additionalNested: TlvEntry[] = [];
+
+  if (additionalDataEntry) {
+    try {
+      additionalNested.push(...parseTlv(additionalDataEntry.value));
+    } catch {
+      // Ignore malformed additional data object; hard checks remain CRC/TLV-level.
+    }
+  }
+
+  return [
+    ...templateNested.map((entry) => entry.value),
+    ...additionalNested.map((entry) => entry.value),
+    ...entries.map((entry) => entry.value),
+  ];
+}
+
+function findNmid(values: string[]): string | null {
+  return values.find((value) => /^ID\d{10,20}$/.test(value)) ?? null;
 }
 
 function assertCrc(rawPayload: string, entries: TlvEntry[]) {
@@ -127,7 +176,7 @@ function assertCrc(rawPayload: string, entries: TlvEntry[]) {
   }
 }
 
-export function validateQrisPayload(rawPayload: string): { normalizedPayload: string } {
+export function validateQrisPayload(rawPayload: string): ValidatedQrisPayload {
   const normalizedPayload = rawPayload.trim();
 
   if (!normalizedPayload) {
@@ -138,8 +187,27 @@ export function validateQrisPayload(rawPayload: string): { normalizedPayload: st
 
   assertPayloadFormatIndicator(entries);
   assertCountryAndCurrency(entries);
-  assertMerchantAccount(entries);
+  const merchantTemplate = assertMerchantAccount(entries);
   assertCrc(normalizedPayload, entries);
 
-  return { normalizedPayload };
+  const merchantName = findSingleEntry(entries, "59")?.value ?? "";
+  const merchantCity = findSingleEntry(entries, "60")?.value ?? "";
+  const pointOfInitiationMethod = findSingleEntry(entries, "01")?.value ?? null;
+  const nmid = findNmid(collectPotentialNmidValues(entries, merchantTemplate.nested));
+
+  if (!merchantName) {
+    throw new Error("Merchant name (tag 59) is missing");
+  }
+
+  if (!merchantCity) {
+    throw new Error("Merchant city (tag 60) is missing");
+  }
+
+  return {
+    normalizedPayload,
+    merchantName,
+    merchantCity,
+    pointOfInitiationMethod,
+    nmid,
+  };
 }
