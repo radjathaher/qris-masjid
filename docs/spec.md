@@ -1,7 +1,7 @@
 # QRIS Masjid Indonesia - MVP Spec (Hackathon)
 
 Last updated: 2026-03-04  
-Status: Draft v4 (ops-first exceptions revised)
+Status: Draft v5 (idempotent upload + report-gated replacement)
 
 ## 1) Product Goal
 
@@ -113,9 +113,9 @@ Data source policy:
 - Overpass/OSM is used only by offline ingest jobs (build-time or scheduled sync).
 - App runtime reads only from internal artifacts (`PMTiles`, `D1`).
 
-## 8) ERD (Ops-first MVP)
+## 8) ERD (Ops-first MVP, storage-tight)
 
-Tables: `users`, `masjids`, `qris`
+Tables: `users`, `masjids`, `qris`, `qris_reports`
 
 ```mermaid
 erDiagram
@@ -183,11 +183,14 @@ Notes:
 - `users.id` is internal UUID.
 - Google `sub` is used only for identity mapping at auth boundary.
 - `masjids` seeded from PMTiles source pipeline.
-- `qris` supports 1-to-many history; only one row is `is_active=1` per masjid.
+- `qris` supports sparse history; new row is created only for first publish or approved replacement.
+- Exactly one active row per masjid.
+- `qris` should enforce unique (`masjid_id`, `payload_hash`) to prevent duplicate rows for same payload.
 - Raw payload is not persisted in cleartext; parse + validate at ingest, then store normalized derivatives only.
 - `nmid_nullable` is optional because not all decoded payload variants expose it consistently.
 - `qris_reports.status`: `open` | `dismissed` | `confirmed`.
 - Enforce one open report per (`reporter_id`, `qris_id`) to reduce spam duplicates.
+- R2 object key should be deterministic by payload hash (`qris/{masjidId}/{payloadHash}`) to avoid duplicate image objects.
 
 ## 9) Frontend Features
 
@@ -198,7 +201,8 @@ UI blocks:
 - Fullscreen map canvas.
 - Search/filter bar.
 - Marker interaction + masjid detail modal.
-- Contribute modal flow (multi-step state machine inside one modal, includes Turnstile challenge).
+- Contribute modal flow (only visible when no active QRIS for selected masjid, includes Turnstile challenge).
+- Report CTA for active QRIS item.
 - Toast/inline feedback for success/failure.
 
 ## 10) Backend API Contracts (MVP)
@@ -234,6 +238,9 @@ Response (example):
 ```json
 {
   "masjidId": "masjid_123",
+  "hasActiveQris": true,
+  "canUpload": false,
+  "uploadPolicy": "report-first",
   "items": [
     {
       "id": "qris_abc",
@@ -254,6 +261,13 @@ Response (example):
 
 `POST /api/contributions/upsert`
 
+Rule:
+
+- Full normalized payload hash is the identity key.
+- Same hash + same masjid => idempotent success, no DB insert, no R2 write.
+- Different hash while active QRIS exists => reject (`409`) and ask reporter flow first.
+- Insert/write happens only when there is no active QRIS.
+
 Request:
 
 ```json
@@ -264,15 +278,42 @@ Request:
 }
 ```
 
-Response:
+Response A (created):
 
 ```json
 {
   "ok": true,
+  "duplicate": false,
+  "created": true,
   "qrisId": "qris_abc",
   "masjidId": "masjid_123"
 }
 ```
+
+Response B (idempotent duplicate):
+
+```json
+{
+  "ok": true,
+  "duplicate": true,
+  "created": false,
+  "qrisId": "qris_existing",
+  "masjidId": "masjid_123"
+}
+```
+
+Response C (active exists but different payload):
+
+```json
+{
+  "ok": false,
+  "code": "ACTIVE_QRIS_EXISTS_REPORT_REQUIRED",
+  "masjidId": "masjid_123",
+  "activeQrisId": "qris_existing"
+}
+```
+
+HTTP status: `409`.
 
 ### 10.5 Report a QRIS item (exception path)
 
@@ -312,10 +353,16 @@ Resolve payload:
 ```json
 {
   "decision": "dismissed | confirmed",
-  "action": "none | deactivate_qris | block_user",
+  "qrisAction": "none | deactivate_qris",
+  "userAction": "none | block_user",
   "resolutionNote": "optional audit note"
 }
 ```
+
+Hard delete policy:
+
+- No delete operation in routine moderation API.
+- Hard delete is reserved for explicit compliance/privacy purge workflow only.
 
 ## 11) Core Flows (Sequence)
 
@@ -368,15 +415,20 @@ sequenceDiagram
   participant D1 as D1
   participant R2 as R2
 
-  U->>FE: Upload QR image + submit
+  U->>FE: Upload QR image + submit (only if no active QRIS)
   FE->>API: POST /api/contributions/upsert
   API->>TS: Verify token
   TS-->>API: pass/fail
   API->>API: Decode QR payload + extract deterministic fields + hash
-  API->>R2: Store image object
-  API->>D1: Insert qris row, update previous active if needed
-  API-->>FE: ok + qrisId
-  FE-->>U: Show success state in modal
+  alt same hash already active
+    API-->>FE: ok duplicate=true (no write)
+  else active exists + different hash
+    API-->>FE: 409 report-required
+  else no active exists
+    API->>R2: Store image object (once)
+    API->>D1: Insert qris row as active
+    API-->>FE: ok created=true
+  end
 ```
 
 ### D) Report and admin moderation (exception)
@@ -426,6 +478,7 @@ Decision note (`1a` vs `1b`):
 Selected direction now:
 
 - Operationally closer to `1b` (no scoring engine) plus report escalation path.
+- Upload and replacement are intentionally constrained to reduce churn and storage cost.
 - Keep architecture open for future `1a` if data volume/risk requires it.
 
 ### 13.1 Deterministic Checks (Hard Validation)
@@ -443,15 +496,28 @@ Hard checks (must pass):
 Output:
 
 - If any hard check fails: reject contribution.
-- If hard checks pass: accept and publish latest active payload.
+- If hard checks pass: follow idempotent policy below.
 
-### 13.2 Report-driven Exceptions
+### 13.2 Idempotent Upload Policy (Cost Control)
+
+Rules:
+
+1. No active QRIS for masjid: accept insert + store one image object.
+2. Active exists and hash is identical: return idempotent success, no write.
+3. Active exists and hash differs: return `409 ACTIVE_QRIS_EXISTS_REPORT_REQUIRED`.
+
+Result:
+
+- No duplicate image objects for same payload hash.
+- No silent active replacement from random new submissions.
+
+### 13.3 Report-driven Exceptions (Only Mutation Gate)
 
 Principle:
 
 - Do not overfit with inferred trust rules early.
 - Accept deterministic-valid data by default.
-- Escalate exceptions via explicit reports.
+- Escalate payload-change attempts via explicit reports.
 
 Report metadata:
 
@@ -459,7 +525,7 @@ Report metadata:
 - `reason_text` optional.
 - Reporter identity always known (authenticated user only).
 
-### 13.3 Admin Resolution
+### 13.4 Admin Resolution
 
 Admin decisions:
 
@@ -472,7 +538,13 @@ Enforcement actions:
 - `deactivate_qris`
 - `block_user`
 
-### 13.4 Future Evolution (keep path open)
+Deletion rule:
+
+- Do not hard-delete users in normal abuse handling.
+- Prefer `block_user` to retain auditability.
+- Hard delete only for explicit legal/privacy requests.
+
+### 13.5 Future Evolution (keep path open)
 
 Deferred capabilities:
 
@@ -480,7 +552,7 @@ Deferred capabilities:
 - Multi-contributor consensus.
 - External verifier adapters (SNAP/PJP or bilateral partnerships).
 
-### 13.5 External Verifier Path (Future `3b`)
+### 13.6 External Verifier Path (Future `3b`)
 
 Current (`3a`):
 
@@ -544,14 +616,15 @@ pmtiles convert masjids.mbtiles public/data/masjids.pmtiles
 2. Build single-route map shell.
 3. Add PMTiles integration with mock file.
 4. Implement modal-only masjid detail + contribute flow.
-5. Extend D1 schema for extracted QRIS fields in `qris`.
+5. Extend D1 schema for extracted QRIS fields in `qris` + unique (`masjid_id`, `payload_hash`).
 6. Add `qris_reports` table + moderation states.
 7. Extend QRIS parser to extract merchant fields + optional NMID.
-8. Implement report API (`POST /api/qris/:qrisId/reports`) with auth + dedupe.
-9. Implement minimal admin moderation APIs (`GET/POST /api/admin/reports...`).
-10. Add report button in masjid detail modal.
-11. Wire auth callback and session.
-12. Ship MVP and handoff real PMTiles replacement to cofounder.
+8. Implement idempotent contribution path (duplicate hash = no write, active different hash = 409).
+9. Implement report API (`POST /api/qris/:qrisId/reports`) with auth + dedupe.
+10. Implement minimal admin moderation APIs (`GET/POST /api/admin/reports...`).
+11. Hide upload CTA when active exists; show report CTA.
+12. Wire auth callback and session.
+13. Ship MVP and handoff real PMTiles replacement to cofounder.
 
 ## 17) Source References
 
