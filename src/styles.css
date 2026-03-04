@@ -42,8 +42,8 @@ body {
 
 .masjid-marker-core {
   display: flex;
-  height: 2.15rem;
-  width: 2.15rem;
+  height: 1.9rem;
+  width: 1.9rem;
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
@@ -60,15 +60,15 @@ body {
 }
 
 .masjid-marker svg {
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 1.08rem;
+  height: 1.08rem;
   fill: #f0fdfa;
 }
 
 .masjid-marker-tail {
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-top: -0.22rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-top: -0.18rem;
   border-radius: 0.1rem;
   transform: rotate(45deg);
   background: #0f766e;
