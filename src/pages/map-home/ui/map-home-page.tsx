@@ -42,7 +42,6 @@ export function MapHomePage() {
         loading={qrisQuery.isLoading}
         error={qrisQuery.error instanceof Error ? qrisQuery.error.message : null}
         onClose={() => setSelectedMasjid(null)}
-        onOpenContribute={() => setContributeOpen(true)}
       />
 
       <ContributeModal

@@ -19,16 +19,13 @@ type MasjidDetailModalProps = {
   loading: boolean;
   error: string | null;
   onClose: () => void;
-  onOpenContribute: () => void;
 };
 
 type ActionSectionProps = {
   activeQrisItemId: string | null;
-  canUpload: boolean;
   loading: boolean;
   reportPending: boolean;
   onReportQris: () => void;
-  onOpenContribute: () => void;
 };
 
 function renderQrisContent(
@@ -72,11 +69,9 @@ async function submitManualReport(qrisId: string): Promise<string> {
 
 function renderActionSection({
   activeQrisItemId,
-  canUpload,
   loading,
   reportPending,
   onReportQris,
-  onOpenContribute,
 }: ActionSectionProps) {
   return (
     <div className="flex justify-end gap-2">
@@ -85,7 +80,6 @@ function renderActionSection({
           {reportPending ? "Submitting report..." : "Report QRIS"}
         </Button>
       ) : null}
-      {canUpload ? <Button onClick={onOpenContribute}>Contribute QRIS</Button> : null}
     </div>
   );
 }
@@ -96,12 +90,10 @@ export function MasjidDetailModal({
   loading,
   error,
   onClose,
-  onOpenContribute,
 }: MasjidDetailModalProps) {
   const [reportMessage, setReportMessage] = useState<string | null>(null);
   const [reportPending, setReportPending] = useState(false);
   const activeQrisItem = qrisData?.items.find((item) => item.isActive) ?? null;
-  const canUpload = !loading && (qrisData?.canUpload ?? true);
 
   const onReportQris = async () => {
     if (!activeQrisItem) {
@@ -139,11 +131,9 @@ export function MasjidDetailModal({
 
         {renderActionSection({
           activeQrisItemId: activeQrisItem?.id ?? null,
-          canUpload,
           loading,
           reportPending,
           onReportQris,
-          onOpenContribute,
         })}
       </DialogContent>
     </Dialog>
