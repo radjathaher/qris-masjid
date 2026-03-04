@@ -11,6 +11,8 @@ type MapCanvasProps = {
   onSelectMasjid: (masjid: Masjid) => void;
 };
 
+const TRACKPAD_PAN_DELTA_THRESHOLD = 40;
+
 function createMarkerElement(name: string): HTMLButtonElement {
   const marker = document.createElement("button");
   marker.type = "button";
@@ -25,6 +27,18 @@ function createMarkerElement(name: string): HTMLButtonElement {
     <span class="masjid-marker-tail" />
   `;
   return marker;
+}
+
+function isTrackpadPanGesture(event: WheelEvent): boolean {
+  if (event.ctrlKey || event.metaKey) {
+    return false;
+  }
+
+  if (event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL) {
+    return false;
+  }
+
+  return Math.abs(event.deltaX) > 0 || Math.abs(event.deltaY) < TRACKPAD_PAN_DELTA_THRESHOLD;
 }
 
 export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
@@ -67,6 +81,18 @@ export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
       "top-right",
     );
 
+    const container = map.getCanvasContainer();
+    const onWheel = (event: WheelEvent) => {
+      if (!isTrackpadPanGesture(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      map.panBy([-event.deltaX, -event.deltaY], { animate: false });
+    };
+    container.addEventListener("wheel", onWheel, { passive: false, capture: true });
+
     map.on("load", () => {
       map.addSource("masjids-pmtiles", {
         type: "vector",
@@ -92,6 +118,7 @@ export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
     mapRef.current = map;
 
     return () => {
+      container.removeEventListener("wheel", onWheel, { capture: true });
       map.remove();
       mapRef.current = null;
     };
