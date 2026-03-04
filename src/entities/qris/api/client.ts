@@ -8,13 +8,30 @@ import {
   type CreateQrisReportRequest,
 } from "#/entities/qris/model/contracts";
 
+type AuthSessionResponse = {
+  authenticated: boolean;
+};
+
+export async function fetchAuthSessionStatus(): Promise<AuthSessionResponse> {
+  const response = await fetch("/api/auth/session", {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    return { authenticated: false };
+  }
+
+  const data = (await response.json()) as Partial<AuthSessionResponse>;
+  return { authenticated: data.authenticated === true };
+}
+
 export async function fetchMasjidQris(masjidId: string) {
   const response = await fetch(`/api/masjids/${encodeURIComponent(masjidId)}/qris`, {
     credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch QRIS data for this masjid");
+    throw new Error("Gagal memuat data QRIS untuk masjid ini");
   }
 
   const data = await response.json();
@@ -36,13 +53,13 @@ export async function upsertContribution(input: ContributionRequest) {
     const conflict = contributionConflictResponseSchema.safeParse(json);
 
     if (conflict.success) {
-      throw new Error("Active QRIS already exists. Report current QRIS first.");
+      throw new Error("QRIS aktif sudah ada. Laporkan data saat ini terlebih dahulu.");
     }
   }
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(error || "Failed to submit contribution");
+    throw new Error(error || "Gagal mengirim kontribusi");
   }
 
   const data = await response.json();
@@ -63,7 +80,7 @@ export async function createQrisReport(qrisId: string, input: CreateQrisReportRe
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(error || "Failed to submit report");
+    throw new Error(error || "Gagal mengirim laporan");
   }
 
   const data = await response.json();

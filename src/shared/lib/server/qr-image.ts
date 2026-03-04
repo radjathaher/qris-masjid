@@ -121,7 +121,7 @@ export function decodeQrTextFromImage(image: DecodedBase64Image): string {
   });
 
   if (!result?.data) {
-    throw new Error("Unable to decode QR from image");
+    throw new Error("QR tidak bisa dibaca dari gambar");
   }
 
   return result.data;

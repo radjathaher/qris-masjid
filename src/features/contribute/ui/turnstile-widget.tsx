@@ -45,7 +45,7 @@ function waitForTurnstileApi(resolve: () => void, reject: (reason?: unknown) => 
 
     if (attempts >= maxAttempts) {
       window.clearInterval(interval);
-      reject(new Error("Turnstile API did not load"));
+      reject(new Error("API Turnstile gagal dimuat"));
     }
   }, 100);
 }
@@ -80,7 +80,7 @@ function loadTurnstileScript(): Promise<void> {
       waitForTurnstileApi(resolve, reject);
     };
     script.onerror = () => {
-      reject(new Error("Failed to load Turnstile script"));
+      reject(new Error("Gagal memuat skrip Turnstile"));
     };
 
     document.head.appendChild(script);

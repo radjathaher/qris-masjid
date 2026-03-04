@@ -18,13 +18,16 @@ type MasjidDetailModalProps = {
   qrisData: MasjidQrisResponse | null;
   loading: boolean;
   error: string | null;
+  onContributeQris: () => void;
   onClose: () => void;
 };
 
 type ActionSectionProps = {
+  canContribute: boolean;
   activeQrisItemId: string | null;
   loading: boolean;
   reportPending: boolean;
+  onContributeQris: () => void;
   onReportQris: () => void;
 };
 
@@ -34,7 +37,7 @@ function renderQrisContent(
   qrisData: MasjidQrisResponse | null,
 ) {
   if (loading) {
-    return <p className="text-sm text-emerald-900/70">Loading QRIS data...</p>;
+    return <p className="text-sm text-emerald-900/70">Memuat data QRIS...</p>;
   }
 
   if (error) {
@@ -45,7 +48,7 @@ function renderQrisContent(
     return (
       <Card>
         <CardContent className="pt-4 text-sm text-emerald-900/70">
-          No QRIS submitted for this masjid yet.
+          Belum ada QRIS yang dikirim untuk masjid ini.
         </CardContent>
       </Card>
     );
@@ -59,25 +62,28 @@ function renderQrisContent(
 }
 
 async function submitManualReport(qrisId: string): Promise<string> {
-  const reasonText = window.prompt("Describe the issue (optional).") ?? "";
+  const reasonText = window.prompt("Jelaskan masalahnya (opsional).") ?? "";
   await createQrisReport(qrisId, {
     reasonCode: "manual-review",
     reasonText: reasonText.length > 0 ? reasonText : undefined,
   });
-  return "Report submitted. Admin review is queued.";
+  return "Laporan terkirim. Menunggu peninjauan admin.";
 }
 
 function renderActionSection({
+  canContribute,
   activeQrisItemId,
   loading,
   reportPending,
+  onContributeQris,
   onReportQris,
 }: ActionSectionProps) {
   return (
     <div className="flex justify-end gap-2">
+      {canContribute && !loading ? <Button onClick={onContributeQris}>Tambah QRIS</Button> : null}
       {activeQrisItemId && !loading ? (
         <Button variant="outline" disabled={reportPending} onClick={onReportQris}>
-          {reportPending ? "Submitting report..." : "Report QRIS"}
+          {reportPending ? "Mengirim laporan..." : "Laporkan QRIS"}
         </Button>
       ) : null}
     </div>
@@ -89,11 +95,13 @@ export function MasjidDetailModal({
   qrisData,
   loading,
   error,
+  onContributeQris,
   onClose,
 }: MasjidDetailModalProps) {
   const [reportMessage, setReportMessage] = useState<string | null>(null);
   const [reportPending, setReportPending] = useState(false);
   const activeQrisItem = qrisData?.items.find((item) => item.isActive) ?? null;
+  const canContribute = Boolean(!loading && !error && qrisData && qrisData.items.length === 0);
 
   const onReportQris = async () => {
     if (!activeQrisItem) {
@@ -106,7 +114,7 @@ export function MasjidDetailModal({
       setReportMessage(await submitManualReport(activeQrisItem.id));
     } catch (reportError) {
       setReportMessage(
-        reportError instanceof Error ? reportError.message : "Failed to submit report",
+        reportError instanceof Error ? reportError.message : "Gagal mengirim laporan",
       );
     } finally {
       setReportPending(false);
@@ -117,11 +125,11 @@ export function MasjidDetailModal({
     <Dialog open={Boolean(masjid)} onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{masjid?.name ?? "Masjid Detail"}</DialogTitle>
+          <DialogTitle>{masjid?.name ?? "Detail Masjid"}</DialogTitle>
           <DialogDescription>
             {masjid
               ? `${masjid.city}, ${masjid.province}`
-              : "Choose a masjid marker to inspect current QRIS data."}
+              : "Pilih marker masjid untuk melihat data QRIS saat ini."}
           </DialogDescription>
         </DialogHeader>
 
@@ -130,9 +138,11 @@ export function MasjidDetailModal({
         {reportMessage ? <p className="text-sm text-emerald-900/80">{reportMessage}</p> : null}
 
         {renderActionSection({
+          canContribute,
           activeQrisItemId: activeQrisItem?.id ?? null,
           loading,
           reportPending,
+          onContributeQris,
           onReportQris,
         })}
       </DialogContent>

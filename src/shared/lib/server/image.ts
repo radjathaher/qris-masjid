@@ -20,7 +20,7 @@ export function decodeBase64Image(raw: string): DecodedBase64Image {
   const base64Body = dataUrlMatch?.groups?.body ?? raw;
 
   if (!mimeTypeRaw || !SUPPORTED_MIME_TYPES.has(mimeTypeRaw as SupportedImageMime)) {
-    throw new Error("Unsupported image format. Use PNG or JPEG.");
+    throw new Error("Format gambar tidak didukung. Gunakan PNG atau JPEG.");
   }
 
   const mimeType = mimeTypeRaw as SupportedImageMime;

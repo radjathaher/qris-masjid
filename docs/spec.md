@@ -1,7 +1,7 @@
 # QRIS Masjid Indonesia - MVP Spec (Hackathon)
 
 Last updated: 2026-03-04  
-Status: Draft v6 (implemented idempotent upload + moderation APIs)
+Status: Draft v7 (implemented idempotent upload + moderation APIs + auth-aware contribute modal)
 
 ## 1) Product Goal
 
@@ -38,7 +38,7 @@ Route:
 Overlays/modals inside `/`:
 
 - Masjid detail popover/modal (on marker click).
-- Contribute flow modal (start -> auth -> upload -> success states in one modal flow).
+- Contribute flow modal (entry -> auth gate jika belum login -> upload -> success).
 - Lightweight error/info modal states.
 
 ## 5) Data Artifacts
@@ -202,9 +202,13 @@ UI blocks:
 - Fullscreen map canvas.
 - Search/filter bar.
 - Marker interaction + masjid detail modal.
-- Contribute modal flow (only visible when no active QRIS for selected masjid, includes Turnstile challenge).
+- Contribute CTA in detail modal when masjid has no active QRIS.
+- Contribute modal flow with auth-aware branch:
+  - Logged in: entry -> upload form.
+  - Not logged in: entry -> auth modal (Turnstile + Google) -> upload form.
 - Report CTA for active QRIS item.
 - Toast/inline feedback for success/failure.
+- All user-facing copy uses Bahasa Indonesia.
 
 ## 10) Backend API Contracts (MVP)
 
@@ -212,11 +216,13 @@ UI blocks:
 
 `GET /api/auth/google/start`
 
+`POST /api/auth/google/start`
+
 Behavior:
 
 - Generate OAuth state.
-- Set short-lived state cookie.
-- Redirect browser to Google OAuth consent URL.
+- `GET`: redirect browser to Google OAuth consent URL (fallback).
+- `POST`: validate Turnstile token, then return `{ redirectUrl }` for client-side redirect.
 
 ### 10.2 Google auth callback
 
@@ -228,9 +234,26 @@ Behavior:
 - Verify identity.
 - Upsert `users` by `google_sub`.
 - Create app session (cookie/token).
-- Redirect to `/?contribute=1&auth=ok`.
+- Redirect to `/?auth=ok`.
 
-### 10.3 Read QRIS for a masjid
+### 10.3 Read auth session status
+
+`GET /api/auth/session`
+
+Response (example):
+
+```json
+{
+  "authenticated": true
+}
+```
+
+Behavior:
+
+- Reads session cookie.
+- Returns `authenticated=false` if session missing, user missing, or user blocked.
+
+### 10.4 Read QRIS for a masjid
 
 `GET /api/masjids/:masjidId/qris`
 
@@ -258,7 +281,7 @@ Response (example):
 }
 ```
 
-### 10.4 Upsert contribution
+### 10.5 Upsert contribution
 
 `POST /api/contributions/upsert`
 
@@ -316,7 +339,7 @@ Response C (active exists but different payload):
 
 HTTP status: `409`.
 
-### 10.5 Report a QRIS item (exception path)
+### 10.6 Report a QRIS item (exception path)
 
 `POST /api/qris/:qrisId/reports`
 
@@ -343,7 +366,7 @@ Response:
 }
 ```
 
-### 10.6 Admin review queue (minimal ops API)
+### 10.7 Admin review queue (minimal ops API)
 
 `GET /api/admin/reports?status=open`
 
@@ -401,14 +424,17 @@ sequenceDiagram
   participant API as Worker API
   participant D1 as D1
 
-  U->>FE: Click contribute
-  FE->>API: GET /api/auth/google/start
+  U->>FE: Click "Tambah QRIS" (masjid belum punya QRIS aktif)
+  FE->>FE: If not logged in, show auth gate modal
+  U->>FE: Complete Turnstile + click "Lanjutkan dengan Google"
+  FE->>API: POST /api/auth/google/start
   API->>GA: Redirect OAuth consent
   GA-->>API: Callback with code
   API->>GA: Exchange + verify token
   API->>D1: Upsert users(google_sub -> internal UUID)
-  API-->>FE: Auth session established
-  FE-->>U: Continue modal flow
+  API-->>FE: Redirect /?auth=ok
+  FE->>API: GET /api/auth/session
+  FE-->>U: Continue to upload form
 ```
 
 ### C) Contribute via modal
@@ -422,7 +448,13 @@ sequenceDiagram
   participant D1 as D1
   participant R2 as R2
 
-  U->>FE: Upload QR image + submit (only if no active QRIS)
+  U->>FE: Open contribute modal from detail modal
+  alt not logged in
+    FE-->>U: Auth gate (Turnstile + Google)
+  else logged in
+    FE-->>U: Directly show upload form
+  end
+  U->>FE: Upload QR image + submit
   FE->>API: POST /api/contributions/upsert
   API->>TS: Verify token
   TS-->>API: pass/fail
@@ -630,7 +662,7 @@ pmtiles convert masjids.mbtiles public/data/masjids.pmtiles
 8. Implement idempotent contribution path (duplicate hash = no write, active different hash = 409).
 9. Implement report API (`POST /api/qris/:qrisId/reports`) with auth + dedupe.
 10. Implement minimal admin moderation APIs (`GET/POST /api/admin/reports...`).
-11. Hide upload CTA when active exists; show report CTA.
+11. Show "Tambah QRIS" CTA only when active QRIS does not exist; show report CTA when active exists.
 12. Wire auth callback and session.
 13. Ship MVP and handoff real PMTiles replacement to cofounder.
 

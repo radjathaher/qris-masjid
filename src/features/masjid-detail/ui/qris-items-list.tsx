@@ -11,20 +11,20 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
       {data.items.map((item) => (
         <Card key={item.id}>
           <CardHeader>
-            <CardTitle className="text-sm">QRIS #{item.id}</CardTitle>
+            <CardTitle className="text-sm">Data QRIS #{item.id}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>
-              <strong>Merchant:</strong> {item.merchantName}
+              <strong>Nama Merchant:</strong> {item.merchantName}
             </p>
             <p>
-              <strong>City:</strong> {item.merchantCity}
+              <strong>Kota:</strong> {item.merchantCity}
             </p>
             <p>
-              <strong>Payload hash:</strong> {item.payloadHash}
+              <strong>Hash Payload:</strong> {item.payloadHash}
             </p>
             <p>
-              <strong>Updated:</strong> {new Date(item.updatedAt).toLocaleString()}
+              <strong>Diperbarui:</strong> {new Date(item.updatedAt).toLocaleString("id-ID")}
             </p>
             {item.imageUrl ? (
               <a
@@ -33,10 +33,10 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
                 rel="noreferrer"
                 className="text-emerald-700 underline"
               >
-                Open QR image
+                Buka gambar QR
               </a>
             ) : (
-              <p className="text-emerald-900/70">Image URL not configured yet.</p>
+              <p className="text-emerald-900/70">URL gambar belum tersedia.</p>
             )}
           </CardContent>
         </Card>

@@ -17,12 +17,12 @@ export const Route = createFileRoute("/api/qris/$qrisId/reports")({
         const userId = await readAuthenticatedUserId(env);
 
         if (!userId) {
-          return new Response("Unauthorized", { status: 401 });
+          return new Response("Tidak diizinkan", { status: 401 });
         }
 
         const parsed = createQrisReportRequestSchema.safeParse(await request.json());
         if (!parsed.success) {
-          return new Response("Invalid report payload", { status: 400 });
+          return new Response("Payload laporan tidak valid", { status: 400 });
         }
 
         const db = createDb(env.DB);
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/qris/$qrisId/reports")({
 
         const currentQris = qrisRows[0];
         if (!currentQris) {
-          return new Response("QRIS item not found", { status: 404 });
+          return new Response("Item QRIS tidak ditemukan", { status: 404 });
         }
 
         const existingOpen = await db

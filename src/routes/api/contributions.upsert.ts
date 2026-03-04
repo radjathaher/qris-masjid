@@ -141,7 +141,7 @@ async function saveQrisIfAllowed(
       return { kind: "conflict", activeQrisId: existingActive[0].id };
     }
 
-    throw new Error("Failed to persist QRIS payload");
+    throw new Error("Gagal menyimpan payload QRIS");
   }
 
   return { kind: "created", qrisId };
@@ -155,12 +155,12 @@ export const Route = createFileRoute("/api/contributions/upsert")({
         const userId = await readAuthenticatedUserId(env);
 
         if (!userId) {
-          return new Response("Unauthorized", { status: 401 });
+          return new Response("Tidak diizinkan", { status: 401 });
         }
 
         const input = await parseContributionRequest(request);
         if (!input) {
-          return new Response("Invalid request payload", { status: 400 });
+          return new Response("Payload permintaan tidak valid", { status: 400 });
         }
 
         const turnstileValid = await verifyTurnstileToken(
@@ -170,11 +170,11 @@ export const Route = createFileRoute("/api/contributions/upsert")({
         );
 
         if (!turnstileValid) {
-          return new Response("Turnstile verification failed", { status: 400 });
+          return new Response("Verifikasi Turnstile gagal", { status: 400 });
         }
 
         if (!(await ensureMasjidExists(env, input.masjidId))) {
-          return new Response("Masjid not found", { status: 404 });
+          return new Response("Masjid tidak ditemukan", { status: 404 });
         }
 
         try {
@@ -220,7 +220,7 @@ export const Route = createFileRoute("/api/contributions/upsert")({
             }),
           );
         } catch (error) {
-          const message = error instanceof Error ? error.message : "Invalid QRIS payload";
+          const message = error instanceof Error ? error.message : "Payload QRIS tidak valid";
           return new Response(message, { status: 400 });
         }
       },

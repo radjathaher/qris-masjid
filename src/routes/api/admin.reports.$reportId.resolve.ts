@@ -25,12 +25,12 @@ type OpenReportRow = {
 async function ensureAdminAccess(env: ReturnType<typeof getEnv>): Promise<string | Response> {
   const userId = await readAuthenticatedUserId(env);
   if (!userId) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response("Tidak diizinkan", { status: 401 });
   }
 
   const adminUserId = await readAuthenticatedAdminUserId(env);
   if (!adminUserId) {
-    return new Response("Forbidden", { status: 403 });
+    return new Response("Akses ditolak", { status: 403 });
   }
 
   return adminUserId;
@@ -54,11 +54,11 @@ async function findOpenReport(
 
   const report = reportRows[0];
   if (!report) {
-    return new Response("Report not found", { status: 404 });
+    return new Response("Laporan tidak ditemukan", { status: 404 });
   }
 
   if (report.status !== "open") {
-    return new Response("Report is already resolved", { status: 409 });
+    return new Response("Laporan sudah diselesaikan", { status: 409 });
   }
 
   return {
@@ -116,7 +116,7 @@ export const Route = createFileRoute("/api/admin/reports/$reportId/resolve")({
 
         const parsed = resolveReportSchema.safeParse(await request.json());
         if (!parsed.success) {
-          return new Response("Invalid resolve payload", { status: 400 });
+          return new Response("Payload penyelesaian tidak valid", { status: 400 });
         }
 
         const db = createDb(env.DB);

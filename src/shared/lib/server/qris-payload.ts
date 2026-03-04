@@ -23,14 +23,14 @@ function parseTlv(input: string): TlvEntry[] {
 
   while (cursor < input.length) {
     if (cursor + 4 > input.length) {
-      throw new Error("Malformed TLV payload");
+      throw new Error("Payload TLV tidak valid");
     }
 
     const tag = input.slice(cursor, cursor + 2);
     const lengthRaw = input.slice(cursor + 2, cursor + 4);
 
     if (!isTwoDigitNumber(lengthRaw)) {
-      throw new Error("Invalid TLV length field");
+      throw new Error("Panjang TLV tidak valid");
     }
 
     const length = Number(lengthRaw);
@@ -38,7 +38,7 @@ function parseTlv(input: string): TlvEntry[] {
     const valueEnd = valueStart + length;
 
     if (valueEnd > input.length) {
-      throw new Error("TLV length exceeds payload size");
+      throw new Error("Panjang TLV melebihi ukuran payload");
     }
 
     entries.push({
@@ -80,7 +80,7 @@ function isMerchantAccountTag(tag: string): boolean {
 function assertPayloadFormatIndicator(entries: TlvEntry[]) {
   const payloadFormat = findSingleEntry(entries, "00")?.value;
   if (payloadFormat !== "01") {
-    throw new Error("Payload format indicator must be 01");
+    throw new Error("Indikator format payload harus 01");
   }
 }
 
@@ -89,11 +89,11 @@ function assertCountryAndCurrency(entries: TlvEntry[]) {
   const currency = findSingleEntry(entries, "53")?.value;
 
   if (country !== "ID") {
-    throw new Error("QRIS country code must be ID");
+    throw new Error("Kode negara QRIS harus ID");
   }
 
   if (currency !== "360") {
-    throw new Error("QRIS currency code must be 360");
+    throw new Error("Kode mata uang QRIS harus 360");
   }
 }
 
@@ -126,13 +126,13 @@ function assertMerchantAccount(entries: TlvEntry[]): { tag: string; nested: TlvE
   const merchantEntries = entries.filter((entry) => isMerchantAccountTag(entry.tag));
 
   if (merchantEntries.length === 0) {
-    throw new Error("Missing merchant account information");
+    throw new Error("Informasi akun merchant tidak ditemukan");
   }
 
   const template = findQrisMerchantTemplate(entries);
 
   if (!template) {
-    throw new Error("Merchant account is not recognized as QRIS");
+    throw new Error("Akun merchant tidak dikenali sebagai QRIS");
   }
 
   return template;
@@ -165,14 +165,14 @@ function assertCrc(rawPayload: string, entries: TlvEntry[]) {
   const crcEntry = entries[entries.length - 1];
 
   if (!crcEntry || crcEntry.tag !== "63" || crcEntry.length !== 4) {
-    throw new Error("CRC field (tag 63) is missing or invalid");
+    throw new Error("Field CRC (tag 63) tidak ada atau tidak valid");
   }
 
   const payloadForChecksum = `${rawPayload.slice(0, crcEntry.offset + 4)}0000`;
   const expectedCrc = crc16CcittFalse(payloadForChecksum);
 
   if (crcEntry.value.toUpperCase() !== expectedCrc) {
-    throw new Error("QRIS CRC validation failed");
+    throw new Error("Validasi CRC QRIS gagal");
   }
 }
 
@@ -180,7 +180,7 @@ export function validateQrisPayload(rawPayload: string): ValidatedQrisPayload {
   const normalizedPayload = rawPayload.trim();
 
   if (!normalizedPayload) {
-    throw new Error("QR payload is empty");
+    throw new Error("Payload QR kosong");
   }
 
   const entries = parseTlv(normalizedPayload);
@@ -196,11 +196,11 @@ export function validateQrisPayload(rawPayload: string): ValidatedQrisPayload {
   const nmid = findNmid(collectPotentialNmidValues(entries, merchantTemplate.nested));
 
   if (!merchantName) {
-    throw new Error("Merchant name (tag 59) is missing");
+    throw new Error("Nama merchant (tag 59) tidak ditemukan");
   }
 
   if (!merchantCity) {
-    throw new Error("Merchant city (tag 60) is missing");
+    throw new Error("Kota merchant (tag 60) tidak ditemukan");
   }
 
   return {

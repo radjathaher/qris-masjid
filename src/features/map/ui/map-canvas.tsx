@@ -17,7 +17,7 @@ function createMarkerElement(name: string): HTMLButtonElement {
   const marker = document.createElement("button");
   marker.type = "button";
   marker.className = "masjid-marker";
-  marker.setAttribute("aria-label", `Open details for ${name}`);
+  marker.setAttribute("aria-label", `Buka detail ${name}`);
   marker.innerHTML = `
     <span class="masjid-marker-core">
       <svg viewBox="0 0 24 24" aria-hidden="true">

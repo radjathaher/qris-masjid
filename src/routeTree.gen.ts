@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTurnstileSiteKeyRouteImport } from './routes/api/turnstile.site-key'
 import { Route as ApiContributionsUpsertRouteImport } from './routes/api/contributions.upsert'
+import { Route as ApiAuthSessionRouteImport } from './routes/api/auth.session'
 import { Route as ApiAdminReportsRouteImport } from './routes/api/admin.reports'
 import { Route as ApiQrisQrisIdReportsRouteImport } from './routes/api/qris.$qrisId.reports'
 import { Route as ApiMasjidsMasjidIdQrisRouteImport } from './routes/api/masjids.$masjidId.qris'
@@ -32,6 +33,11 @@ const ApiTurnstileSiteKeyRoute = ApiTurnstileSiteKeyRouteImport.update({
 const ApiContributionsUpsertRoute = ApiContributionsUpsertRouteImport.update({
   id: '/api/contributions/upsert',
   path: '/api/contributions/upsert',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
+  id: '/api/auth/session',
+  path: '/api/auth/session',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminReportsRoute = ApiAdminReportsRouteImport.update({
@@ -69,6 +75,7 @@ const ApiAdminReportsReportIdResolveRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
+  '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
+  '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
+  '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api/admin/reports'
+    | '/api/auth/session'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/admin/reports'
+    | '/api/auth/session'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api/admin/reports'
+    | '/api/auth/session'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
@@ -139,6 +151,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiAdminReportsRoute: typeof ApiAdminReportsRouteWithChildren
+  ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiContributionsUpsertRoute: typeof ApiContributionsUpsertRoute
   ApiTurnstileSiteKeyRoute: typeof ApiTurnstileSiteKeyRoute
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/api/contributions/upsert'
       fullPath: '/api/contributions/upsert'
       preLoaderRoute: typeof ApiContributionsUpsertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/session': {
+      id: '/api/auth/session'
+      path: '/api/auth/session'
+      fullPath: '/api/auth/session'
+      preLoaderRoute: typeof ApiAuthSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/reports': {
@@ -230,6 +250,7 @@ const ApiAdminReportsRouteWithChildren = ApiAdminReportsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAdminReportsRoute: ApiAdminReportsRouteWithChildren,
+  ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiContributionsUpsertRoute: ApiContributionsUpsertRoute,
   ApiTurnstileSiteKeyRoute: ApiTurnstileSiteKeyRoute,
   ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,

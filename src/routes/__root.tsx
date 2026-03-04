@@ -22,7 +22,7 @@ export const Route = createRootRoute({
       },
       {
         name: "description",
-        content: "Community-submitted QRIS directory for masjid in Indonesia.",
+        content: "Direktori QRIS masjid se-Indonesia berbasis kontribusi komunitas.",
       },
     ],
     links: [
@@ -38,7 +38,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="id">
       <head>
         <HeadContent />
       </head>

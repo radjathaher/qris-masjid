@@ -1,136 +1,199 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Masjid } from "#/entities/masjid/model/types";
 import { upsertContribution } from "#/entities/qris/api/client";
-import { Button } from "#/shared/ui/button";
+import { PENDING_CONTRIBUTE_MASJID_ID_KEY } from "#/features/contribute/model/constants";
+import {
+  type AuthStartResponse,
+  type ContributeStep,
+  getContributionStartError,
+  getGoogleAuthStartError,
+  loadTurnstileSiteKey,
+  readContributionImage,
+  readFileAsBase64,
+  resolveInitialStep,
+} from "#/features/contribute/model/workflow";
+import { ContributeModalStepContent } from "#/features/contribute/ui/contribute-modal-steps";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "#/shared/ui/dialog";
-import { Input } from "#/shared/ui/input";
-import { Label } from "#/shared/ui/label";
-import { TurnstileWidget } from "#/features/contribute/ui/turnstile-widget";
 
 type ContributeModalProps = {
   open: boolean;
   masjid: Masjid | null;
   uploadAllowed: boolean;
   defaultOpenForm: boolean;
+  isAuthenticated: boolean;
+  authSessionLoading: boolean;
   onClose: () => void;
   onSuccess: () => void;
 };
-
-type TurnstileSiteKeyResponse = {
-  siteKey?: string;
-};
-
-async function readFileAsBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
-  });
-}
 
 export function ContributeModal({
   open,
   masjid,
   uploadAllowed,
   defaultOpenForm,
+  isAuthenticated,
+  authSessionLoading,
   onClose,
   onSuccess,
 }: ContributeModalProps) {
-  const [step, setStep] = useState<"auth" | "form" | "submitting" | "success">(
-    defaultOpenForm ? "form" : "auth",
+  const [step, setStep] = useState<ContributeStep>(
+    resolveInitialStep(defaultOpenForm, isAuthenticated),
   );
   const [error, setError] = useState<string | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileSiteKey, setTurnstileSiteKey] = useState("");
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
+  const [authTurnstileToken, setAuthTurnstileToken] = useState("");
+  const [submitTurnstileToken, setSubmitTurnstileToken] = useState("");
+  const [authPending, setAuthPending] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setStep(defaultOpenForm ? "form" : "auth");
+      setStep(resolveInitialStep(defaultOpenForm, isAuthenticated));
       setError(null);
-      setTurnstileToken("");
-      setTurnstileLoaded(false);
+      setAuthTurnstileToken("");
+      setSubmitTurnstileToken("");
+      setAuthPending(false);
     }
-  }, [open, defaultOpenForm]);
+  }, [defaultOpenForm, isAuthenticated, open]);
 
   useEffect(() => {
-    if (!open || step !== "form") {
+    if (!open || turnstileSiteKey) {
       return;
     }
 
-    void fetch("/api/turnstile/site-key", { credentials: "include" })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("Failed to load Turnstile site key");
-        }
-
-        const json = (await response.json()) as TurnstileSiteKeyResponse;
-
-        if (!json.siteKey) {
-          throw new Error("Turnstile site key is not configured");
-        }
-
-        setTurnstileSiteKey(json.siteKey);
+    void loadTurnstileSiteKey()
+      .then((siteKey) => {
+        setTurnstileSiteKey(siteKey);
         setTurnstileLoaded(true);
       })
       .catch((loadError) => {
-        const message = loadError instanceof Error ? loadError.message : "Turnstile setup failed";
+        const message =
+          loadError instanceof Error ? loadError.message : "Persiapan Turnstile gagal";
         setError(message);
       });
-  }, [open, step]);
+  }, [open, turnstileSiteKey]);
+
+  useEffect(() => {
+    if (!open || !defaultOpenForm || !isAuthenticated) {
+      return;
+    }
+
+    if (step === "entry" || step === "auth") {
+      setStep("form");
+      setError(null);
+    }
+  }, [defaultOpenForm, isAuthenticated, open, step]);
+
+  const formDisabled = !masjid || !uploadAllowed;
 
   const canSubmit = useMemo(
-    () => Boolean(masjid && uploadAllowed && turnstileToken && turnstileLoaded),
-    [masjid, turnstileLoaded, turnstileToken, uploadAllowed],
+    () => Boolean(masjid && uploadAllowed && submitTurnstileToken && turnstileLoaded),
+    [masjid, submitTurnstileToken, turnstileLoaded, uploadAllowed],
   );
 
-  const onTurnstileTokenChange = useCallback((token: string) => {
-    setTurnstileToken(token);
-  }, []);
+  const canContinueGoogleAuth = useMemo(
+    () => Boolean(masjid && turnstileLoaded && authTurnstileToken && !authPending),
+    [authPending, authTurnstileToken, masjid, turnstileLoaded],
+  );
+
+  const onStartContribution = () => {
+    const startError = getContributionStartError({
+      masjid,
+      uploadAllowed,
+      authSessionLoading,
+    });
+
+    if (startError) {
+      setError(startError);
+      return;
+    }
+
+    setError(null);
+    setStep(isAuthenticated ? "form" : "auth");
+  };
+
+  const onContinueWithGoogle = async () => {
+    const authStartError = getGoogleAuthStartError({
+      masjid,
+      authTurnstileToken,
+    });
+
+    if (authStartError) {
+      setError(authStartError);
+      return;
+    }
+
+    try {
+      setAuthPending(true);
+      setError(null);
+      window.sessionStorage.setItem(PENDING_CONTRIBUTE_MASJID_ID_KEY, masjid!.id);
+
+      const response = await fetch("/api/auth/google/start", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ turnstileToken: authTurnstileToken }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Gagal memulai login Google");
+      }
+
+      const json = (await response.json()) as AuthStartResponse;
+
+      if (!json.redirectUrl) {
+        throw new Error("URL login Google tidak tersedia");
+      }
+
+      window.location.assign(json.redirectUrl);
+    } catch (authError) {
+      setAuthPending(false);
+      setError(authError instanceof Error ? authError.message : "Gagal memulai login Google");
+    }
+  };
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!masjid) {
-      setError("Select a masjid before submitting.");
+      setError("Pilih masjid sebelum mengirim.");
       return;
     }
 
     if (!uploadAllowed) {
-      setError("Active QRIS exists. Use report flow instead of uploading a replacement.");
+      setError("QRIS aktif sudah ada. Gunakan alur laporan, bukan unggah pengganti.");
       return;
     }
 
-    const formData = new FormData(event.currentTarget);
-    const file = formData.get("image");
-
-    if (!(file instanceof File) || file.size === 0) {
-      setError("Upload a QR image first.");
+    if (!submitTurnstileToken) {
+      setError("Verifikasi Turnstile wajib.");
       return;
     }
 
-    if (!turnstileToken) {
-      setError("Turnstile verification is required.");
+    const imageResult = readContributionImage(new FormData(event.currentTarget));
+    if (imageResult.error || !imageResult.file) {
+      setError(imageResult.error);
       return;
     }
 
     try {
       setError(null);
       setStep("submitting");
-      const imageBase64 = await readFileAsBase64(file);
+      const imageBase64 = await readFileAsBase64(imageResult.file);
 
       await upsertContribution({
         masjidId: masjid.id,
         imageBase64,
-        turnstileToken,
+        turnstileToken: submitTurnstileToken,
       });
 
       setStep("success");
@@ -138,9 +201,7 @@ export function ContributeModal({
     } catch (submissionError) {
       setStep("form");
       setError(
-        submissionError instanceof Error
-          ? submissionError.message
-          : "Failed to submit contribution",
+        submissionError instanceof Error ? submissionError.message : "Gagal mengirim kontribusi",
       );
     }
   };
@@ -156,91 +217,31 @@ export function ContributeModal({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Contribute QRIS</DialogTitle>
+          <DialogTitle>Kontribusi QRIS</DialogTitle>
           <DialogDescription>
-            {masjid
-              ? `Target masjid: ${masjid.name}`
-              : "Pick a masjid marker first, then contribute."}
+            {masjid ? `Masjid tujuan: ${masjid.name}` : "Pilih marker masjid terlebih dahulu."}
           </DialogDescription>
         </DialogHeader>
 
-        {step === "auth" ? (
-          <div className="space-y-4">
-            <p className="text-sm text-emerald-900/70">
-              Continue with Google before uploading QRIS data.
-            </p>
-            <Button asChild>
-              <a href="/api/auth/google/start">Continue with Google</a>
-            </Button>
-            <Button variant="outline" onClick={() => setStep("form")}>
-              I already signed in
-            </Button>
-          </div>
-        ) : null}
+        <ContributeModalStepContent
+          step={step}
+          authSessionLoading={authSessionLoading}
+          uploadAllowed={uploadAllowed}
+          canContinueGoogleAuth={canContinueGoogleAuth}
+          authPending={authPending}
+          turnstileSiteKey={turnstileSiteKey}
+          formDisabled={formDisabled}
+          canSubmit={canSubmit}
+          onStartContribution={onStartContribution}
+          onContinueWithGoogle={onContinueWithGoogle}
+          onBackToEntry={() => setStep("entry")}
+          onAuthTurnstileTokenChange={setAuthTurnstileToken}
+          onSubmitTurnstileTokenChange={setSubmitTurnstileToken}
+          onSubmit={onSubmit}
+          onClose={onClose}
+        />
 
-        {step === "form" ? (
-          <form className="space-y-4" onSubmit={onSubmit}>
-            {!uploadAllowed ? (
-              <p className="text-sm text-emerald-900/70">
-                This masjid already has an active QRIS. Report the current QRIS first if it is
-                incorrect.
-              </p>
-            ) : null}
-            <div className="space-y-2">
-              <Label htmlFor="image">QR image</Label>
-              <Input
-                id="image"
-                name="image"
-                type="file"
-                accept="image/*"
-                required
-                disabled={!masjid || !uploadAllowed}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Turnstile verification</Label>
-              {turnstileSiteKey ? (
-                <TurnstileWidget
-                  siteKey={turnstileSiteKey}
-                  onTokenChange={onTurnstileTokenChange}
-                />
-              ) : (
-                <p className="text-sm text-emerald-900/70">Loading Turnstile challenge...</p>
-              )}
-            </div>
-
-            {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-            <DialogFooter>
-              <Button type="submit" disabled={!canSubmit}>
-                Submit
-              </Button>
-            </DialogFooter>
-          </form>
-        ) : null}
-
-        {step === "submitting" ? (
-          <p className="text-sm text-emerald-900/70">Submitting contribution...</p>
-        ) : null}
-
-        {step === "success" ? (
-          <div className="space-y-4">
-            <p className="text-sm text-emerald-900/80">
-              Contribution submitted. Thanks for helping improve masjid QRIS data.
-            </p>
-            <DialogFooter>
-              <Button
-                onClick={() => {
-                  onClose();
-                  setStep("auth");
-                }}
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </div>
-        ) : null}
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
       </DialogContent>
     </Dialog>
   );

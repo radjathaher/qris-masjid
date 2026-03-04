@@ -17,12 +17,12 @@ export const Route = createFileRoute("/api/admin/reports")({
         const env = getEnv({ context });
         const userId = await readAuthenticatedUserId(env);
         if (!userId) {
-          return new Response("Unauthorized", { status: 401 });
+          return new Response("Tidak diizinkan", { status: 401 });
         }
 
         const adminUserId = await readAuthenticatedAdminUserId(env);
         if (!adminUserId) {
-          return new Response("Forbidden", { status: 403 });
+          return new Response("Akses ditolak", { status: 403 });
         }
 
         const url = new URL(request.url);

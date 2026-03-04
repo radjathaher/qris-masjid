@@ -17,12 +17,12 @@ export const Route = createFileRoute("/api/auth/google/callback")({
         const incomingState = requestUrl.searchParams.get("state");
 
         if (!code || !incomingState) {
-          return new Response("OAuth callback is invalid or expired", { status: 400 });
+          return new Response("Callback OAuth tidak valid atau sudah kedaluwarsa", { status: 400 });
         }
 
         const isValidState = await verifyOauthState(incomingState, env.APP_SESSION_SECRET);
         if (!isValidState) {
-          return new Response("OAuth callback is invalid or expired", { status: 400 });
+          return new Response("Callback OAuth tidak valid atau sudah kedaluwarsa", { status: 400 });
         }
 
         try {
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/api/auth/google/callback")({
           let userId = existing[0]?.id;
 
           if (existing[0]?.isBlocked === 1) {
-            return new Response("User is blocked", { status: 403 });
+            return new Response("Akun diblokir", { status: 403 });
           }
 
           if (userId) {
@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/auth/google/callback")({
 
           return Response.redirect("/?auth=ok", 302);
         } catch {
-          return new Response("Google authentication failed", { status: 500 });
+          return new Response("Autentikasi Google gagal", { status: 500 });
         }
       },
     },
