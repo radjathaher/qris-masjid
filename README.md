@@ -74,10 +74,22 @@ bun install
 cp .dev.vars.example .dev.vars
 ```
 
-3. Run dev server:
+3. Initialize local D1 schema (safe to rerun):
+
+```bash
+bun run db:migrate:local
+```
+
+4. Run full local FE+BE:
 
 ```bash
 bun run dev
+```
+
+Or run both in one command:
+
+```bash
+bun run dev:local
 ```
 
 ## Lint and format

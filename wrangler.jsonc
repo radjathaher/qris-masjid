@@ -4,7 +4,7 @@
   "account_id": "4f26e2c3ce7b8782972595576d301f84",
   "compatibility_date": "2026-03-03",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  "main": "./src/server.ts",
   "d1_databases": [
     {
       "binding": "DB",
