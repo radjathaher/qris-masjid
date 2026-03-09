@@ -2,23 +2,33 @@
   "queries": [
     {
       "label": "jakarta:istiqlal",
-      "q": "Masjid Istiqlal Jakarta"
+      "q": "Masjid Istiqlal Jakarta",
+      "city": "Jakarta Pusat",
+      "province": "DKI Jakarta"
     },
     {
       "label": "bandung:raya",
-      "q": "Masjid Raya Bandung"
+      "q": "Masjid Raya Bandung",
+      "city": "Bandung",
+      "province": "Jawa Barat"
     },
     {
       "label": "aceh:baiturrahman",
-      "q": "Masjid Raya Baiturrahman Banda Aceh"
+      "q": "Masjid Raya Baiturrahman Banda Aceh",
+      "city": "Banda Aceh",
+      "province": "Aceh"
     },
     {
       "label": "yogyakarta:gedhe-kauman",
-      "q": "Masjid Gedhe Kauman Yogyakarta"
+      "q": "Masjid Gedhe Kauman Yogyakarta",
+      "city": "Yogyakarta",
+      "province": "DI Yogyakarta"
     },
     {
       "label": "surabaya:al-akbar",
-      "q": "Masjid Al Akbar Surabaya"
+      "q": "Masjid Al Akbar Surabaya",
+      "city": "Surabaya",
+      "province": "Jawa Timur"
     }
   ]
 }

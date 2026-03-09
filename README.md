@@ -77,6 +77,9 @@ Notes:
 bun run ingest:nominatim --query-file=docs/nominatim-bootstrap-query-example.json
 ```
 
+- Reverse geocode enrichment is enabled by default to backfill city/province from accepted coordinates.
+- Curated query files may also supply `city` and `province` overrides when the Nominatim response is too sparse.
+
 ## Local development
 
 1. Install dependencies:

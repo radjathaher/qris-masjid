@@ -7,9 +7,11 @@ import {
   dedupeBootstrapPois,
   normalizeBootstrapItems,
   type BootstrapQuery,
+  type BootstrapPoi,
   type NominatimSearchResult,
   type QueryFileShape,
   type QueryRunResult,
+  type ReverseGeocodeAddress,
 } from "#/shared/ingest/nominatim-bootstrap";
 
 type CliOptions = {
@@ -19,6 +21,7 @@ type CliOptions = {
   throttleMs: number;
   maxQueries: number | null;
   queryFile: string | null;
+  reverseEnrich: boolean;
 };
 
 function readOption(name: string): string | null {
@@ -49,6 +52,7 @@ function parseCliOptions(): CliOptions {
     throttleMs: parseIntegerOption("throttle-ms", 250),
     maxQueries: readOption("max-queries") ? parseIntegerOption("max-queries", 1) : null,
     queryFile: readOption("query-file"),
+    reverseEnrich: readOption("reverse-enrich") !== "false",
   };
 }
 
@@ -99,6 +103,11 @@ async function readQueriesFromFile(path: string): Promise<BootstrapQuery[]> {
   return queries.map((query) => ({
     label: query.label.trim(),
     q: query.q.trim(),
+    city: typeof query.city === "string" && query.city.trim().length > 0 ? query.city.trim() : undefined,
+    province:
+      typeof query.province === "string" && query.province.trim().length > 0
+        ? query.province.trim()
+        : undefined,
   }));
 }
 
@@ -180,6 +189,84 @@ async function fetchQuery(
   }
 }
 
+function buildReverseUrl(baseUrl: string, poi: BootstrapPoi): string {
+  const url = new URL("/reverse", baseUrl);
+  url.searchParams.set("lat", String(poi.lat));
+  url.searchParams.set("lon", String(poi.lon));
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+  return url.toString();
+}
+
+async function reverseGeocodePoi(
+  baseUrl: string,
+  poi: BootstrapPoi,
+): Promise<ReverseGeocodeAddress | null> {
+  const url = buildReverseUrl(baseUrl, poi);
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "id-ID,id;q=0.9,en;q=0.6",
+        "User-Agent": "qris-masjid-wave1-bootstrap/0.1",
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const json = (await response.json()) as {
+      address?: Record<string, string | undefined>;
+      display_name?: string;
+    };
+    const address = json.address;
+    if (!address) {
+      return null;
+    }
+
+    const city =
+      address.city?.trim() ||
+      address.town?.trim() ||
+      address.municipality?.trim() ||
+      address.county?.trim() ||
+      address.regency?.trim() ||
+      address.state_district?.trim() ||
+      null;
+
+    const province = address.state?.trim() || address.region?.trim() || address.province?.trim() || null;
+
+    return { city, province };
+  } catch {
+    return null;
+  }
+}
+
+async function enrichPoisWithReverseGeocode(
+  baseUrl: string,
+  pois: BootstrapPoi[],
+  throttleMs: number,
+): Promise<BootstrapPoi[]> {
+  const enriched: BootstrapPoi[] = [];
+
+  for (const [index, poi] of pois.entries()) {
+    const reverse = await reverseGeocodePoi(baseUrl, poi);
+
+    enriched.push({
+      ...poi,
+      city: poi.city || reverse?.city || null,
+      province: poi.province || reverse?.province || null,
+    });
+
+    if (index < pois.length - 1) {
+      await Bun.sleep(throttleMs);
+    }
+  }
+
+  return enriched;
+}
+
 async function writeJson(path: string, value: unknown) {
   await Bun.write(path, `${JSON.stringify(value, null, 2)}\n`);
 }
@@ -231,7 +318,11 @@ async function main() {
     return normalizedResult.accepted;
   });
 
-  const { deduped, duplicateCount } = dedupeBootstrapPois(normalized);
+  const reverseEnriched = options.reverseEnrich
+    ? await enrichPoisWithReverseGeocode(options.baseUrl, normalized, options.throttleMs)
+    : normalized;
+
+  const { deduped, duplicateCount } = dedupeBootstrapPois(reverseEnriched);
   const report = buildBootstrapReport({
     queryResults: results,
     deduped,
@@ -243,6 +334,7 @@ async function main() {
     sourceVersion,
     baseUrl: options.baseUrl,
     querySource: options.queryFile ? `file:${options.queryFile}` : "built-in-bootstrap",
+    reverseEnrich: options.reverseEnrich,
     queryCount: queries.length,
     limitPerQuery: options.limit,
     throttleMs: options.throttleMs,

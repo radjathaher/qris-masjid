@@ -36,6 +36,11 @@ export type BootstrapPoi = {
   sourceQuery: string;
 };
 
+export type ReverseGeocodeAddress = {
+  city: string | null;
+  province: string | null;
+};
+
 export type RejectedBootstrapItem = {
   queryLabel: string;
   queryText: string;
@@ -49,6 +54,8 @@ export type RejectedBootstrapItem = {
 export type BootstrapQuery = {
   label: string;
   q: string;
+  city?: string;
+  province?: string;
 };
 
 export type QueryFileShape = {
@@ -364,8 +371,8 @@ function classifyBootstrapItem(input: {
         "county",
         "regency",
         "state_district",
-      ]),
-      province: readAddressField(input.item.address, ["state", "region", "province"]),
+      ]) ?? input.query.city ?? null,
+      province: readAddressField(input.item.address, ["state", "region", "province"]) ?? input.query.province ?? null,
       subtype: inferSubtype({
         name,
         displayName,
