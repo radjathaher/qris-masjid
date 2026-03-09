@@ -176,16 +176,14 @@ Goal
 
 Deliverables
 
-- Map markers driven by real dataset.
+- Map selection driven by real dataset.
 - Selection/detail flow works against imported ids.
 - Auth return flow no longer assumes in-memory mock list.
 
 Key work
 
 - Replace `mockMasjids` usage in page state.
-- Decide marker source:
-  - either fetch visible POIs from API
-  - or read rendered features from PMTiles layer and map feature props to app state
+- Read rendered features from PMTiles layer and map feature props to app state.
 - Keep modal/detail API contract stable.
 
 Acceptance
@@ -196,7 +194,8 @@ Acceptance
 - Current state:
   - runtime `mockMasjids` dependency removed
   - home page now reads masjid rows from D1 through `/api/masjids`
-  - PMTiles layer rendering is still separate follow-up work
+  - map clicks now resolve selected masjids from rendered PMTiles features
+  - search still uses fetched D1 rows for result discovery and map focus
 
 Wave 4 - Search and discovery
 
