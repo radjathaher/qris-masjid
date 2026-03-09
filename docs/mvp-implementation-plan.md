@@ -252,7 +252,7 @@ Acceptance
 - Current state:
   - thin `/admin` moderation UI exists over existing admin APIs
   - operators can filter reports by status and resolve open items in-app
-  - public report submission UX is still the older prompt-based flow
+  - public report submission now uses an in-app form in the masjid detail flow
 
 Wave 6 - Public-beta hardening
 
@@ -267,9 +267,15 @@ Current state
 - R2 object keys are now unique per upload, with cleanup on DB write failure paths.
 - Worker observability/traces are enabled in Wrangler config.
 - Public report submission now uses an in-app form instead of `window.prompt`.
+- Local browser verification has covered:
+  - home page render
+  - `/api/masjids` real-data load
+  - client-side search narrowing
+  - result selection opening the detail panel
 - Remaining hardening gaps:
   - `R2_PUBLIC_BASE_URL` still needs real production config for image delivery
-  - no browser-level verification completed in this repo state
+  - no automated browser smoke suite exists yet
+  - local D1 schema resets can require a fresh `bun run dev` restart to avoid stale worker state
 
 Deliverables
 
