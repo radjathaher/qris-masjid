@@ -100,6 +100,18 @@ Source-side endpoint guidance:
 - [docs/nominatim-export-contract.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-contract.md)
 - [docs/nominatim-export-implementation-guide.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-implementation-guide.md)
 
+Once you have `normalized-pois.json`, generate D1 upsert SQL:
+
+```bash
+bun run build:d1-sync --input=data/ingest/nominatim/<source-version>/normalized-pois.json
+```
+
+Then apply it:
+
+```bash
+wrangler d1 execute qris-masjid --local --file=data/ingest/nominatim/<source-version>/d1-sync.sql
+```
+
 - Reverse geocode enrichment is enabled by default to backfill city/province from accepted coordinates.
 - Curated query files may also supply `city` and `province` overrides when the Nominatim response is too sparse.
 
