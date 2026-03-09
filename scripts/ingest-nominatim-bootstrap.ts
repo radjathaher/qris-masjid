@@ -7,6 +7,7 @@ import {
   dedupeBootstrapPois,
   normalizeStructuredExportItems,
   normalizeBootstrapItems,
+  validateStructuredExportShape,
   type BootstrapQuery,
   type BootstrapPoi,
   type NominatimSearchResult,
@@ -131,11 +132,7 @@ async function readStructuredExportFile(path: string): Promise<StructuredExportS
     throw new Error(`Structured export file is not valid JSON: ${path}`);
   }
 
-  if (!json || typeof json !== "object" || !Array.isArray((json as StructuredExportShape).items)) {
-    throw new Error(`Structured export file must be shaped as { "items": [...] }`);
-  }
-
-  return json as StructuredExportShape;
+  return validateStructuredExportShape(json);
 }
 
 async function fetchStructuredExport(url: string): Promise<StructuredExportShape> {
@@ -158,11 +155,7 @@ async function fetchStructuredExport(url: string): Promise<StructuredExportShape
     throw new Error(`Structured export URL did not return valid JSON: ${url}`);
   }
 
-  if (!json || typeof json !== "object" || !Array.isArray((json as StructuredExportShape).items)) {
-    throw new Error(`Structured export URL must return { "items": [...] }`);
-  }
-
-  return json as StructuredExportShape;
+  return validateStructuredExportShape(json);
 }
 
 async function fetchQuery(

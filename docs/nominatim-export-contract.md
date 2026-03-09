@@ -49,6 +49,16 @@ Field requirements
 - `city` / `province`: strongly preferred
 - `class` / `type`: strongly preferred
 
+Validation behavior in this repo
+
+- Ingest now fails early if:
+  - `sourceVersion` is missing/blank
+  - `items` is not an array
+  - an item is missing `name`
+  - `lat` or `lon` are not numeric
+- Validation errors include the failing field path, for example:
+  - `items[42].lat`
+
 Filtering expectations on source side
 
 - Return only plausible Muslim prayer-place POIs.
