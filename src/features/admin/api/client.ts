@@ -27,8 +27,17 @@ const resolveAdminReportResponseSchema = z.object({
   appliedActions: z.array(z.string()),
 });
 
+const adminConfigHealthResponseSchema = z.object({
+  imageDelivery: z.object({
+    configured: z.boolean(),
+    mode: z.enum(["unconfigured", "invalid", "public-custom-domain", "public-r2-dev"]),
+    baseUrl: z.string(),
+  }),
+});
+
 export type AdminReport = z.infer<typeof adminReportSchema>;
 export type AdminReportStatus = AdminReport["status"];
+export type AdminConfigHealth = z.infer<typeof adminConfigHealthResponseSchema>;
 
 export type ResolveAdminReportInput = {
   decision: "dismissed" | "confirmed";
@@ -68,4 +77,18 @@ export async function resolveAdminReport(reportId: string, input: ResolveAdminRe
 
   const data = await response.json();
   return resolveAdminReportResponseSchema.parse(data);
+}
+
+export async function fetchAdminConfigHealth() {
+  const response = await fetch("/api/admin/config-health", {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Gagal memuat status konfigurasi admin");
+  }
+
+  const data = await response.json();
+  return adminConfigHealthResponseSchema.parse(data);
 }

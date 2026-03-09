@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { type AdminReportStatus, fetchAdminReports, resolveAdminReport } from "#/features/admin/api/client";
+import {
+  type AdminReportStatus,
+  fetchAdminConfigHealth,
+  fetchAdminReports,
+  resolveAdminReport,
+} from "#/features/admin/api/client";
 import { AdminReportCard } from "#/features/admin/ui/admin-report-card";
 import { Button } from "#/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/shared/ui/card";
@@ -19,6 +24,11 @@ function AdminReportsPage() {
   const reportsQuery = useQuery({
     queryKey: ["admin-reports", status],
     queryFn: () => fetchAdminReports(status),
+    staleTime: 15_000,
+  });
+  const configHealthQuery = useQuery({
+    queryKey: ["admin-config-health"],
+    queryFn: fetchAdminConfigHealth,
     staleTime: 15_000,
   });
 
@@ -69,6 +79,34 @@ function AdminReportsPage() {
               ))}
             </div>
           </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Config Health</CardTitle>
+            <CardDescription>Status operasional untuk delivery gambar QRIS.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {configHealthQuery.error instanceof Error ? (
+              <p className="text-red-600">{configHealthQuery.error.message}</p>
+            ) : configHealthQuery.isLoading ? (
+              <p className="text-emerald-900/70">Memuat status konfigurasi...</p>
+            ) : configHealthQuery.data ? (
+              <>
+                <p>
+                  <strong>Image Delivery:</strong> {configHealthQuery.data.imageDelivery.mode}
+                </p>
+                <p>
+                  <strong>Configured:</strong>{" "}
+                  {configHealthQuery.data.imageDelivery.configured ? "yes" : "no"}
+                </p>
+                <p>
+                  <strong>Base URL:</strong>{" "}
+                  {configHealthQuery.data.imageDelivery.baseUrl || "belum diatur"}
+                </p>
+              </>
+            ) : null}
+          </CardContent>
         </Card>
 
         {reportsQuery.error instanceof Error ? (
