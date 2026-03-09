@@ -229,7 +229,7 @@ wrangler secret put TURNSTILE_SECRET_KEY
 - `GOOGLE_OAUTH_CLIENT_ID`
 - `GOOGLE_OAUTH_REDIRECT_URI`
 - `APP_BASE_URL`
-- `R2_PUBLIC_BASE_URL` (optional public bucket URL or custom domain)
+- `R2_PUBLIC_BASE_URL` (optional public image base URL; use an R2 custom domain for production, `*.r2.dev` only for dev/testing)
 - `TURNSTILE_SITE_KEY`
 - `TURNSTILE_BYPASS` (`false` in production)
 

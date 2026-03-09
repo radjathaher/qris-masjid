@@ -28,6 +28,7 @@ const qrisData: MasjidQrisResponse = {
   canUpload: false,
   uploadPolicy: "report-first",
   imageDeliveryConfigured: false,
+  imageDeliveryMode: "unconfigured",
   items: [
     {
       id: "qris-1",
@@ -80,5 +81,34 @@ describe("MasjidDetailModal", () => {
     });
 
     expect(await screen.findByText("Laporan terkirim. Menunggu peninjauan admin.")).toBeTruthy();
+  });
+
+  it("warns when image delivery uses an r2.dev url", () => {
+    render(
+      <MasjidDetailModal
+        masjid={masjid}
+        qrisData={{
+          ...qrisData,
+          imageDeliveryConfigured: true,
+          imageDeliveryMode: "public-r2-dev",
+          items: [
+            {
+              ...qrisData.items[0],
+              imageUrl: null,
+            },
+          ],
+        }}
+        loading={false}
+        error={null}
+        onContributeQris={() => {}}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(
+      screen.getByText((_, element) => {
+        return element?.textContent === "URL gambar memakai domain .r2.dev. Aman untuk dev, bukan jalur produksi.";
+      }),
+    ).toBeTruthy();
   });
 });

@@ -286,6 +286,7 @@ Current state
 - Remaining hardening gaps:
   - `R2_PUBLIC_BASE_URL` still needs real production config for image delivery
   - QRIS read API now exposes whether image delivery is configured, so misconfig is explicit instead of surfacing as ambiguous `null` URLs
+  - QRIS read API now also distinguishes `*.r2.dev` from custom-domain delivery, so non-production image hosting is visible in the UI
 - no full browser-level e2e suite exists yet
 - local D1 schema resets can require a fresh `bun run dev` restart to avoid stale worker state
 - repo-side lint debt is currently clean

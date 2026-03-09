@@ -98,6 +98,7 @@ describe("MapHomePage", () => {
       canUpload: true,
       uploadPolicy: "report-first",
       imageDeliveryConfigured: false,
+      imageDeliveryMode: "unconfigured",
       items: [],
     }));
   });

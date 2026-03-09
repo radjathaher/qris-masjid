@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { masjidQrisResponseSchema } from "#/entities/qris/model/contracts";
 import { createDb } from "#/shared/db/client";
 import { qris } from "#/shared/db/schema";
-import { getEnv, readPublicR2BaseUrl } from "#/shared/lib/server/env";
+import { getEnv, readPublicR2Delivery } from "#/shared/lib/server/env";
 
 export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
   server: {
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
           .where(eq(qris.masjidId, params.masjidId))
           .orderBy(desc(qris.updatedAt));
 
-        const baseUrl = readPublicR2BaseUrl(env);
+        const imageDelivery = readPublicR2Delivery(env);
 
         return Response.json(
           masjidQrisResponseSchema.parse({
@@ -35,7 +35,8 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
             hasActiveQris: rows.some((row) => row.isActive === 1),
             canUpload: rows.every((row) => row.isActive !== 1),
             uploadPolicy: "report-first",
-            imageDeliveryConfigured: Boolean(baseUrl),
+            imageDeliveryConfigured: imageDelivery.configured,
+            imageDeliveryMode: imageDelivery.mode,
             items: rows.map((row) => ({
               id: row.id,
               payloadHash: row.payloadHash,
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
               merchantCity: row.merchantCity,
               pointOfInitiationMethod: row.pointOfInitiationMethod,
               nmid: row.nmid,
-              imageUrl: baseUrl ? `${baseUrl}/${row.imageR2Key}` : null,
+              imageUrl: imageDelivery.baseUrl ? `${imageDelivery.baseUrl}/${row.imageR2Key}` : null,
               isActive: row.isActive === 1,
               updatedAt: row.updatedAt,
             })),

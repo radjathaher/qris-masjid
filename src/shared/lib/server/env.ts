@@ -13,6 +13,12 @@ export type AppEnv = {
   QRIS_IMAGES: R2Bucket;
 };
 
+export type PublicR2Delivery = {
+  baseUrl: string;
+  configured: boolean;
+  mode: "unconfigured" | "public-custom-domain" | "public-r2-dev";
+};
+
 type HandlerInput = {
   context?: {
     cloudflare?: {
@@ -38,4 +44,30 @@ export function readPublicR2BaseUrl(env: AppEnv): string {
   }
 
   return "";
+}
+
+export function readPublicR2Delivery(env: AppEnv): PublicR2Delivery {
+  const baseUrl = readPublicR2BaseUrl(env);
+
+  if (!baseUrl) {
+    return {
+      baseUrl: "",
+      configured: false,
+      mode: "unconfigured",
+    };
+  }
+
+  let hostname = "";
+
+  try {
+    hostname = new URL(baseUrl).hostname;
+  } catch {
+    hostname = "";
+  }
+
+  return {
+    baseUrl,
+    configured: true,
+    mode: hostname.endsWith(".r2.dev") ? "public-r2-dev" : "public-custom-domain",
+  };
 }

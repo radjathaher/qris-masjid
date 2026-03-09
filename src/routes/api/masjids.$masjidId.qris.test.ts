@@ -89,6 +89,7 @@ describe("/api/masjids/$masjidId/qris", () => {
       canUpload: false,
       uploadPolicy: "report-first",
       imageDeliveryConfigured: true,
+      imageDeliveryMode: "public-custom-domain",
       items: [
         {
           id: "qris-active",
@@ -155,6 +156,7 @@ describe("/api/masjids/$masjidId/qris", () => {
       canUpload: true,
       uploadPolicy: "report-first",
       imageDeliveryConfigured: false,
+      imageDeliveryMode: "unconfigured",
       items: [
         {
           id: "qris-old",
@@ -166,6 +168,54 @@ describe("/api/masjids/$masjidId/qris", () => {
           imageUrl: null,
           isActive: false,
           updatedAt: "2026-03-09T00:00:00.000Z",
+        },
+      ],
+    });
+  });
+
+  it("marks r2.dev delivery as configured but non-production", async () => {
+    createDbMock.mockReturnValue({
+      select: vi.fn(() => ({
+        from: () => ({
+          where: () => ({
+            orderBy: async () => [
+              {
+                id: "qris-active",
+                payloadHash: "hash-1",
+                merchantName: "Masjid Istiqlal",
+                merchantCity: "Jakarta",
+                pointOfInitiationMethod: "11",
+                nmid: "ID102030",
+                imageR2Key: "qris/masjid-1/active.png",
+                isActive: 1,
+                updatedAt: "2026-03-10T00:00:00.000Z",
+              },
+            ],
+          }),
+        }),
+      })),
+    });
+
+    const response = await getGetHandler()({
+      context: {
+        env: createEnv({
+          R2_PUBLIC_BASE_URL: "https://pub-12345.r2.dev",
+        }),
+      },
+      params: {
+        masjidId: "masjid-1",
+      },
+    } as never);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      masjidId: "masjid-1",
+      imageDeliveryConfigured: true,
+      imageDeliveryMode: "public-r2-dev",
+      items: [
+        {
+          id: "qris-active",
+          imageUrl: "https://pub-12345.r2.dev/qris/masjid-1/active.png",
         },
       ],
     });
