@@ -35,6 +35,7 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
             hasActiveQris: rows.some((row) => row.isActive === 1),
             canUpload: rows.every((row) => row.isActive !== 1),
             uploadPolicy: "report-first",
+            imageDeliveryConfigured: Boolean(baseUrl),
             items: rows.map((row) => ({
               id: row.id,
               payloadHash: row.payloadHash,

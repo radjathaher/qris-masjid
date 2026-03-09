@@ -27,6 +27,7 @@ const qrisData: MasjidQrisResponse = {
   hasActiveQris: true,
   canUpload: false,
   uploadPolicy: "report-first",
+  imageDeliveryConfigured: false,
   items: [
     {
       id: "qris-1",
@@ -60,6 +61,10 @@ describe("MasjidDetailModal", () => {
         onClose={() => {}}
       />,
     );
+
+    expect(
+      screen.getByText("Gambar QR tersimpan, tapi URL publik R2 belum dikonfigurasi."),
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Laporkan QRIS" }));
     fireEvent.change(screen.getByLabelText("Kenapa QRIS ini perlu ditinjau?"), {

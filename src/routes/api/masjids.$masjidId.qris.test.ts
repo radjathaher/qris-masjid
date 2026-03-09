@@ -88,6 +88,7 @@ describe("/api/masjids/$masjidId/qris", () => {
       hasActiveQris: true,
       canUpload: false,
       uploadPolicy: "report-first",
+      imageDeliveryConfigured: true,
       items: [
         {
           id: "qris-active",
@@ -153,6 +154,7 @@ describe("/api/masjids/$masjidId/qris", () => {
       hasActiveQris: false,
       canUpload: true,
       uploadPolicy: "report-first",
+      imageDeliveryConfigured: false,
       items: [
         {
           id: "qris-old",

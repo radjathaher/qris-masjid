@@ -97,6 +97,7 @@ describe("MapHomePage", () => {
       hasActiveQris: false,
       canUpload: true,
       uploadPolicy: "report-first",
+      imageDeliveryConfigured: false,
       items: [],
     }));
   });

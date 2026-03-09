@@ -35,6 +35,10 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
               >
                 Buka gambar QR
               </a>
+            ) : !data.imageDeliveryConfigured ? (
+              <p className="text-amber-800/80">
+                Gambar QR tersimpan, tapi URL publik R2 belum dikonfigurasi.
+              </p>
             ) : (
               <p className="text-emerald-900/70">URL gambar belum tersedia.</p>
             )}
