@@ -280,6 +280,8 @@ Current state
   - `POST /api/contributions/upsert` created response path
   - `POST /api/contributions/upsert` duplicate response path
   - `POST /api/contributions/upsert` conflict response path
+  - `GET /api/masjids` list response shape
+  - `GET /api/masjids/:id/qris` active/upload-policy/image-url response shape
   - `POST /api/qris/:id/reports` existing-open idempotent path
   - `POST /api/qris/:id/reports` fresh create path
 - Remaining hardening gaps:

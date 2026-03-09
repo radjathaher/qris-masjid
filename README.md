@@ -182,6 +182,8 @@ Current smoke coverage includes:
 - contribution API duplicate path
 - QRIS report form submit path
 - contribution API conflict path
+- masjid list API response shape
+- masjid QRIS API active/upload/image-url shape
 - report API idempotent existing-open path
 - report API fresh create path
 
