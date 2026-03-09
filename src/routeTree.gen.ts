@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTurnstileSiteKeyRouteImport } from './routes/api/turnstile.site-key'
 import { Route as ApiContributionsUpsertRouteImport } from './routes/api/contributions.upsert'
@@ -21,6 +22,11 @@ import { Route as ApiAuthGoogleStartRouteImport } from './routes/api/auth.google
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth.google.callback'
 import { Route as ApiAdminReportsReportIdResolveRouteImport } from './routes/api/admin.reports.$reportId.resolve'
 
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -79,6 +85,7 @@ const ApiAdminReportsReportIdResolveRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/admin': typeof AdminRoute
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/masjids': typeof ApiMasjidsRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/reports/$reportId/resolve': typeof ApiAdminReportsReportIdResolveRoute
 }
 export interface FileRoutesByTo {
+  '/admin': typeof AdminRoute
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/masjids': typeof ApiMasjidsRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/admin': typeof AdminRoute
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/masjids': typeof ApiMasjidsRoute
@@ -121,6 +130,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/admin'
     | '/'
     | '/api/admin/reports'
     | '/api/masjids'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/api/admin/reports/$reportId/resolve'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/admin'
     | '/'
     | '/api/admin/reports'
     | '/api/masjids'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/api/admin/reports/$reportId/resolve'
   id:
     | '__root__'
+    | '/admin'
     | '/'
     | '/api/admin/reports'
     | '/api/masjids'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AdminRoute: typeof AdminRoute
   IndexRoute: typeof IndexRoute
   ApiAdminReportsRoute: typeof ApiAdminReportsRouteWithChildren
   ApiMasjidsRoute: typeof ApiMasjidsRoute
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/turnstile/site-key': {
@@ -268,6 +288,7 @@ const ApiAdminReportsRouteWithChildren = ApiAdminReportsRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  AdminRoute: AdminRoute,
   IndexRoute: IndexRoute,
   ApiAdminReportsRoute: ApiAdminReportsRouteWithChildren,
   ApiMasjidsRoute: ApiMasjidsRoute,

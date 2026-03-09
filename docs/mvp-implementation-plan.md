@@ -249,6 +249,10 @@ Key work
 Acceptance
 
 - Admin can review and resolve reports end-to-end in app.
+- Current state:
+  - thin `/admin` moderation UI exists over existing admin APIs
+  - operators can filter reports by status and resolve open items in-app
+  - public report submission UX is still the older prompt-based flow
 
 Wave 6 - Public-beta hardening
 
