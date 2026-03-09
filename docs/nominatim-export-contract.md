@@ -73,6 +73,12 @@ How to use in this repo
 bun run ingest:nominatim --export-file=/path/to/nominatim-export.json
 ```
 
+Or directly from a URL:
+
+```bash
+bun run ingest:nominatim --export-url=https://nominatim.cakrawala.ai/internal/exports/muslim-place-of-worship.json
+```
+
 Artifacts produced
 
 - `manifest.json`

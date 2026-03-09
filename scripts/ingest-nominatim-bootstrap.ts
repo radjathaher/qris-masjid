@@ -24,6 +24,7 @@ type CliOptions = {
   maxQueries: number | null;
   queryFile: string | null;
   exportFile: string | null;
+  exportUrl: string | null;
   reverseEnrich: boolean;
 };
 
@@ -56,6 +57,7 @@ function parseCliOptions(): CliOptions {
     maxQueries: readOption("max-queries") ? parseIntegerOption("max-queries", 1) : null,
     queryFile: readOption("query-file"),
     exportFile: readOption("export-file"),
+    exportUrl: readOption("export-url"),
     reverseEnrich: readOption("reverse-enrich") !== "false",
   };
 }
@@ -131,6 +133,33 @@ async function readStructuredExportFile(path: string): Promise<StructuredExportS
 
   if (!json || typeof json !== "object" || !Array.isArray((json as StructuredExportShape).items)) {
     throw new Error(`Structured export file must be shaped as { "items": [...] }`);
+  }
+
+  return json as StructuredExportShape;
+}
+
+async function fetchStructuredExport(url: string): Promise<StructuredExportShape> {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "qris-masjid-wave1-bootstrap/0.1",
+    },
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Structured export fetch failed: HTTP ${response.status} ${text}`.trim());
+  }
+
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`Structured export URL did not return valid JSON: ${url}`);
+  }
+
+  if (!json || typeof json !== "object" || !Array.isArray((json as StructuredExportShape).items)) {
+    throw new Error(`Structured export URL must return { "items": [...] }`);
   }
 
   return json as StructuredExportShape;
@@ -303,7 +332,11 @@ async function writeNdjson(path: string, values: unknown[]) {
 
 async function main() {
   const options = parseCliOptions();
-  const structuredExport = options.exportFile ? await readStructuredExportFile(options.exportFile) : null;
+  const structuredExport = options.exportUrl
+    ? await fetchStructuredExport(options.exportUrl)
+    : options.exportFile
+      ? await readStructuredExportFile(options.exportFile)
+      : null;
   const sourceVersion = structuredExport?.sourceVersion ?? makeSourceVersion();
   const outputDir = join(options.outputRoot, sourceVersion);
   const rawDir = join(outputDir, "raw");
@@ -331,7 +364,9 @@ async function main() {
     await writeJson(join(outputDir, "manifest.json"), {
       sourceVersion,
       baseUrl: options.baseUrl,
-      querySource: `file:${options.exportFile}`,
+      querySource: options.exportUrl
+        ? `url:${options.exportUrl}`
+        : `file:${options.exportFile}`,
       reverseEnrich: options.reverseEnrich,
       queryCount: 0,
       limitPerQuery: options.limit,

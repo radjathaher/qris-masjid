@@ -89,6 +89,12 @@ If your Nominatim side can export structured POIs directly, this repo can ingest
 bun run ingest:nominatim --export-file=docs/nominatim-export-sample.json
 ```
 
+Or fetch it directly once the endpoint exists:
+
+```bash
+bun run ingest:nominatim --export-url=https://nominatim.cakrawala.ai/internal/exports/muslim-place-of-worship.json
+```
+
 - Reverse geocode enrichment is enabled by default to backfill city/province from accepted coordinates.
 - Curated query files may also supply `city` and `province` overrides when the Nominatim response is too sparse.
 
