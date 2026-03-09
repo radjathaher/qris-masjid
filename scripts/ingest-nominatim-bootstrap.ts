@@ -8,6 +8,7 @@ import {
   normalizeBootstrapItems,
   type BootstrapQuery,
   type NominatimSearchResult,
+  type QueryFileShape,
   type QueryRunResult,
 } from "#/shared/ingest/nominatim-bootstrap";
 
@@ -17,6 +18,7 @@ type CliOptions = {
   limit: number;
   throttleMs: number;
   maxQueries: number | null;
+  queryFile: string | null;
 };
 
 function readOption(name: string): string | null {
@@ -46,6 +48,7 @@ function parseCliOptions(): CliOptions {
     limit: parseIntegerOption("limit", 50),
     throttleMs: parseIntegerOption("throttle-ms", 250),
     maxQueries: readOption("max-queries") ? parseIntegerOption("max-queries", 1) : null,
+    queryFile: readOption("query-file"),
   };
 }
 
@@ -59,6 +62,44 @@ function sliceQueries(queries: BootstrapQuery[], maxQueries: number | null): Boo
   }
 
   return queries.slice(0, maxQueries);
+}
+
+async function readQueriesFromFile(path: string): Promise<BootstrapQuery[]> {
+  const file = Bun.file(path);
+  if (!(await file.exists())) {
+    throw new Error(`Query file not found: ${path}`);
+  }
+
+  const text = await file.text();
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`Query file is not valid JSON: ${path}`);
+  }
+
+  if (!json || typeof json !== "object" || !Array.isArray((json as QueryFileShape).queries)) {
+    throw new Error(`Query file must be shaped as { "queries": [{ "label": "...", "q": "..." }] }`);
+  }
+
+  const queries = (json as QueryFileShape).queries.filter((query) => {
+    return (
+      Boolean(query) &&
+      typeof query.label === "string" &&
+      query.label.trim().length > 0 &&
+      typeof query.q === "string" &&
+      query.q.trim().length > 0
+    );
+  });
+
+  if (queries.length === 0) {
+    throw new Error(`Query file contains no valid queries: ${path}`);
+  }
+
+  return queries.map((query) => ({
+    label: query.label.trim(),
+    q: query.q.trim(),
+  }));
 }
 
 async function fetchQuery(
@@ -156,8 +197,12 @@ async function main() {
 
   await mkdir(rawDir, { recursive: true });
 
-  const queries = sliceQueries(buildBootstrapQueries(), options.maxQueries);
+  const querySource = options.queryFile
+    ? await readQueriesFromFile(options.queryFile)
+    : buildBootstrapQueries();
+  const queries = sliceQueries(querySource, options.maxQueries);
   const results: QueryRunResult[] = [];
+  const rejectedItems = [];
 
   for (const [index, query] of queries.entries()) {
     const result = await fetchQuery(options.baseUrl, query, options.limit);
@@ -176,12 +221,14 @@ async function main() {
       return [];
     }
 
-    return normalizeBootstrapItems({
+    const normalizedResult = normalizeBootstrapItems({
       items: result.items,
       query: result.query,
       fetchedAt: result.fetchedAt,
       sourceVersion,
     });
+    rejectedItems.push(...normalizedResult.rejected);
+    return normalizedResult.accepted;
   });
 
   const { deduped, duplicateCount } = dedupeBootstrapPois(normalized);
@@ -189,11 +236,13 @@ async function main() {
     queryResults: results,
     deduped,
     duplicateCount,
+    rejected: rejectedItems,
   });
 
   await writeJson(join(outputDir, "manifest.json"), {
     sourceVersion,
     baseUrl: options.baseUrl,
+    querySource: options.queryFile ? `file:${options.queryFile}` : "built-in-bootstrap",
     queryCount: queries.length,
     limitPerQuery: options.limit,
     throttleMs: options.throttleMs,
@@ -201,6 +250,7 @@ async function main() {
   });
   await writeNdjson(join(outputDir, "raw-results.ndjson"), results);
   await writeJson(join(outputDir, "normalized-pois.json"), deduped);
+  await writeJson(join(outputDir, "rejected-pois.json"), rejectedItems);
   await writeJson(join(outputDir, "report.json"), report);
 
   console.log(

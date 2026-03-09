@@ -36,9 +36,23 @@ export type BootstrapPoi = {
   sourceQuery: string;
 };
 
+export type RejectedBootstrapItem = {
+  queryLabel: string;
+  queryText: string;
+  name: string | null;
+  displayName: string | null;
+  sourceClass: string | null;
+  sourceType: string | null;
+  reason: string;
+};
+
 export type BootstrapQuery = {
   label: string;
   q: string;
+};
+
+export type QueryFileShape = {
+  queries: BootstrapQuery[];
 };
 
 export type QueryRunResult =
@@ -270,63 +284,130 @@ export function buildSearchUrl(baseUrl: string, query: BootstrapQuery, limit: nu
   return url.toString();
 }
 
+function classifyBootstrapItem(input: {
+  item: NominatimSearchResult;
+  query: BootstrapQuery;
+  fetchedAt: string;
+  sourceVersion: string;
+}): { accepted: true; poi: BootstrapPoi } | { accepted: false; rejected: RejectedBootstrapItem } {
+  const name = pickName(input.item);
+  const lat = Number(input.item.lat);
+  const lon = Number(input.item.lon);
+  const sourceClass = input.item.class?.trim() ?? null;
+  const sourceType = input.item.type?.trim() ?? null;
+  const displayName = input.item.display_name?.trim() ?? null;
+
+  if (!name) {
+    return {
+      accepted: false,
+      rejected: {
+        queryLabel: input.query.label,
+        queryText: input.query.q,
+        name: null,
+        displayName,
+        sourceClass,
+        sourceType,
+        reason: "missing-name",
+      },
+    };
+  }
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return {
+      accepted: false,
+      rejected: {
+        queryLabel: input.query.label,
+        queryText: input.query.q,
+        name,
+        displayName,
+        sourceClass,
+        sourceType,
+        reason: "invalid-coordinates",
+      },
+    };
+  }
+
+  if (!isLikelyMuslimPrayerPlace(input.item, name)) {
+    return {
+      accepted: false,
+      rejected: {
+        queryLabel: input.query.label,
+        queryText: input.query.q,
+        name,
+        displayName,
+        sourceClass,
+        sourceType,
+        reason: "filtered-non-prayer-place",
+      },
+    };
+  }
+
+  const osmId =
+    input.item.osm_type && input.item.osm_id
+      ? `${String(input.item.osm_type)}:${String(input.item.osm_id)}`
+      : null;
+
+  return {
+    accepted: true,
+    poi: {
+      id: buildStableId(input.item, name),
+      osmId,
+      sourceSystem: "nominatim-http",
+      sourceVersion: input.sourceVersion,
+      name,
+      lat,
+      lon,
+      city: readAddressField(input.item.address, [
+        "city",
+        "town",
+        "municipality",
+        "county",
+        "regency",
+        "state_district",
+      ]),
+      province: readAddressField(input.item.address, ["state", "region", "province"]),
+      subtype: inferSubtype({
+        name,
+        displayName,
+        type: sourceType,
+      }),
+      sourceClass,
+      sourceType,
+      sourceCategory: input.item.category?.trim() ?? null,
+      displayName,
+      importance: typeof input.item.importance === "number" ? input.item.importance : null,
+      lastSeenAt: input.fetchedAt,
+      sourceQuery: input.query.q,
+    },
+  };
+}
+
 export function normalizeBootstrapItems(input: {
   items: NominatimSearchResult[];
   query: BootstrapQuery;
   fetchedAt: string;
   sourceVersion: string;
-}): BootstrapPoi[] {
-  return input.items
-    .map((item) => {
-      const name = pickName(item);
-      const lat = Number(item.lat);
-      const lon = Number(item.lon);
+}): { accepted: BootstrapPoi[]; rejected: RejectedBootstrapItem[] } {
+  const accepted: BootstrapPoi[] = [];
+  const rejected: RejectedBootstrapItem[] = [];
 
-      if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-        return null;
-      }
+  for (const item of input.items) {
+    const result = classifyBootstrapItem({
+      item,
+      query: input.query,
+      fetchedAt: input.fetchedAt,
+      sourceVersion: input.sourceVersion,
+    });
 
-      if (!isLikelyMuslimPrayerPlace(item, name)) {
-        return null;
-      }
+    if (result.accepted) {
+      accepted.push(result.poi);
+      continue;
+    }
 
-      const osmId =
-        item.osm_type && item.osm_id ? `${String(item.osm_type)}:${String(item.osm_id)}` : null;
-      const displayName = item.display_name?.trim() ?? null;
-      const sourceType = item.type?.trim() ?? null;
+    rejected.push(result.rejected);
+  }
 
-      return {
-        id: buildStableId(item, name),
-        osmId,
-        sourceSystem: "nominatim-http",
-        sourceVersion: input.sourceVersion,
-        name,
-        lat,
-        lon,
-        city: readAddressField(item.address, [
-          "city",
-          "town",
-          "municipality",
-          "county",
-          "regency",
-          "state_district",
-        ]),
-        province: readAddressField(item.address, ["state", "region", "province"]),
-        subtype: inferSubtype({
-          name,
-          displayName,
-          type: sourceType,
-        }),
-        sourceClass: item.class?.trim() ?? null,
-        sourceType,
-        sourceCategory: item.category?.trim() ?? null,
-        displayName,
-        importance: typeof item.importance === "number" ? item.importance : null,
-        lastSeenAt: input.fetchedAt,
-        sourceQuery: input.query.q,
-      } satisfies BootstrapPoi;
-    })
-    .filter((item): item is BootstrapPoi => item !== null);
+  return { accepted, rejected };
 }
 
 export function dedupeBootstrapPois(items: BootstrapPoi[]): {
@@ -371,6 +452,7 @@ export function buildBootstrapReport(input: {
   queryResults: QueryRunResult[];
   deduped: BootstrapPoi[];
   duplicateCount: number;
+  rejected: RejectedBootstrapItem[];
 }) {
   const successfulQueries = input.queryResults.filter((result) => result.ok).length;
   const failedQueries = input.queryResults.length - successfulQueries;
@@ -387,6 +469,11 @@ export function buildBootstrapReport(input: {
     return accumulator;
   }, {});
 
+  const rejectedReasonCounts = input.rejected.reduce<Record<string, number>>((accumulator, item) => {
+    accumulator[item.reason] = (accumulator[item.reason] ?? 0) + 1;
+    return accumulator;
+  }, {});
+
   return {
     generatedAt: new Date().toISOString(),
     queryCount: input.queryResults.length,
@@ -397,6 +484,8 @@ export function buildBootstrapReport(input: {
     }, 0),
     dedupedItemCount: input.deduped.length,
     duplicateCount: input.duplicateCount,
+    rejectedItemCount: input.rejected.length,
+    rejectedReasonCounts,
     subtypeCounts,
     provinceCounts,
     failedQueryLabels: input.queryResults

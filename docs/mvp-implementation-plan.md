@@ -42,6 +42,7 @@ Phase-1 bootstrap source:
 - Use self-hosted Nominatim HTTP endpoints.
 - Prefer structured queries over free-text scraping whenever possible.
 - Treat this as a bootstrap import, not a perfect national ground truth.
+- If broad discovery quality is poor, fall back to curated exact-name seed queries and operator-maintained lists.
 
 Preferred future upgrade path:
 
@@ -57,6 +58,7 @@ Why HTTP-only is temporary
 - Ranking/relevance may skew toward famous places.
 - Naming variations will cause uneven coverage.
 - Duplicate and subtype normalization becomes application burden.
+- Some self-hosted deployments may be usable for exact lookup but weak for wide discovery.
 
 Canonical data model target
 

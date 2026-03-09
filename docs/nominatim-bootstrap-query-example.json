@@ -1,0 +1,24 @@
+{
+  "queries": [
+    {
+      "label": "jakarta:istiqlal",
+      "q": "Masjid Istiqlal Jakarta"
+    },
+    {
+      "label": "bandung:raya",
+      "q": "Masjid Raya Bandung"
+    },
+    {
+      "label": "aceh:baiturrahman",
+      "q": "Masjid Raya Baiturrahman Banda Aceh"
+    },
+    {
+      "label": "yogyakarta:gedhe-kauman",
+      "q": "Masjid Gedhe Kauman Yogyakarta"
+    },
+    {
+      "label": "surabaya:al-akbar",
+      "q": "Masjid Al Akbar Surabaya"
+    }
+  ]
+}

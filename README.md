@@ -71,6 +71,11 @@ Notes:
 - Outputs land under `data/ingest/nominatim/<source-version>/`.
 - This is ingest-only and should not become a runtime dependency.
 - HTTP bootstrap is intentionally temporary and may have incomplete recall.
+- If your Nominatim behaves better for exact lookups than discovery, use a curated query file:
+
+```bash
+bun run ingest:nominatim --query-file=docs/nominatim-bootstrap-query-example.json
+```
 
 ## Local development
 
