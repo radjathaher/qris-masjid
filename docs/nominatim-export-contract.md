@@ -11,6 +11,7 @@ Why this exists
 - Current self-hosted Nominatim HTTP search is usable for narrow lookup.
 - It is not reliable for broad mosque discovery.
 - This repo now supports ingesting a structured export file directly.
+- Source-side implementation guidance lives in [docs/nominatim-export-implementation-guide.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-implementation-guide.md).
 
 Required output shape
 

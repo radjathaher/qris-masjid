@@ -1,7 +1,7 @@
 QRIS Masjid Indonesia - MVP Implementation Plan
 
-Last updated: 2026-03-09
-Status: Planning baseline for multi-wave implementation
+Last updated: 2026-03-10
+Status: Wave 1 repo boundary largely complete; source-side export endpoint remains blocker
 
 Purpose
 
@@ -133,6 +133,11 @@ Acceptance
 - Repo can generate a reproducible normalized dataset artifact.
 - Artifact contains more than mock data and covers multiple provinces.
 - Every row has stable id, name, coordinates, subtype, and source metadata.
+- Current state:
+  - repo-side ingest boundary is in place
+  - preferred next move is implementing the structured export endpoint described in:
+    - [docs/nominatim-export-contract.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-contract.md)
+    - [docs/nominatim-export-implementation-guide.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-implementation-guide.md)
 
 Wave 2 - PMTiles + D1 sync
 
