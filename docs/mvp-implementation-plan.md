@@ -165,7 +165,8 @@ Acceptance
 - App can be deployed without the 4-row mock seed being meaningful.
 - Current state:
   - D1 sync SQL generation can proceed from `normalized-pois.json`
-  - PMTiles generation path still pending
+  - PMTiles build script can proceed from `normalized-pois.json`
+  - native `tippecanoe` install is still required for final `.pmtiles` output
 
 Wave 3 - Frontend real-data wiring
 

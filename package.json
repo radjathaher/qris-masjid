@@ -19,6 +19,7 @@
     "check": "bun run typecheck && bun run lint && bun run format:check",
     "ingest:nominatim": "bun scripts/ingest-nominatim-bootstrap.ts",
     "build:d1-sync": "bun scripts/build-masjid-d1-sync.ts",
+    "build:pmtiles": "bun scripts/build-masjid-pmtiles.ts",
     "db:migrate:local": "wrangler d1 execute qris-masjid --local --file=./drizzle/0000_init.sql",
     "db:generate": "drizzle-kit generate",
     "deploy": "bun run build && wrangler deploy"

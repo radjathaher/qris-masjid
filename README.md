@@ -112,6 +112,18 @@ Then apply it:
 wrangler d1 execute qris-masjid --local --file=data/ingest/nominatim/<source-version>/d1-sync.sql
 ```
 
+To generate a map artifact from the same normalized dataset:
+
+```bash
+bun run build:pmtiles --input=data/ingest/nominatim/<source-version>/normalized-pois.json
+```
+
+If `tippecanoe` is not installed yet, emit GeoJSON only:
+
+```bash
+bun run build:pmtiles --input=data/ingest/nominatim/<source-version>/normalized-pois.json --skip-tippecanoe=true
+```
+
 - Reverse geocode enrichment is enabled by default to backfill city/province from accepted coordinates.
 - Curated query files may also supply `city` and `province` overrides when the Nominatim response is too sparse.
 
