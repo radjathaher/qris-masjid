@@ -13,6 +13,7 @@ import {
   type NominatimSearchResult,
   type QueryFileShape,
   type QueryRunResult,
+  type RejectedBootstrapItem,
   type ReverseGeocodeAddress,
   type StructuredExportShape,
 } from "#/shared/ingest/nominatim-bootstrap";
@@ -31,7 +32,7 @@ type CliOptions = {
 
 function readOption(name: string): string | null {
   const prefix = `--${name}=`;
-  const raw = Bun.argv.find((value) => value.startsWith(prefix));
+  const raw = Bun.argv.find((value: string) => value.startsWith(prefix));
   return raw ? raw.slice(prefix.length) : null;
 }
 
@@ -392,7 +393,7 @@ async function main() {
     : buildBootstrapQueries();
   const queries = sliceQueries(querySource, options.maxQueries);
   const results: QueryRunResult[] = [];
-  const rejectedItems = [];
+  const rejectedItems: RejectedBootstrapItem[] = [];
 
   for (const [index, query] of queries.entries()) {
     const result = await fetchQuery(options.baseUrl, query, options.limit);

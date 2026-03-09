@@ -38,7 +38,7 @@ type FeatureCollection = {
 
 function readOption(name: string): string | null {
   const prefix = `--${name}=`;
-  const raw = Bun.argv.find((value) => value.startsWith(prefix));
+  const raw = Bun.argv.find((value: string) => value.startsWith(prefix));
   return raw ? raw.slice(prefix.length) : null;
 }
 

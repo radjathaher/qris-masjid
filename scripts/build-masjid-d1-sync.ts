@@ -51,7 +51,7 @@ const INSERT_COLUMNS = [
 
 function readOption(name: string): string | null {
   const prefix = `--${name}=`;
-  const raw = Bun.argv.find((value) => value.startsWith(prefix));
+  const raw = Bun.argv.find((value: string) => value.startsWith(prefix));
   return raw ? raw.slice(prefix.length) : null;
 }
 
@@ -100,7 +100,7 @@ function validateCanonicalMasjidRows(input: unknown): CanonicalMasjidRow[] {
     const name = typeof row.name === "string" ? row.name.trim() : "";
     const id = typeof row.id === "string" ? row.id.trim() : "";
     const sourceVersion = typeof row.sourceVersion === "string" ? row.sourceVersion.trim() : "";
-    const sourceSystem = typeof row.sourceSystem === "string" ? row.sourceSystem.trim() : "";
+    const sourceSystem = row.sourceSystem === "nominatim-http" ? row.sourceSystem : "";
     const lastSeenAt = typeof row.lastSeenAt === "string" ? row.lastSeenAt.trim() : "";
     const lat = typeof row.lat === "number" ? row.lat : Number(row.lat);
     const lon = typeof row.lon === "number" ? row.lon : Number(row.lon);
