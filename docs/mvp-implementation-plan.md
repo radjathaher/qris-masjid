@@ -274,6 +274,8 @@ Current state
   - result selection opening the detail panel
 - Automated smoke coverage now exists for:
   - `MapHomePage` loading/search/select/detail-open flow
+  - `MapHomePage` auth-return reopen flow for pending contributions
+  - `ContributeModal` authenticated submit success path
   - `MasjidDetailModal` report-form submit success path
 - Remaining hardening gaps:
   - `R2_PUBLIC_BASE_URL` still needs real production config for image delivery

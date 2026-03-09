@@ -173,6 +173,13 @@ bun run format
 bun run check
 ```
 
+Current smoke coverage includes:
+
+- map home load + search + detail open
+- auth-return reopening the pending contribute flow
+- contribute modal authenticated submit path
+- QRIS report form submit path
+
 ## Database migration
 
 SQL migration is in:

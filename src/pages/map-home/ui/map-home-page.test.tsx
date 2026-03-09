@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MasjidListResponse } from "#/entities/masjid/model/types";
 import type { MasjidQrisResponse } from "#/entities/qris/model/contracts";
+import { PENDING_CONTRIBUTE_MASJID_ID_KEY } from "#/features/contribute/model/constants";
 import { MapHomePage } from "#/pages/map-home/ui/map-home-page";
 
 const { fetchMasjidsMock, fetchAuthSessionStatusMock, fetchMasjidQrisMock } = vi.hoisted(() => ({
@@ -27,7 +28,23 @@ vi.mock("#/features/map/ui/map-canvas", () => ({
 }));
 
 vi.mock("#/features/contribute/ui/contribute-modal", () => ({
-  ContributeModal: () => null,
+  ContributeModal: ({
+    open,
+    defaultOpenForm,
+    masjid,
+  }: {
+    open: boolean;
+    defaultOpenForm: boolean;
+    masjid: { id: string } | null;
+  }) => (
+    <div data-testid="contribute-modal">
+      {JSON.stringify({
+        open,
+        defaultOpenForm,
+        masjidId: masjid?.id ?? null,
+      })}
+    </div>
+  ),
 }));
 
 const masjids: MasjidListResponse = {
@@ -71,6 +88,8 @@ function renderWithProviders() {
 
 describe("MapHomePage", () => {
   beforeEach(() => {
+    window.history.replaceState({}, "", "/");
+    window.sessionStorage.clear();
     fetchMasjidsMock.mockResolvedValue(masjids);
     fetchAuthSessionStatusMock.mockResolvedValue({ authenticated: false });
     fetchMasjidQrisMock.mockImplementation(async (masjidId) => ({
@@ -104,5 +123,26 @@ describe("MapHomePage", () => {
     await waitFor(() => {
       expect(fetchMasjidQrisMock).toHaveBeenCalledWith("masjid-istiqlal");
     });
+  });
+
+  it("reopens contribute flow after auth return for the pending masjid", async () => {
+    window.history.replaceState({}, "", "/?auth=ok");
+    window.sessionStorage.setItem(PENDING_CONTRIBUTE_MASJID_ID_KEY, "masjid-istiqlal");
+    fetchAuthSessionStatusMock.mockResolvedValue({ authenticated: true });
+
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Masjid Istiqlal" })).toBeTruthy();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("contribute-modal").textContent).toContain('"open":true');
+      expect(screen.getByTestId("contribute-modal").textContent).toContain('"defaultOpenForm":true');
+      expect(screen.getByTestId("contribute-modal").textContent).toContain('"masjidId":"masjid-istiqlal"');
+    });
+
+    expect(window.sessionStorage.getItem(PENDING_CONTRIBUTE_MASJID_ID_KEY)).toBeNull();
+    expect(window.location.search).toBe("");
   });
 });
