@@ -60,6 +60,18 @@ Suggested ingestion flow:
 4. Sync `masjids` table in D1 (`source_version` bump).
 5. Deploy refreshed PMTiles artifact.
 
+Wave 1 bootstrap from self-hosted Nominatim HTTP is also supported for early data gathering:
+
+```bash
+bun run ingest:nominatim --base-url=https://nominatim.cakrawala.ai --max-queries=5
+```
+
+Notes:
+
+- Outputs land under `data/ingest/nominatim/<source-version>/`.
+- This is ingest-only and should not become a runtime dependency.
+- HTTP bootstrap is intentionally temporary and may have incomplete recall.
+
 ## Local development
 
 1. Install dependencies:
