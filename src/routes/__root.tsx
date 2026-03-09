@@ -37,6 +37,8 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const showDevtools = import.meta.env.DEV;
+
   return (
     <html lang="id">
       <head>
@@ -45,17 +47,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <QueryProvider>{children}</QueryProvider>
         {import.meta.env.DEV ? <Agentation /> : null}
-        <TanStackDevtools
-          config={{
-            position: "bottom-right",
-          }}
-          plugins={[
-            {
-              name: "TanStack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
+        {showDevtools ? (
+          <TanStackDevtools
+            config={{
+              position: "bottom-right",
+            }}
+            plugins={[
+              {
+                name: "TanStack Router",
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+            ]}
+          />
+        ) : null}
         <Scripts />
       </body>
     </html>

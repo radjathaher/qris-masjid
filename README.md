@@ -238,4 +238,5 @@ bun run deploy
 
 - Turnstile widget is embedded in contribute modal and posts token to backend.
 - Server rejects uploads that are not decodable QR images, non-QRIS payloads, or invalid CRC payloads.
+- Contribution image uploads are capped at 5 MB on both client and server paths.
 - To make production strict, disable bypass and pass real Turnstile token from frontend widget integration.

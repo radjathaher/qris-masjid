@@ -93,7 +93,7 @@ async function saveQrisIfAllowed(
 
   const now = new Date().toISOString();
   const qrisId = crypto.randomUUID();
-  const imageKey = `qris/${input.masjidId}/${input.payloadHash}`;
+  const imageKey = `qris/${input.masjidId}/${qrisId}.${input.image.extension}`;
 
   await env.QRIS_IMAGES.put(imageKey, input.image.bytes, {
     httpMetadata: {
@@ -126,6 +126,7 @@ async function saveQrisIfAllowed(
       .limit(1);
 
     if (existingSameHash[0]) {
+      await env.QRIS_IMAGES.delete(imageKey);
       return { kind: "duplicate", qrisId: existingSameHash[0].id };
     }
 
@@ -138,9 +139,11 @@ async function saveQrisIfAllowed(
       .limit(1);
 
     if (existingActive[0]) {
+      await env.QRIS_IMAGES.delete(imageKey);
       return { kind: "conflict", activeQrisId: existingActive[0].id };
     }
 
+    await env.QRIS_IMAGES.delete(imageKey);
     throw new Error("Gagal menyimpan payload QRIS");
   }
 

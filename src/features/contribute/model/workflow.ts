@@ -1,5 +1,7 @@
 import type { Masjid } from "#/entities/masjid/model/types";
 
+const MAX_CONTRIBUTION_IMAGE_BYTES = 5 * 1024 * 1024;
+
 type TurnstileSiteKeyResponse = {
   siteKey?: string;
 };
@@ -62,6 +64,13 @@ export function readContributionImage(formData: FormData): {
     return {
       file: null,
       error: "Unggah gambar QR terlebih dahulu.",
+    };
+  }
+
+  if (file.size > MAX_CONTRIBUTION_IMAGE_BYTES) {
+    return {
+      file: null,
+      error: "Ukuran gambar terlalu besar. Maksimal 5 MB.",
     };
   }
 

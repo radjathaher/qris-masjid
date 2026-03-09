@@ -1,5 +1,7 @@
 export type SupportedImageMime = "image/jpeg" | "image/jpg" | "image/png";
 
+export const MAX_CONTRIBUTION_IMAGE_BYTES = 5 * 1024 * 1024;
+
 const MIME_TO_EXTENSION: Record<SupportedImageMime, string> = {
   "image/jpeg": "jpg",
   "image/jpg": "jpg",
@@ -27,6 +29,11 @@ export function decodeBase64Image(raw: string): DecodedBase64Image {
   const extension = MIME_TO_EXTENSION[mimeType];
 
   const binary = atob(base64Body);
+
+  if (binary.length > MAX_CONTRIBUTION_IMAGE_BYTES) {
+    throw new Error("Ukuran gambar terlalu besar. Maksimal 5 MB.");
+  }
+
   const bytes = new Uint8Array(binary.length);
 
   for (let index = 0; index < binary.length; index += 1) {
