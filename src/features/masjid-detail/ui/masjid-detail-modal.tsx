@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatMasjidLocation, type Masjid } from "#/entities/masjid/model/types";
 import { createQrisReport } from "#/entities/qris/api/client";
 import type { MasjidQrisResponse } from "#/entities/qris/model/contracts";
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "#/shared/ui/dialog";
+import { Label } from "#/shared/ui/label";
 
 type MasjidDetailModalProps = {
   masjid: Masjid | null;
@@ -26,9 +27,10 @@ type ActionSectionProps = {
   canContribute: boolean;
   activeQrisItemId: string | null;
   loading: boolean;
+  reportFormOpen: boolean;
   reportPending: boolean;
   onContributeQris: () => void;
-  onReportQris: () => void;
+  onOpenReportForm: () => void;
 };
 
 function renderQrisContent(
@@ -61,29 +63,21 @@ function renderQrisContent(
   return null;
 }
 
-async function submitManualReport(qrisId: string): Promise<string> {
-  const reasonText = window.prompt("Jelaskan masalahnya (opsional).") ?? "";
-  await createQrisReport(qrisId, {
-    reasonCode: "manual-review",
-    reasonText: reasonText.length > 0 ? reasonText : undefined,
-  });
-  return "Laporan terkirim. Menunggu peninjauan admin.";
-}
-
 function renderActionSection({
   canContribute,
   activeQrisItemId,
   loading,
+  reportFormOpen,
   reportPending,
   onContributeQris,
-  onReportQris,
+  onOpenReportForm,
 }: ActionSectionProps) {
   return (
     <div className="flex justify-end gap-2">
       {canContribute && !loading ? <Button onClick={onContributeQris}>Tambah QRIS</Button> : null}
       {activeQrisItemId && !loading ? (
-        <Button variant="outline" disabled={reportPending} onClick={onReportQris}>
-          {reportPending ? "Mengirim laporan..." : "Laporkan QRIS"}
+        <Button variant="outline" disabled={reportPending} onClick={onOpenReportForm}>
+          {reportPending ? "Mengirim laporan..." : reportFormOpen ? "Tutup Form Laporan" : "Laporkan QRIS"}
         </Button>
       ) : null}
     </div>
@@ -100,10 +94,25 @@ export function MasjidDetailModal({
 }: MasjidDetailModalProps) {
   const [reportMessage, setReportMessage] = useState<string | null>(null);
   const [reportPending, setReportPending] = useState(false);
+  const [reportFormOpen, setReportFormOpen] = useState(false);
+  const [reportReasonText, setReportReasonText] = useState("");
   const activeQrisItem = qrisData?.items.find((item) => item.isActive) ?? null;
   const canContribute = Boolean(!loading && !error && qrisData && qrisData.items.length === 0);
 
-  const onReportQris = async () => {
+  useEffect(() => {
+    if (masjid) {
+      return;
+    }
+
+    setReportMessage(null);
+    setReportPending(false);
+    setReportFormOpen(false);
+    setReportReasonText("");
+  }, [masjid]);
+
+  const onSubmitReport = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     if (!activeQrisItem) {
       return;
     }
@@ -111,7 +120,13 @@ export function MasjidDetailModal({
     try {
       setReportPending(true);
       setReportMessage(null);
-      setReportMessage(await submitManualReport(activeQrisItem.id));
+      await createQrisReport(activeQrisItem.id, {
+        reasonCode: "manual-review",
+        reasonText: reportReasonText.trim().length > 0 ? reportReasonText.trim() : undefined,
+      });
+      setReportMessage("Laporan terkirim. Menunggu peninjauan admin.");
+      setReportReasonText("");
+      setReportFormOpen(false);
     } catch (reportError) {
       setReportMessage(
         reportError instanceof Error ? reportError.message : "Gagal mengirim laporan",
@@ -135,13 +150,54 @@ export function MasjidDetailModal({
 
         {reportMessage ? <p className="text-sm text-emerald-900/80">{reportMessage}</p> : null}
 
+        {activeQrisItem && reportFormOpen ? (
+          <Card>
+            <CardContent className="space-y-3 pt-4">
+              <form className="space-y-3" onSubmit={onSubmitReport}>
+                <div className="space-y-2">
+                  <Label htmlFor="report-reason-text">Kenapa QRIS ini perlu ditinjau?</Label>
+                  <textarea
+                    id="report-reason-text"
+                    className="min-h-24 w-full rounded-md border border-emerald-950/15 bg-white px-3 py-2 text-sm text-emerald-950 placeholder:text-emerald-900/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    value={reportReasonText}
+                    onChange={(event) => {
+                      setReportReasonText(event.target.value);
+                    }}
+                    placeholder="Contoh: QRIS tidak cocok dengan masjid ini, merchant berbeda, atau data sudah tidak aktif."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={reportPending}
+                    onClick={() => {
+                      setReportFormOpen(false);
+                    }}
+                  >
+                    Batal
+                  </Button>
+                  <Button type="submit" disabled={reportPending}>
+                    {reportPending ? "Mengirim laporan..." : "Kirim laporan"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {renderActionSection({
           canContribute,
           activeQrisItemId: activeQrisItem?.id ?? null,
           loading,
+          reportFormOpen,
           reportPending,
           onContributeQris,
-          onReportQris,
+          onOpenReportForm: () => {
+            setReportMessage(null);
+            setReportFormOpen((current) => !current);
+          },
         })}
       </DialogContent>
     </Dialog>

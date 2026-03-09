@@ -266,9 +266,9 @@ Current state
 - Contribution image uploads are capped at 5 MB on both client and server paths.
 - R2 object keys are now unique per upload, with cleanup on DB write failure paths.
 - Worker observability/traces are enabled in Wrangler config.
+- Public report submission now uses an in-app form instead of `window.prompt`.
 - Remaining hardening gaps:
   - `R2_PUBLIC_BASE_URL` still needs real production config for image delivery
-  - public report submission UX is still prompt-based
   - no browser-level verification completed in this repo state
 
 Deliverables
