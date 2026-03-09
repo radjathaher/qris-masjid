@@ -220,4 +220,52 @@ describe("/api/masjids/$masjidId/qris", () => {
       ],
     });
   });
+
+  it("marks malformed public base urls as invalid instead of configured", async () => {
+    createDbMock.mockReturnValue({
+      select: vi.fn(() => ({
+        from: () => ({
+          where: () => ({
+            orderBy: async () => [
+              {
+                id: "qris-active",
+                payloadHash: "hash-1",
+                merchantName: "Masjid Istiqlal",
+                merchantCity: "Jakarta",
+                pointOfInitiationMethod: "11",
+                nmid: "ID102030",
+                imageR2Key: "qris/masjid-1/active.png",
+                isActive: 1,
+                updatedAt: "2026-03-10T00:00:00.000Z",
+              },
+            ],
+          }),
+        }),
+      })),
+    });
+
+    const response = await getGetHandler()({
+      context: {
+        env: createEnv({
+          R2_PUBLIC_BASE_URL: "not-a-url",
+        }),
+      },
+      params: {
+        masjidId: "masjid-1",
+      },
+    } as never);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      masjidId: "masjid-1",
+      imageDeliveryConfigured: false,
+      imageDeliveryMode: "invalid",
+      items: [
+        {
+          id: "qris-active",
+          imageUrl: null,
+        },
+      ],
+    });
+  });
 });

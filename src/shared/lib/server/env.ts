@@ -16,7 +16,7 @@ export type AppEnv = {
 export type PublicR2Delivery = {
   baseUrl: string;
   configured: boolean;
-  mode: "unconfigured" | "public-custom-domain" | "public-r2-dev";
+  mode: "unconfigured" | "invalid" | "public-custom-domain" | "public-r2-dev";
 };
 
 type HandlerInput = {
@@ -58,11 +58,26 @@ export function readPublicR2Delivery(env: AppEnv): PublicR2Delivery {
   }
 
   let hostname = "";
+  let protocol = "";
 
   try {
-    hostname = new URL(baseUrl).hostname;
+    const parsed = new URL(baseUrl);
+    hostname = parsed.hostname;
+    protocol = parsed.protocol;
   } catch {
-    hostname = "";
+    return {
+      baseUrl,
+      configured: false,
+      mode: "invalid",
+    };
+  }
+
+  if (protocol !== "https:" && protocol !== "http:") {
+    return {
+      baseUrl,
+      configured: false,
+      mode: "invalid",
+    };
   }
 
   return {

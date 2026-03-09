@@ -36,9 +36,15 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
                 Buka gambar QR
               </a>
             ) : !data.imageDeliveryConfigured ? (
-              <p className="text-amber-800/80">
-                Gambar QR tersimpan, tapi URL publik R2 belum dikonfigurasi.
-              </p>
+              data.imageDeliveryMode === "invalid" ? (
+                <p className="text-amber-800/80">
+                  URL publik R2 tidak valid. Periksa nilai <code>R2_PUBLIC_BASE_URL</code>.
+                </p>
+              ) : (
+                <p className="text-amber-800/80">
+                  Gambar QR tersimpan, tapi URL publik R2 belum dikonfigurasi.
+                </p>
+              )
             ) : data.imageDeliveryMode === "public-r2-dev" ? (
               <p className="text-amber-800/80">
                 URL gambar memakai domain <code>.r2.dev</code>. Aman untuk dev, bukan jalur produksi.

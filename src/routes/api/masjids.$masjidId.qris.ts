@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
               merchantCity: row.merchantCity,
               pointOfInitiationMethod: row.pointOfInitiationMethod,
               nmid: row.nmid,
-              imageUrl: imageDelivery.baseUrl ? `${imageDelivery.baseUrl}/${row.imageR2Key}` : null,
+              imageUrl: imageDelivery.configured ? `${imageDelivery.baseUrl}/${row.imageR2Key}` : null,
               isActive: row.isActive === 1,
               updatedAt: row.updatedAt,
             })),

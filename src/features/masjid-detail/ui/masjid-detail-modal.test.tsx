@@ -111,4 +111,33 @@ describe("MasjidDetailModal", () => {
       }),
     ).toBeTruthy();
   });
+
+  it("warns when image delivery config is invalid", () => {
+    render(
+      <MasjidDetailModal
+        masjid={masjid}
+        qrisData={{
+          ...qrisData,
+          imageDeliveryConfigured: false,
+          imageDeliveryMode: "invalid",
+          items: [
+            {
+              ...qrisData.items[0],
+              imageUrl: null,
+            },
+          ],
+        }}
+        loading={false}
+        error={null}
+        onContributeQris={() => {}}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(
+      screen.getByText((_, element) => {
+        return element?.textContent === "URL publik R2 tidak valid. Periksa nilai R2_PUBLIC_BASE_URL.";
+      }),
+    ).toBeTruthy();
+  });
 });
