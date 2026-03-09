@@ -277,6 +277,8 @@ Current state
   - `MapHomePage` auth-return reopen flow for pending contributions
   - `ContributeModal` authenticated submit success path
   - `MasjidDetailModal` report-form submit success path
+  - `POST /api/contributions/upsert` created response path
+  - `POST /api/contributions/upsert` duplicate response path
   - `POST /api/contributions/upsert` conflict response path
   - `POST /api/qris/:id/reports` existing-open idempotent path
   - `POST /api/qris/:id/reports` fresh create path
