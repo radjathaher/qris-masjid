@@ -277,6 +277,9 @@ Current state
   - `MapHomePage` auth-return reopen flow for pending contributions
   - `ContributeModal` authenticated submit success path
   - `MasjidDetailModal` report-form submit success path
+  - `POST /api/contributions/upsert` conflict response path
+  - `POST /api/qris/:id/reports` existing-open idempotent path
+  - `POST /api/qris/:id/reports` fresh create path
 - Remaining hardening gaps:
   - `R2_PUBLIC_BASE_URL` still needs real production config for image delivery
   - no full browser-level e2e suite exists yet

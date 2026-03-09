@@ -179,6 +179,9 @@ Current smoke coverage includes:
 - auth-return reopening the pending contribute flow
 - contribute modal authenticated submit path
 - QRIS report form submit path
+- contribution API conflict path
+- report API idempotent existing-open path
+- report API fresh create path
 
 ## Database migration
 
