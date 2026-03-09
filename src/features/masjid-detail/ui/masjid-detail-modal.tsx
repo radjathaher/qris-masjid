@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Masjid } from "#/entities/masjid/model/types";
+import { formatMasjidLocation, type Masjid } from "#/entities/masjid/model/types";
 import { createQrisReport } from "#/entities/qris/api/client";
 import type { MasjidQrisResponse } from "#/entities/qris/model/contracts";
 import { QrisItemsList } from "#/features/masjid-detail/ui/qris-items-list";
@@ -127,9 +127,7 @@ export function MasjidDetailModal({
         <DialogHeader>
           <DialogTitle>{masjid?.name ?? "Detail Masjid"}</DialogTitle>
           <DialogDescription>
-            {masjid
-              ? `${masjid.city}, ${masjid.province}`
-              : "Pilih marker masjid untuk melihat data QRIS saat ini."}
+            {masjid ? formatMasjidLocation(masjid) : "Pilih marker masjid untuk melihat data QRIS saat ini."}
           </DialogDescription>
         </DialogHeader>
 

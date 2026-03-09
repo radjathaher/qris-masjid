@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import maplibregl, { type Map } from "maplibre-gl";
 import { Protocol } from "pmtiles";
-import type { Masjid } from "#/entities/masjid/model/types";
+import { formatMasjidLocation, type Masjid } from "#/entities/masjid/model/types";
 
 let protocolRegistered = false;
 let protocol: Protocol | null = null;
@@ -44,6 +44,7 @@ function isTrackpadPanGesture(event: WheelEvent): boolean {
 export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -98,13 +99,39 @@ export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
         type: "vector",
         url: "pmtiles:///data/masjids.pmtiles",
       });
+    });
 
-      for (const masjid of masjids) {
+    mapRef.current = map;
+
+    return () => {
+      container.removeEventListener("wheel", onWheel, { capture: true });
+      for (const marker of markersRef.current) {
+        marker.remove();
+      }
+      markersRef.current = [];
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    const syncMarkers = () => {
+      for (const marker of markersRef.current) {
+        marker.remove();
+      }
+      markersRef.current = [];
+
+      markersRef.current = masjids.map((masjid) => {
         const marker = new maplibregl.Marker({ element: createMarkerElement(masjid.name) })
           .setLngLat([masjid.lon, masjid.lat])
           .setPopup(
             new maplibregl.Popup({ offset: 20, className: "masjid-popup" }).setHTML(
-              `<div class="masjid-popup-card"><p class="masjid-popup-title">${masjid.name}</p><p class="masjid-popup-subtitle">${masjid.city}, ${masjid.province}</p></div>`,
+              `<div class="masjid-popup-card"><p class="masjid-popup-title">${masjid.name}</p><p class="masjid-popup-subtitle">${formatMasjidLocation(masjid)}</p></div>`,
             ),
           )
           .addTo(map);
@@ -112,15 +139,19 @@ export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
         marker.getElement().addEventListener("click", () => {
           onSelectMasjid(masjid);
         });
-      }
-    });
 
-    mapRef.current = map;
+        return marker;
+      });
+    };
 
+    if (map.isStyleLoaded()) {
+      syncMarkers();
+      return;
+    }
+
+    map.once("load", syncMarkers);
     return () => {
-      container.removeEventListener("wheel", onWheel, { capture: true });
-      map.remove();
-      mapRef.current = null;
+      map.off("load", syncMarkers);
     };
   }, [masjids, onSelectMasjid]);
 

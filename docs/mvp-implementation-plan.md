@@ -193,6 +193,10 @@ Acceptance
 - Selecting a real imported POI opens detail modal.
 - Contribution flow works for imported masjid ids.
 - Reload/auth callback does not depend on mock data.
+- Current state:
+  - runtime `mockMasjids` dependency removed
+  - home page now reads masjid rows from D1 through `/api/masjids`
+  - PMTiles layer rendering is still separate follow-up work
 
 Wave 4 - Search and discovery
 

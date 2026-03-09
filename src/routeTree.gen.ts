@@ -14,6 +14,7 @@ import { Route as ApiTurnstileSiteKeyRouteImport } from './routes/api/turnstile.
 import { Route as ApiContributionsUpsertRouteImport } from './routes/api/contributions.upsert'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth.session'
 import { Route as ApiAdminReportsRouteImport } from './routes/api/admin.reports'
+import { Route as ApiMasjidsRouteImport } from './routes/api/masjids'
 import { Route as ApiQrisQrisIdReportsRouteImport } from './routes/api/qris.$qrisId.reports'
 import { Route as ApiMasjidsMasjidIdQrisRouteImport } from './routes/api/masjids.$masjidId.qris'
 import { Route as ApiAuthGoogleStartRouteImport } from './routes/api/auth.google.start'
@@ -43,6 +44,11 @@ const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
 const ApiAdminReportsRoute = ApiAdminReportsRouteImport.update({
   id: '/api/admin/reports',
   path: '/api/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMasjidsRoute = ApiMasjidsRouteImport.update({
+  id: '/api/masjids',
+  path: '/api/masjids',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiQrisQrisIdReportsRoute = ApiQrisQrisIdReportsRouteImport.update({
@@ -75,6 +81,7 @@ const ApiAdminReportsReportIdResolveRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
+  '/api/masjids': typeof ApiMasjidsRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
+  '/api/masjids': typeof ApiMasjidsRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
+  '/api/masjids': typeof ApiMasjidsRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api/admin/reports'
+    | '/api/masjids'
     | '/api/auth/session'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/admin/reports'
+    | '/api/masjids'
     | '/api/auth/session'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api/admin/reports'
+    | '/api/masjids'
     | '/api/auth/session'
     | '/api/contributions/upsert'
     | '/api/turnstile/site-key'
@@ -151,6 +163,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiAdminReportsRoute: typeof ApiAdminReportsRouteWithChildren
+  ApiMasjidsRoute: typeof ApiMasjidsRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiContributionsUpsertRoute: typeof ApiContributionsUpsertRoute
   ApiTurnstileSiteKeyRoute: typeof ApiTurnstileSiteKeyRoute
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/api/admin/reports'
       fullPath: '/api/admin/reports'
       preLoaderRoute: typeof ApiAdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/masjids': {
+      id: '/api/masjids'
+      path: '/api/masjids'
+      fullPath: '/api/masjids'
+      preLoaderRoute: typeof ApiMasjidsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/qris/$qrisId/reports': {
@@ -250,6 +270,7 @@ const ApiAdminReportsRouteWithChildren = ApiAdminReportsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAdminReportsRoute: ApiAdminReportsRouteWithChildren,
+  ApiMasjidsRoute: ApiMasjidsRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiContributionsUpsertRoute: ApiContributionsUpsertRoute,
   ApiTurnstileSiteKeyRoute: ApiTurnstileSiteKeyRoute,
