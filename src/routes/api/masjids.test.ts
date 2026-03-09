@@ -12,7 +12,13 @@ vi.mock("#/shared/db/client", () => ({
 import { Route } from "#/routes/api/masjids";
 
 function getGetHandler() {
-  return (Route.options.server?.handlers as { GET: (input: unknown) => Promise<Response> }).GET;
+  const server = Route.options.server;
+
+  if (!server) {
+    throw new Error("Expected route server config");
+  }
+
+  return (server.handlers as { GET: (input: unknown) => Promise<Response> }).GET;
 }
 
 function createEnv(overrides?: Partial<AppEnv>) {

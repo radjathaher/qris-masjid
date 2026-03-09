@@ -286,8 +286,9 @@ Current state
   - `POST /api/qris/:id/reports` fresh create path
 - Remaining hardening gaps:
   - `R2_PUBLIC_BASE_URL` still needs real production config for image delivery
-  - no full browser-level e2e suite exists yet
-  - local D1 schema resets can require a fresh `bun run dev` restart to avoid stale worker state
+- no full browser-level e2e suite exists yet
+- local D1 schema resets can require a fresh `bun run dev` restart to avoid stale worker state
+- current remaining lint debt is concentrated in `src/shared/ingest/nominatim-bootstrap.ts`
 
 Deliverables
 

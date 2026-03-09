@@ -47,7 +47,13 @@ vi.mock("#/shared/lib/server/qris-payload", () => ({
 import { Route } from "#/routes/api/contributions.upsert";
 
 function getPostHandler() {
-  return (Route.options.server?.handlers as { POST: (input: unknown) => Promise<Response> }).POST;
+  const server = Route.options.server;
+
+  if (!server) {
+    throw new Error("Expected route server config");
+  }
+
+  return (server.handlers as { POST: (input: unknown) => Promise<Response> }).POST;
 }
 
 function createSelectBuilder(results: unknown[]) {
