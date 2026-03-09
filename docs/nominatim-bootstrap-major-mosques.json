@@ -1,0 +1,100 @@
+{
+  "queries": [
+    {
+      "label": "aceh:baiturrahman",
+      "q": "Masjid Raya Baiturrahman Banda Aceh",
+      "city": "Banda Aceh",
+      "province": "Aceh"
+    },
+    {
+      "label": "sumbar:raya",
+      "q": "Masjid Raya Sumatera Barat Padang",
+      "city": "Padang",
+      "province": "Sumatera Barat"
+    },
+    {
+      "label": "dki:istiqlal",
+      "q": "Masjid Istiqlal Jakarta",
+      "city": "Jakarta Pusat",
+      "province": "DKI Jakarta"
+    },
+    {
+      "label": "jabar:raya-bandung",
+      "q": "Masjid Raya Bandung",
+      "city": "Bandung",
+      "province": "Jawa Barat"
+    },
+    {
+      "label": "jateng:agung-jawa-tengah",
+      "q": "Masjid Agung Jawa Tengah Semarang",
+      "city": "Semarang",
+      "province": "Jawa Tengah"
+    },
+    {
+      "label": "diy:gedhe-kauman",
+      "q": "Masjid Gedhe Kauman Yogyakarta",
+      "city": "Yogyakarta",
+      "province": "DI Yogyakarta"
+    },
+    {
+      "label": "jatim:al-akbar",
+      "q": "Masjid Al Akbar Surabaya",
+      "city": "Surabaya",
+      "province": "Jawa Timur"
+    },
+    {
+      "label": "ntb:hubbul-wathan",
+      "q": "Masjid Hubbul Wathan Islamic Center Mataram",
+      "city": "Mataram",
+      "province": "Nusa Tenggara Barat"
+    },
+    {
+      "label": "kalbar:mujahidin",
+      "q": "Masjid Raya Mujahidin Pontianak",
+      "city": "Pontianak",
+      "province": "Kalimantan Barat"
+    },
+    {
+      "label": "kalteng:darussalam",
+      "q": "Masjid Raya Darussalam Palangka Raya",
+      "city": "Palangka Raya",
+      "province": "Kalimantan Tengah"
+    },
+    {
+      "label": "kalsel:sabilal-muhtadin",
+      "q": "Masjid Raya Sabilal Muhtadin Banjarmasin",
+      "city": "Banjarmasin",
+      "province": "Kalimantan Selatan"
+    },
+    {
+      "label": "kaltim:darussalam",
+      "q": "Masjid Raya Darussalam Samarinda",
+      "city": "Samarinda",
+      "province": "Kalimantan Timur"
+    },
+    {
+      "label": "sulsel:al-markaz",
+      "q": "Masjid Al-Markaz Al-Islami Makassar",
+      "city": "Makassar",
+      "province": "Sulawesi Selatan"
+    },
+    {
+      "label": "sulut:ahmad-yani",
+      "q": "Masjid Ahmad Yani Manado",
+      "city": "Manado",
+      "province": "Sulawesi Utara"
+    },
+    {
+      "label": "maluku:alfatah",
+      "q": "Masjid Al Fatah Ambon",
+      "city": "Ambon",
+      "province": "Maluku"
+    },
+    {
+      "label": "papua:baiturrahim",
+      "q": "Masjid Raya Baiturrahim Jayapura",
+      "city": "Jayapura",
+      "province": "Papua"
+    }
+  ]
+}
