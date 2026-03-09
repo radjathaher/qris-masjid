@@ -5,6 +5,7 @@ import {
   buildBootstrapReport,
   buildSearchUrl,
   dedupeBootstrapPois,
+  normalizeStructuredExportItems,
   normalizeBootstrapItems,
   type BootstrapQuery,
   type BootstrapPoi,
@@ -12,6 +13,7 @@ import {
   type QueryFileShape,
   type QueryRunResult,
   type ReverseGeocodeAddress,
+  type StructuredExportShape,
 } from "#/shared/ingest/nominatim-bootstrap";
 
 type CliOptions = {
@@ -21,6 +23,7 @@ type CliOptions = {
   throttleMs: number;
   maxQueries: number | null;
   queryFile: string | null;
+  exportFile: string | null;
   reverseEnrich: boolean;
 };
 
@@ -52,6 +55,7 @@ function parseCliOptions(): CliOptions {
     throttleMs: parseIntegerOption("throttle-ms", 250),
     maxQueries: readOption("max-queries") ? parseIntegerOption("max-queries", 1) : null,
     queryFile: readOption("query-file"),
+    exportFile: readOption("export-file"),
     reverseEnrich: readOption("reverse-enrich") !== "false",
   };
 }
@@ -109,6 +113,27 @@ async function readQueriesFromFile(path: string): Promise<BootstrapQuery[]> {
         ? query.province.trim()
         : undefined,
   }));
+}
+
+async function readStructuredExportFile(path: string): Promise<StructuredExportShape> {
+  const file = Bun.file(path);
+  if (!(await file.exists())) {
+    throw new Error(`Structured export file not found: ${path}`);
+  }
+
+  const text = await file.text();
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`Structured export file is not valid JSON: ${path}`);
+  }
+
+  if (!json || typeof json !== "object" || !Array.isArray((json as StructuredExportShape).items)) {
+    throw new Error(`Structured export file must be shaped as { "items": [...] }`);
+  }
+
+  return json as StructuredExportShape;
 }
 
 async function fetchQuery(
@@ -278,11 +303,61 @@ async function writeNdjson(path: string, values: unknown[]) {
 
 async function main() {
   const options = parseCliOptions();
-  const sourceVersion = makeSourceVersion();
+  const structuredExport = options.exportFile ? await readStructuredExportFile(options.exportFile) : null;
+  const sourceVersion = structuredExport?.sourceVersion ?? makeSourceVersion();
   const outputDir = join(options.outputRoot, sourceVersion);
   const rawDir = join(outputDir, "raw");
 
   await mkdir(rawDir, { recursive: true });
+
+  if (structuredExport) {
+    const fetchedAt = new Date().toISOString();
+    const normalizedResult = normalizeStructuredExportItems({
+      items: structuredExport.items,
+      sourceVersion,
+      fetchedAt,
+    });
+    const reverseEnriched = options.reverseEnrich
+      ? await enrichPoisWithReverseGeocode(options.baseUrl, normalizedResult.accepted, options.throttleMs)
+      : normalizedResult.accepted;
+    const { deduped, duplicateCount } = dedupeBootstrapPois(reverseEnriched);
+    const report = buildBootstrapReport({
+      queryResults: [],
+      deduped,
+      duplicateCount,
+      rejected: normalizedResult.rejected,
+    });
+
+    await writeJson(join(outputDir, "manifest.json"), {
+      sourceVersion,
+      baseUrl: options.baseUrl,
+      querySource: `file:${options.exportFile}`,
+      reverseEnrich: options.reverseEnrich,
+      queryCount: 0,
+      limitPerQuery: options.limit,
+      throttleMs: options.throttleMs,
+      generatedAt: new Date().toISOString(),
+      mode: "structured-export",
+    });
+    await writeJson(join(outputDir, "structured-export-input.json"), structuredExport);
+    await writeJson(join(outputDir, "normalized-pois.json"), deduped);
+    await writeJson(join(outputDir, "rejected-pois.json"), normalizedResult.rejected);
+    await writeJson(join(outputDir, "report.json"), report);
+
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          sourceVersion,
+          outputDir,
+          report,
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
 
   const querySource = options.queryFile
     ? await readQueriesFromFile(options.queryFile)

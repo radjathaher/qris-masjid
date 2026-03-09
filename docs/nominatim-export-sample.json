@@ -1,0 +1,37 @@
+{
+  "sourceVersion": "2026-03-10-export-v1",
+  "items": [
+    {
+      "osm_type": "r",
+      "osm_id": 9627236,
+      "lat": -6.1702779,
+      "lon": 106.8310435,
+      "name": "Masjid Istiqlal",
+      "display_name": "Masjid Istiqlal, DKI Jakarta",
+      "class": "amenity",
+      "type": "place_of_worship",
+      "category": "amenity",
+      "importance": 0.42,
+      "city": "Jakarta Pusat",
+      "province": "DKI Jakarta",
+      "religion": "muslim",
+      "source_query": "internal-export"
+    },
+    {
+      "osm_type": "w",
+      "osm_id": 157838266,
+      "lat": -6.9218735,
+      "lon": 107.6062926,
+      "name": "Masjid Raya Bandung",
+      "display_name": "Masjid Raya Bandung, Jawa Barat",
+      "class": "amenity",
+      "type": "place_of_worship",
+      "category": "amenity",
+      "importance": 0.27,
+      "city": "Bandung",
+      "province": "Jawa Barat",
+      "religion": "muslim",
+      "source_query": "internal-export"
+    }
+  ]
+}

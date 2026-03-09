@@ -62,6 +62,28 @@ export type QueryFileShape = {
   queries: BootstrapQuery[];
 };
 
+export type StructuredExportItem = {
+  osm_type?: string;
+  osm_id?: number | string;
+  lat: number | string;
+  lon: number | string;
+  name: string;
+  display_name?: string;
+  class?: string;
+  type?: string;
+  category?: string;
+  importance?: number;
+  city?: string;
+  province?: string;
+  religion?: string;
+  source_query?: string;
+};
+
+export type StructuredExportShape = {
+  sourceVersion?: string;
+  items: StructuredExportItem[];
+};
+
 export type QueryRunResult =
   | {
       ok: true;
@@ -289,6 +311,79 @@ export function buildSearchUrl(baseUrl: string, query: BootstrapQuery, limit: nu
   url.searchParams.set("extratags", "1");
   url.searchParams.set("countrycodes", "id");
   return url.toString();
+}
+
+export function normalizeStructuredExportItems(input: {
+  items: StructuredExportItem[];
+  sourceVersion: string;
+  fetchedAt: string;
+}): { accepted: BootstrapPoi[]; rejected: RejectedBootstrapItem[] } {
+  const accepted: BootstrapPoi[] = [];
+  const rejected: RejectedBootstrapItem[] = [];
+
+  for (const item of input.items) {
+    const lat = Number(item.lat);
+    const lon = Number(item.lon);
+    const name = item.name?.trim() || null;
+    const displayName = item.display_name?.trim() ?? null;
+    const sourceClass = item.class?.trim() ?? null;
+    const sourceType = item.type?.trim() ?? null;
+
+    if (!name) {
+      rejected.push({
+        queryLabel: "structured-export",
+        queryText: item.source_query ?? "structured-export",
+        name: null,
+        displayName,
+        sourceClass,
+        sourceType,
+        reason: "missing-name",
+      });
+      continue;
+    }
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      rejected.push({
+        queryLabel: "structured-export",
+        queryText: item.source_query ?? "structured-export",
+        name,
+        displayName,
+        sourceClass,
+        sourceType,
+        reason: "invalid-coordinates",
+      });
+      continue;
+    }
+
+    accepted.push({
+      id:
+        item.osm_type && item.osm_id
+          ? `nominatim-${sanitizeForId(String(item.osm_type))}-${String(item.osm_id)}`
+          : `nominatim-${sanitizeForId(name)}`,
+      osmId: item.osm_type && item.osm_id ? `${String(item.osm_type)}:${String(item.osm_id)}` : null,
+      sourceSystem: "nominatim-http",
+      sourceVersion: input.sourceVersion,
+      name,
+      lat,
+      lon,
+      city: item.city?.trim() ?? null,
+      province: item.province?.trim() ?? null,
+      subtype: inferSubtype({
+        name,
+        displayName,
+        type: sourceType,
+      }),
+      sourceClass,
+      sourceType,
+      sourceCategory: item.category?.trim() ?? null,
+      displayName,
+      importance: typeof item.importance === "number" ? item.importance : null,
+      lastSeenAt: input.fetchedAt,
+      sourceQuery: item.source_query ?? "structured-export",
+    });
+  }
+
+  return { accepted, rejected };
 }
 
 function classifyBootstrapItem(input: {
