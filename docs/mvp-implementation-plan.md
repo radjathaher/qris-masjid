@@ -272,9 +272,12 @@ Current state
   - `/api/masjids` real-data load
   - client-side search narrowing
   - result selection opening the detail panel
+- Automated smoke coverage now exists for:
+  - `MapHomePage` loading/search/select/detail-open flow
+  - `MasjidDetailModal` report-form submit success path
 - Remaining hardening gaps:
   - `R2_PUBLIC_BASE_URL` still needs real production config for image delivery
-  - no automated browser smoke suite exists yet
+  - no full browser-level e2e suite exists yet
   - local D1 schema resets can require a fresh `bun run dev` restart to avoid stale worker state
 
 Deliverables

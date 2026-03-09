@@ -1,0 +1,108 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { MasjidListResponse } from "#/entities/masjid/model/types";
+import type { MasjidQrisResponse } from "#/entities/qris/model/contracts";
+import { MapHomePage } from "#/pages/map-home/ui/map-home-page";
+
+const { fetchMasjidsMock, fetchAuthSessionStatusMock, fetchMasjidQrisMock } = vi.hoisted(() => ({
+  fetchMasjidsMock: vi.fn<() => Promise<MasjidListResponse>>(),
+  fetchAuthSessionStatusMock: vi.fn<() => Promise<{ authenticated: boolean }>>(),
+  fetchMasjidQrisMock: vi.fn<(masjidId: string) => Promise<MasjidQrisResponse>>(),
+}));
+
+vi.mock("#/entities/masjid/api/client", () => ({
+  fetchMasjids: fetchMasjidsMock,
+}));
+
+vi.mock("#/entities/qris/api/client", () => ({
+  fetchAuthSessionStatus: fetchAuthSessionStatusMock,
+  fetchMasjidQris: fetchMasjidQrisMock,
+}));
+
+vi.mock("#/features/map/ui/map-canvas", () => ({
+  MapCanvas: ({ selectedMasjidId }: { selectedMasjidId: string | null }) => (
+    <div data-testid="map-canvas">{selectedMasjidId ?? "none"}</div>
+  ),
+}));
+
+vi.mock("#/features/contribute/ui/contribute-modal", () => ({
+  ContributeModal: () => null,
+}));
+
+const masjids: MasjidListResponse = {
+  items: [
+    {
+      id: "masjid-istiqlal",
+      name: "Masjid Istiqlal",
+      lat: -6.170156,
+      lon: 106.831392,
+      city: "Jakarta Pusat",
+      province: "DKI Jakarta",
+      subtype: "masjid",
+    },
+    {
+      id: "masjid-raya-bandung",
+      name: "Masjid Raya Bandung",
+      lat: -6.9219,
+      lon: 107.6073,
+      city: "Bandung",
+      province: "Jawa Barat",
+      subtype: "masjid",
+    },
+  ],
+};
+
+function renderWithProviders() {
+  const client = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={client}>
+      <MapHomePage />
+    </QueryClientProvider>,
+  );
+}
+
+describe("MapHomePage", () => {
+  beforeEach(() => {
+    fetchMasjidsMock.mockResolvedValue(masjids);
+    fetchAuthSessionStatusMock.mockResolvedValue({ authenticated: false });
+    fetchMasjidQrisMock.mockImplementation(async (masjidId) => ({
+      masjidId,
+      hasActiveQris: false,
+      canUpload: true,
+      uploadPolicy: "report-first",
+      items: [],
+    }));
+  });
+
+  it("loads masjids, narrows search results, and opens detail for the selected masjid", async () => {
+    renderWithProviders();
+
+    const searchInput = await screen.findByLabelText("Cari masjid, kota, provinsi");
+    fireEvent.change(searchInput, { target: { value: "Istiqlal" } });
+
+    const resultTitle = await screen.findByText("Masjid Istiqlal");
+    const resultButton = resultTitle.closest("button");
+
+    expect(resultButton).toBeTruthy();
+    if (!resultButton) {
+      throw new Error("Expected search result button");
+    }
+
+    fireEvent.click(resultButton);
+
+    expect(await screen.findByRole("heading", { name: "Masjid Istiqlal" })).toBeTruthy();
+    expect(screen.getByTestId("map-canvas").textContent).toBe("masjid-istiqlal");
+
+    await waitFor(() => {
+      expect(fetchMasjidQrisMock).toHaveBeenCalledWith("masjid-istiqlal");
+    });
+  });
+});

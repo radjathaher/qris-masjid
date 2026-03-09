@@ -141,11 +141,16 @@ bun install
 cp .dev.vars.example .dev.vars
 ```
 
-3. Initialize local D1 schema (safe to rerun):
+3. Initialize local D1 schema:
 
 ```bash
 bun run db:migrate:local
 ```
+
+Notes:
+
+- If local schema shape changed incompatibly, you may need to recreate local D1 state instead of reusing the old file.
+- After recreating local D1 state, restart `bun run dev` so the Worker binds the fresh database instead of stale local state.
 
 4. Run full local FE+BE:
 
@@ -163,6 +168,7 @@ bun run dev:local
 
 ```bash
 bun run lint
+bun run test
 bun run format
 bun run check
 ```
