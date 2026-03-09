@@ -220,6 +220,10 @@ Acceptance
 
 - User can find imported masjid/musholla/surau/langgar by name.
 - Search selects/focuses map and opens detail.
+- Current state:
+  - client-side search UI exists over fetched `/api/masjids` rows
+  - search result selection now flies map and opens detail
+  - backend search/index path is still a later scalability follow-up
 
 Wave 5 - Admin moderation UI
 

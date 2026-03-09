@@ -6,6 +6,7 @@ import { fetchAuthSessionStatus, fetchMasjidQris } from "#/entities/qris/api/cli
 import { PENDING_CONTRIBUTE_MASJID_ID_KEY } from "#/features/contribute/model/constants";
 import { ContributeModal } from "#/features/contribute/ui/contribute-modal";
 import { MapCanvas } from "#/features/map/ui/map-canvas";
+import { MasjidSearchPanel } from "#/features/map/ui/masjid-search-panel";
 import { MasjidDetailModal } from "#/features/masjid-detail/ui/masjid-detail-modal";
 
 export function MapHomePage() {
@@ -88,7 +89,18 @@ export function MapHomePage() {
         <p className="px-4 pt-4 text-sm text-red-600">{masjidsQuery.error.message}</p>
       ) : null}
 
-      <MapCanvas masjids={masjids} onSelectMasjid={onSelectMasjid} />
+      <MasjidSearchPanel
+        masjids={masjids}
+        loading={masjidsQuery.isLoading}
+        selectedMasjidId={selectedMasjid?.id ?? null}
+        onSelectMasjid={onSelectMasjid}
+      />
+
+      <MapCanvas
+        masjids={masjids}
+        selectedMasjidId={selectedMasjid?.id ?? null}
+        onSelectMasjid={onSelectMasjid}
+      />
 
       <MasjidDetailModal
         masjid={selectedMasjid}

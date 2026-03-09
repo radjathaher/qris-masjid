@@ -8,6 +8,7 @@ let protocol: Protocol | null = null;
 
 type MapCanvasProps = {
   masjids: Masjid[];
+  selectedMasjidId: string | null;
   onSelectMasjid: (masjid: Masjid) => void;
 };
 
@@ -41,7 +42,7 @@ function isTrackpadPanGesture(event: WheelEvent): boolean {
   return Math.abs(event.deltaX) > 0 || Math.abs(event.deltaY) < TRACKPAD_PAN_DELTA_THRESHOLD;
 }
 
-export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
+export function MapCanvas({ masjids, selectedMasjidId, onSelectMasjid }: MapCanvasProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
@@ -154,6 +155,29 @@ export function MapCanvas({ masjids, onSelectMasjid }: MapCanvasProps) {
       map.off("load", syncMarkers);
     };
   }, [masjids, onSelectMasjid]);
+
+  useEffect(() => {
+    if (!selectedMasjidId) {
+      return;
+    }
+
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    const masjid = masjids.find((item) => item.id === selectedMasjidId);
+    if (!masjid) {
+      return;
+    }
+
+    map.flyTo({
+      center: [masjid.lon, masjid.lat],
+      zoom: Math.max(map.getZoom(), 14),
+      duration: 900,
+      essential: true,
+    });
+  }, [masjids, selectedMasjidId]);
 
   return <div ref={mapContainerRef} className="map-canvas" />;
 }
