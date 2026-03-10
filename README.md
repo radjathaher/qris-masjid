@@ -187,6 +187,7 @@ Current smoke coverage includes:
 - auth-return reopening the pending contribute flow
 - contribute modal authenticated submit path
 - Wave 2 pipeline runner option parsing + ingest-arg wiring
+- Wave 2 pipeline runner sample export artifact-chain smoke
 - contribution API create path
 - contribution API duplicate path
 - QRIS report form submit path

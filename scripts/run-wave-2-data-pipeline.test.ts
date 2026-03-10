@@ -1,9 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { spawn } from "node:child_process";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   buildIngestArgs,
   parseBooleanOption,
   parseCliOptions,
 } from "#/../scripts/run-wave-2-data-pipeline";
+
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirs.splice(0).map(async (path) => {
+      await rm(path, { recursive: true, force: true });
+    }),
+  );
+});
 
 describe("parseBooleanOption", () => {
   it("returns the fallback when the flag is absent", () => {
@@ -142,5 +156,76 @@ describe("buildIngestArgs", () => {
       "--reverse-enrich=true",
       "--export-file=/tmp/export.json",
     ]);
+  });
+});
+
+describe("run:wave2", () => {
+  it("produces one artifact chain from the sample structured export", async () => {
+    const outputRoot = await mkdtemp(join(tmpdir(), "qris-masjid-wave2-"));
+    tempDirs.push(outputRoot);
+
+    const subprocess = spawn(
+      "bun",
+      [
+        "scripts/run-wave-2-data-pipeline.ts",
+        "--export-file=docs/nominatim-export-sample.json",
+        `--output-root=${outputRoot}`,
+        "--skip-d1-apply=true",
+        "--skip-tippecanoe=true",
+      ],
+      {
+        cwd: process.cwd(),
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+
+    const stderrChunks: Buffer[] = [];
+    subprocess.stderr.on("data", (chunk) => {
+      stderrChunks.push(Buffer.from(chunk));
+    });
+
+    const exitCode = await new Promise<number | null>((resolve, reject) => {
+      subprocess.once("error", reject);
+      subprocess.once("exit", resolve);
+    });
+    const outputDir = join(outputRoot, "2026-03-10-export-v1");
+    const normalizedPath = join(outputDir, "normalized-pois.json");
+    const d1SyncPath = join(outputDir, "d1-sync.sql");
+    const geojsonPath = join(outputDir, "masjids.geojson");
+    const pipelineManifestPath = join(outputDir, "wave-2-pipeline.json");
+
+    expect(exitCode, Buffer.concat(stderrChunks).toString("utf8")).toBe(0);
+
+    await expect(stat(normalizedPath)).resolves.toBeTruthy();
+    await expect(stat(d1SyncPath)).resolves.toBeTruthy();
+    await expect(stat(geojsonPath)).resolves.toBeTruthy();
+    await expect(stat(pipelineManifestPath)).resolves.toBeTruthy();
+
+    const normalized = JSON.parse(await readFile(normalizedPath, "utf8")) as Array<{
+      sourceVersion: string;
+    }>;
+    const pipelineManifest = JSON.parse(await readFile(pipelineManifestPath, "utf8")) as {
+      sourceVersion: string;
+      normalizedPath: string;
+      d1SyncPath: string;
+      pmtilesPath: string;
+      geojsonPath: string;
+      d1Target: string;
+      pmtilesBuilt: boolean;
+    };
+
+    expect(normalized).toHaveLength(2);
+    expect([...new Set(normalized.map((item) => item.sourceVersion))]).toEqual([
+      "2026-03-10-export-v1",
+    ]);
+    expect(pipelineManifest).toEqual({
+      sourceVersion: "2026-03-10-export-v1",
+      normalizedPath,
+      d1SyncPath,
+      pmtilesPath: "public/data/masjids.pmtiles",
+      geojsonPath,
+      d1Target: "skipped",
+      pmtilesBuilt: false,
+    });
   });
 });
