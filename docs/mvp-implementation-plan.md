@@ -292,6 +292,7 @@ Current state
   - `/admin` now has route-level smoke coverage for config health rendering and report resolution wiring
   - `/admin` now translates raw image-delivery modes into operator-facing status/recommendation copy instead of exposing enums only
   - admin config guidance now has focused coverage for `Not Configured`, `Invalid Config`, and `Dev Only` states
+  - admin/config unhappy paths are now covered too, including non-admin rejection and config-health fetch failure rendering
 - no full browser-level e2e suite exists yet
 - local D1 schema resets can require a fresh `bun run dev` restart to avoid stale worker state
 - repo-side lint debt is currently clean

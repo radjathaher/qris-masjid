@@ -77,4 +77,18 @@ describe("/api/admin/config-health", () => {
     expect(response.status).toBe(401);
     await expect(response.text()).resolves.toBe("Tidak diizinkan");
   });
+
+  it("rejects authenticated non-admin requests", async () => {
+    readAuthenticatedUserIdMock.mockResolvedValue("user-1");
+    readAuthenticatedAdminUserIdMock.mockResolvedValue(null);
+
+    const response = await getGetHandler()({
+      context: {
+        env: createEnv(),
+      },
+    } as never);
+
+    expect(response.status).toBe(403);
+    await expect(response.text()).resolves.toBe("Akses ditolak");
+  });
 });

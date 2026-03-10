@@ -110,4 +110,32 @@ describe("/admin", () => {
 
     expect(await screen.findByText("Laporan dikonfirmasi.")).toBeTruthy();
   });
+
+  it("renders config-health fetch errors without hiding the report queue", async () => {
+    fetchAdminConfigHealthMock.mockRejectedValue(new Error("Gagal memuat status konfigurasi admin"));
+    fetchAdminReportsMock.mockResolvedValue({
+      items: [
+        {
+          id: "report-1",
+          status: "open",
+          reasonCode: "manual-review",
+          reasonText: null,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+          reviewedAtNullable: null,
+          resolutionNoteNullable: null,
+          qrisId: "qris-1",
+          masjidId: "masjid-1",
+          reporterId: "user-1",
+          reporterEmail: null,
+          qrisContributorId: null,
+        },
+      ],
+    });
+
+    renderRoute();
+
+    expect(await screen.findByText("Gagal memuat status konfigurasi admin")).toBeTruthy();
+    expect(await screen.findByText("Report report-1")).toBeTruthy();
+  });
 });
