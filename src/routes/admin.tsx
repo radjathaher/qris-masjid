@@ -7,6 +7,7 @@ import {
   fetchAdminReports,
   resolveAdminReport,
 } from "#/features/admin/api/client";
+import { AdminConfigHealthCard } from "#/features/admin/ui/admin-config-health-card";
 import { AdminReportCard } from "#/features/admin/ui/admin-report-card";
 import { Button } from "#/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/shared/ui/card";
@@ -81,33 +82,11 @@ function AdminReportsPage() {
           </CardHeader>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Config Health</CardTitle>
-            <CardDescription>Status operasional untuk delivery gambar QRIS.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {configHealthQuery.error instanceof Error ? (
-              <p className="text-red-600">{configHealthQuery.error.message}</p>
-            ) : configHealthQuery.isLoading ? (
-              <p className="text-emerald-900/70">Memuat status konfigurasi...</p>
-            ) : configHealthQuery.data ? (
-              <>
-                <p>
-                  <strong>Image Delivery:</strong> {configHealthQuery.data.imageDelivery.mode}
-                </p>
-                <p>
-                  <strong>Configured:</strong>{" "}
-                  {configHealthQuery.data.imageDelivery.configured ? "yes" : "no"}
-                </p>
-                <p>
-                  <strong>Base URL:</strong>{" "}
-                  {configHealthQuery.data.imageDelivery.baseUrl || "belum diatur"}
-                </p>
-              </>
-            ) : null}
-          </CardContent>
-        </Card>
+        <AdminConfigHealthCard
+          data={configHealthQuery.data ?? null}
+          error={configHealthQuery.error instanceof Error ? configHealthQuery.error.message : null}
+          loading={configHealthQuery.isLoading}
+        />
 
         {reportsQuery.error instanceof Error ? (
           <Card>

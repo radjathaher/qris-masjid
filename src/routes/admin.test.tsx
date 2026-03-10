@@ -80,6 +80,10 @@ describe("/admin", () => {
     renderRoute();
 
     expect(await screen.findByText("Config Health")).toBeTruthy();
+    expect(await screen.findByText("Production Ready")).toBeTruthy();
+    expect(
+      screen.getByText("Delivery gambar memakai custom domain dan siap dipakai di produksi."),
+    ).toBeTruthy();
     expect(await screen.findByText("public-custom-domain")).toBeTruthy();
     expect(await screen.findByText("https://cdn.example.com")).toBeTruthy();
     expect(await screen.findByText("Report report-1")).toBeTruthy();
