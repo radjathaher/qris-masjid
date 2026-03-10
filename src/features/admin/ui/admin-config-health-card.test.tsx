@@ -22,6 +22,24 @@ function buildHealth(mode: AdminConfigHealth["imageDelivery"]["mode"], overrides
 }
 
 describe("AdminConfigHealthCard", () => {
+  it("renders the loading state", () => {
+    render(<AdminConfigHealthCard data={null} error={null} loading />);
+
+    expect(screen.getByText("Memuat status konfigurasi...")).toBeTruthy();
+  });
+
+  it("renders the error state", () => {
+    render(
+      <AdminConfigHealthCard
+        data={null}
+        error="Gagal memuat status konfigurasi admin"
+        loading={false}
+      />,
+    );
+
+    expect(screen.getByText("Gagal memuat status konfigurasi admin")).toBeTruthy();
+  });
+
   it("renders the not configured state", () => {
     render(<AdminConfigHealthCard data={buildHealth("unconfigured")} error={null} loading={false} />);
 
