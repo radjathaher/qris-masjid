@@ -99,6 +99,8 @@ Source-side endpoint guidance:
 
 - [docs/nominatim-export-contract.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-contract.md)
 - [docs/nominatim-export-implementation-guide.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-implementation-guide.md)
+- Wave 2 execution runbook:
+  - [docs/wave-2-data-execution-runbook.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/wave-2-data-execution-runbook.md)
 
 Once you have `normalized-pois.json`, generate D1 upsert SQL:
 

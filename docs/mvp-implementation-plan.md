@@ -167,6 +167,8 @@ Acceptance
   - D1 sync SQL generation can proceed from `normalized-pois.json`
   - PMTiles build script can proceed from `normalized-pois.json`
   - native `tippecanoe` install is still required for final `.pmtiles` output
+  - operator execution path is now consolidated in:
+    - [docs/wave-2-data-execution-runbook.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/wave-2-data-execution-runbook.md)
 
 Wave 3 - Frontend real-data wiring
 
