@@ -186,6 +186,7 @@ Current smoke coverage includes:
 - map home load + search + detail open
 - auth-return reopening the pending contribute flow
 - contribute modal authenticated submit path
+- Wave 2 pipeline runner option parsing + ingest-arg wiring
 - contribution API create path
 - contribution API duplicate path
 - QRIS report form submit path

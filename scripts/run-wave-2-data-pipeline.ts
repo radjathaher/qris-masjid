@@ -22,14 +22,14 @@ type IngestResult = {
   report: unknown;
 };
 
-function readOption(name: string): string | null {
+export function readOption(name: string, argv: string[]): string | null {
   const prefix = `--${name}=`;
-  const raw = Bun.argv.find((value: string) => value.startsWith(prefix));
+  const raw = argv.find((value: string) => value.startsWith(prefix));
   return raw ? raw.slice(prefix.length) : null;
 }
 
-function parseBooleanOption(name: string, fallback: boolean): boolean {
-  const raw = readOption(name);
+export function parseBooleanOption(name: string, argv: string[], fallback: boolean): boolean {
+  const raw = readOption(name, argv);
   if (!raw) {
     return fallback;
   }
@@ -45,9 +45,12 @@ function parseBooleanOption(name: string, fallback: boolean): boolean {
   throw new Error(`Invalid --${name}: ${raw}`);
 }
 
-function parseCliOptions(): CliOptions {
-  const exportFile = readOption("export-file");
-  const exportUrl = readOption("export-url");
+export function parseCliOptions(
+  argv: string[] = Bun.argv,
+  env: NodeJS.ProcessEnv = process.env,
+): CliOptions {
+  const exportFile = readOption("export-file", argv);
+  const exportUrl = readOption("export-url", argv);
 
   if (!exportFile && !exportUrl) {
     throw new Error("Missing source. Provide --export-url=<url> or --export-file=/path/to/export.json");
@@ -57,8 +60,8 @@ function parseCliOptions(): CliOptions {
     throw new Error("Choose one source only: --export-url or --export-file");
   }
 
-  const localD1 = parseBooleanOption("local-d1", true);
-  const remoteD1 = parseBooleanOption("remote-d1", false);
+  const localD1 = parseBooleanOption("local-d1", argv, true);
+  const remoteD1 = parseBooleanOption("remote-d1", argv, false);
 
   if (localD1 && remoteD1) {
     throw new Error("Choose one D1 target only: --local-d1=true or --remote-d1=true");
@@ -67,18 +70,18 @@ function parseCliOptions(): CliOptions {
   return {
     exportFile,
     exportUrl,
-    outputRoot: readOption("output-root") ?? "data/ingest/nominatim",
-    baseUrl: readOption("base-url") ?? process.env.NOMINATIM_BASE_URL ?? "https://nominatim.cakrawala.ai",
-    reverseEnrich: parseBooleanOption("reverse-enrich", true),
+    outputRoot: readOption("output-root", argv) ?? "data/ingest/nominatim",
+    baseUrl: readOption("base-url", argv) ?? env.NOMINATIM_BASE_URL ?? "https://nominatim.cakrawala.ai",
+    reverseEnrich: parseBooleanOption("reverse-enrich", argv, true),
     localD1,
     remoteD1,
-    skipD1Apply: parseBooleanOption("skip-d1-apply", false),
-    skipPmtiles: parseBooleanOption("skip-pmtiles", false),
-    skipTippecanoe: parseBooleanOption("skip-tippecanoe", false),
+    skipD1Apply: parseBooleanOption("skip-d1-apply", argv, false),
+    skipPmtiles: parseBooleanOption("skip-pmtiles", argv, false),
+    skipTippecanoe: parseBooleanOption("skip-tippecanoe", argv, false),
   };
 }
 
-function buildIngestArgs(options: CliOptions): string[] {
+export function buildIngestArgs(options: CliOptions): string[] {
   const args = [
     "scripts/ingest-nominatim-bootstrap.ts",
     `--output-root=${options.outputRoot}`,
@@ -250,4 +253,6 @@ async function main() {
   );
 }
 
-await main();
+if (import.meta.main) {
+  await main();
+}
