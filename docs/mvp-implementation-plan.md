@@ -172,6 +172,7 @@ Acceptance
   - one-command orchestration now exists via `bun run run:wave2`
   - orchestration option parsing and ingest-arg wiring now have direct test coverage
   - sample-export end-to-end runner smoke now verifies artifact-chain generation into one output directory
+  - invalid structured exports now have runner-level fail-fast coverage before downstream D1/PMTiles work begins
 
 Wave 3 - Frontend real-data wiring
 

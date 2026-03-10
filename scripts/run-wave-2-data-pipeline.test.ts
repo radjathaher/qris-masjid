@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
@@ -227,5 +227,58 @@ describe("run:wave2", () => {
       d1Target: "skipped",
       pmtilesBuilt: false,
     });
+  }, 15000);
+
+  it("fails early on invalid structured exports and does not produce downstream artifacts", async () => {
+    const outputRoot = await mkdtemp(join(tmpdir(), "qris-masjid-wave2-invalid-"));
+    tempDirs.push(outputRoot);
+
+    const invalidExportPath = join(outputRoot, "invalid-export.json");
+    await writeFile(
+      invalidExportPath,
+      `${JSON.stringify({
+        sourceVersion: "",
+        items: [
+          {
+            name: "Masjid Broken",
+            lat: -6.2,
+            lon: 106.8,
+          },
+        ],
+      })}\n`,
+    );
+
+    const subprocess = spawn(
+      "bun",
+      [
+        "scripts/run-wave-2-data-pipeline.ts",
+        `--export-file=${invalidExportPath}`,
+        `--output-root=${outputRoot}`,
+        "--skip-d1-apply=true",
+        "--skip-tippecanoe=true",
+      ],
+      {
+        cwd: process.cwd(),
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+
+    const stderrChunks: Buffer[] = [];
+    subprocess.stderr.on("data", (chunk) => {
+      stderrChunks.push(Buffer.from(chunk));
+    });
+
+    const exitCode = await new Promise<number | null>((resolve, reject) => {
+      subprocess.once("error", reject);
+      subprocess.once("exit", resolve);
+    });
+
+    const stderr = Buffer.concat(stderrChunks).toString("utf8");
+    const failedOutputDir = join(outputRoot, "2026-03-10-export-v1");
+
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain("Invalid structured export: sourceVersion must be a non-empty string");
+    await expect(stat(join(failedOutputDir, "d1-sync.sql"))).rejects.toThrow();
+    await expect(stat(join(failedOutputDir, "wave-2-pipeline.json"))).rejects.toThrow();
   });
 });

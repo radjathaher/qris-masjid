@@ -188,6 +188,7 @@ Current smoke coverage includes:
 - contribute modal authenticated submit path
 - Wave 2 pipeline runner option parsing + ingest-arg wiring
 - Wave 2 pipeline runner sample export artifact-chain smoke
+- Wave 2 pipeline runner invalid-export fail-fast path
 - contribution API create path
 - contribution API duplicate path
 - QRIS report form submit path
