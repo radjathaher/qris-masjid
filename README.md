@@ -233,6 +233,11 @@ wrangler secret put TURNSTILE_SECRET_KEY
 - `TURNSTILE_SITE_KEY`
 - `TURNSTILE_BYPASS` (`false` in production)
 
+Operational setup:
+
+- Production QR image delivery runbook:
+  - [docs/r2-image-delivery-runbook.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/r2-image-delivery-runbook.md)
+
 ### 4) Google OAuth setup
 
 Create OAuth client in Google Cloud Console:
