@@ -294,6 +294,7 @@ Current state
   - admin config guidance now has focused coverage for `Not Configured`, `Invalid Config`, and `Dev Only` states
   - admin/config unhappy paths are now covered too, including non-admin rejection and config-health fetch failure rendering
   - `AdminConfigHealthCard` now has direct loading/error coverage in addition to its delivery-mode matrix
+  - `readPublicR2BaseUrl` and `readPublicR2Delivery` now have direct unit coverage for trimming and delivery-mode classification
   - production setup/verification now has a canonical handoff doc in `docs/r2-image-delivery-runbook.md`
 - no full browser-level e2e suite exists yet
 - local D1 schema resets can require a fresh `bun run dev` restart to avoid stale worker state

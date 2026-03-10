@@ -1,0 +1,85 @@
+import { describe, expect, it } from "vitest";
+import { readPublicR2BaseUrl, readPublicR2Delivery, type AppEnv } from "#/shared/lib/server/env";
+
+function createEnv(overrides?: Partial<AppEnv>): AppEnv {
+  return {
+    APP_BASE_URL: "http://localhost:3000",
+    APP_SESSION_SECRET: "secret",
+    GOOGLE_OAUTH_CLIENT_ID: "id",
+    GOOGLE_OAUTH_CLIENT_SECRET: "secret",
+    GOOGLE_OAUTH_REDIRECT_URI: "http://localhost/callback",
+    TURNSTILE_SECRET_KEY: "turnstile-secret",
+    TURNSTILE_SITE_KEY: "turnstile-site-key",
+    DB: {} as D1Database,
+    QRIS_IMAGES: {} as R2Bucket,
+    ...overrides,
+  };
+}
+
+describe("readPublicR2BaseUrl", () => {
+  it("trims a trailing slash", () => {
+    expect(
+      readPublicR2BaseUrl(
+        createEnv({
+          R2_PUBLIC_BASE_URL: "https://cdn.example.com/",
+        }),
+      ),
+    ).toBe("https://cdn.example.com");
+  });
+
+  it("returns empty string when unset", () => {
+    expect(readPublicR2BaseUrl(createEnv())).toBe("");
+  });
+});
+
+describe("readPublicR2Delivery", () => {
+  it("classifies unset config as unconfigured", () => {
+    expect(readPublicR2Delivery(createEnv())).toEqual({
+      baseUrl: "",
+      configured: false,
+      mode: "unconfigured",
+    });
+  });
+
+  it("classifies malformed urls as invalid", () => {
+    expect(
+      readPublicR2Delivery(
+        createEnv({
+          R2_PUBLIC_BASE_URL: "not-a-url",
+        }),
+      ),
+    ).toEqual({
+      baseUrl: "not-a-url",
+      configured: false,
+      mode: "invalid",
+    });
+  });
+
+  it("classifies r2.dev hosts as dev-only", () => {
+    expect(
+      readPublicR2Delivery(
+        createEnv({
+          R2_PUBLIC_BASE_URL: "https://pub-12345.r2.dev/",
+        }),
+      ),
+    ).toEqual({
+      baseUrl: "https://pub-12345.r2.dev",
+      configured: true,
+      mode: "public-r2-dev",
+    });
+  });
+
+  it("classifies custom domains as production-ready", () => {
+    expect(
+      readPublicR2Delivery(
+        createEnv({
+          R2_PUBLIC_BASE_URL: "https://cdn.example.com",
+        }),
+      ),
+    ).toEqual({
+      baseUrl: "https://cdn.example.com",
+      configured: true,
+      mode: "public-custom-domain",
+    });
+  });
+});
