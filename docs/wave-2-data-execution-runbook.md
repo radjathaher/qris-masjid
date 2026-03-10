@@ -30,6 +30,30 @@ structured export
        PMTiles features
 ```
 
+Fast path
+
+```bash
+bun run run:wave2 --export-url=https://nominatim.cakrawala.ai/internal/exports/muslim-place-of-worship.json
+```
+
+What it does
+
+```text
+ingest
+  -> build d1-sync.sql
+  -> apply local D1 by default
+  -> build PMTiles by default
+  -> write wave-2-pipeline.json
+```
+
+Useful flags
+
+- `--export-file=/absolute/path/to/export.json`
+- `--remote-d1=true`
+- `--skip-d1-apply=true`
+- `--skip-pmtiles=true`
+- `--skip-tippecanoe=true`
+
 Prerequisites
 
 - Structured export source exists and matches:
@@ -257,12 +281,9 @@ Recommended operator loop
 
 ```text
 1. obtain/export structured source
-2. run ingest
-3. inspect report.json
-4. generate d1-sync.sql
-5. apply D1 sync
-6. build PMTiles
-7. restart dev if local D1 changed
-8. verify map + /api/masjids
-9. only then deploy/push
+2. run bun run run:wave2 ...
+3. inspect report.json + wave-2-pipeline.json
+4. restart dev if local D1 changed
+5. verify map + /api/masjids
+6. only then deploy/push
 ```

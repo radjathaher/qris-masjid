@@ -169,6 +169,7 @@ Acceptance
   - native `tippecanoe` install is still required for final `.pmtiles` output
   - operator execution path is now consolidated in:
     - [docs/wave-2-data-execution-runbook.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/wave-2-data-execution-runbook.md)
+  - one-command orchestration now exists via `bun run run:wave2`
 
 Wave 3 - Frontend real-data wiring
 

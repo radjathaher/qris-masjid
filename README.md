@@ -95,6 +95,12 @@ Or fetch it directly once the endpoint exists:
 bun run ingest:nominatim --export-url=https://nominatim.cakrawala.ai/internal/exports/muslim-place-of-worship.json
 ```
 
+To run the full Wave 2 path in one command:
+
+```bash
+bun run run:wave2 --export-url=https://nominatim.cakrawala.ai/internal/exports/muslim-place-of-worship.json
+```
+
 Source-side endpoint guidance:
 
 - [docs/nominatim-export-contract.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-contract.md)
