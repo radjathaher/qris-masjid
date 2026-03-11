@@ -7,6 +7,7 @@ import type {
 } from "./nominatim-bootstrap.types";
 import {
   inferSubtype,
+  isGenericPrayerPlaceName,
   isLikelyMuslimPrayerPlace,
   normalizeSourceFields,
 } from "./nominatim-bootstrap.matching";
@@ -39,6 +40,91 @@ function sanitizeForId(value: string): string {
 function trimToNull(value: string | undefined): string | null {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+const PROVINCE_ALIAS_ENTRIES = [
+  ["aceh", "Aceh"],
+  ["bali", "Bali"],
+  ["banten", "Banten"],
+  ["bengkulu", "Bengkulu"],
+  ["bengkurlu", "Bengkulu"],
+  ["daerah khusus ibukota jakarta", "DKI Jakarta"],
+  ["dki jakarta", "DKI Jakarta"],
+  ["dki", "DKI Jakarta"],
+  ["dki jakarta raya", "DKI Jakarta"],
+  ["jakarta", "DKI Jakarta"],
+  ["daerah istimewa yogyakarta", "DI Yogyakarta"],
+  ["di yogyakarta", "DI Yogyakarta"],
+  ["d i yogyakarta", "DI Yogyakarta"],
+  ["diy", "DI Yogyakarta"],
+  ["special region of yogyakarta", "DI Yogyakarta"],
+  ["yogyakarta", "DI Yogyakarta"],
+  ["gorontalo", "Gorontalo"],
+  ["jambi", "Jambi"],
+  ["jawa barat", "Jawa Barat"],
+  ["jawabarat", "Jawa Barat"],
+  ["jawa bawat", "Jawa Barat"],
+  ["west java", "Jawa Barat"],
+  ["central java", "Jawa Tengah"],
+  ["jawa tengah", "Jawa Tengah"],
+  ["jawa timur", "Jawa Timur"],
+  ["kalimantan barat", "Kalimantan Barat"],
+  ["kalimantan selatan", "Kalimantan Selatan"],
+  ["kalimantan tengah", "Kalimantan Tengah"],
+  ["kalimantan timur", "Kalimantan Timur"],
+  ["east kalimantan", "Kalimantan Timur"],
+  ["kalimantan utara", "Kalimantan Utara"],
+  ["kepulauan bangka belitung", "Kepulauan Bangka Belitung"],
+  ["kepulauan riau", "Kepulauan Riau"],
+  ["riau islands", "Kepulauan Riau"],
+  ["lampung", "Lampung"],
+  ["maluku", "Maluku"],
+  ["maluku utara", "Maluku Utara"],
+  ["nusa tenggara barat", "Nusa Tenggara Barat"],
+  ["nusa tenggara bara", "Nusa Tenggara Barat"],
+  ["ntb", "Nusa Tenggara Barat"],
+  ["nusa tenggara timur", "Nusa Tenggara Timur"],
+  ["papua", "Papua"],
+  ["papua barat", "Papua Barat"],
+  ["papua barat daya", "Papua Barat Daya"],
+  ["papua pegunungan", "Papua Pegunungan"],
+  ["papua selatan", "Papua Selatan"],
+  ["papua tengah", "Papua Tengah"],
+  ["riau", "Riau"],
+  ["sulawesi barat", "Sulawesi Barat"],
+  ["sulawesi selatan", "Sulawesi Selatan"],
+  ["sulawesi tengah", "Sulawesi Tengah"],
+  ["sulawesi tenggara", "Sulawesi Tenggara"],
+  ["sulawesi tenggar", "Sulawesi Tenggara"],
+  ["sulawesi utara", "Sulawesi Utara"],
+  ["sumatera barat", "Sumatera Barat"],
+  ["sumatra barat", "Sumatera Barat"],
+  ["sumatera selatan", "Sumatera Selatan"],
+  ["sumatera utara", "Sumatera Utara"],
+] as const satisfies ReadonlyArray<readonly [string, string]>;
+
+const PROVINCE_ALIASES = new Map<string, string>(PROVINCE_ALIAS_ENTRIES);
+
+function normalizeLookupKey(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeProvince(value: string | null): string | null {
+  const trimmed = trimToNull(value ?? undefined);
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^\d+$/.test(trimmed) || trimmed.toLowerCase() === "id") {
+    return null;
+  }
+
+  return PROVINCE_ALIASES.get(normalizeLookupKey(trimmed)) ?? trimmed;
 }
 
 function readAddressField(
@@ -190,7 +276,7 @@ function classifyBootstrapItem(input: BootstrapClassificationInput): AcceptedBoo
       lat,
       lon,
       name,
-      province: readAddressField(input.item.address, PROVINCE_FIELDS) ?? input.query.province ?? null,
+      province: normalizeProvince(readAddressField(input.item.address, PROVINCE_FIELDS) ?? input.query.province ?? null),
       queryText: input.query.q,
       sourceSystem: "nominatim-http",
       sourceVersion: input.sourceVersion,
@@ -236,6 +322,19 @@ function normalizeStructuredExportItem(input: {
     };
   }
 
+  if (isGenericPrayerPlaceName(name)) {
+    return {
+      accepted: false,
+      rejected: buildRejectedItem({
+        queryLabel: "structured-export",
+        queryText,
+        name,
+        reason: "generic-name",
+        fields,
+      }),
+    };
+  }
+
   return {
     accepted: true,
     poi: buildPoi({
@@ -245,7 +344,7 @@ function normalizeStructuredExportItem(input: {
       lat,
       lon,
       name,
-      province: trimToNull(input.item.province),
+      province: normalizeProvince(trimToNull(input.item.province)),
       queryText,
       sourceSystem: queryText.startsWith("nominatim-db") ? "nominatim-db" : "nominatim-export",
       sourceVersion: input.sourceVersion,

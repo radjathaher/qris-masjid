@@ -14,6 +14,18 @@ const EXCLUDED_CLASS_TYPE_PAIRS = new Set([
 
 const PRAYER_PLACE_TERMS = ["masjid", "mosque", "musholla", "musala", "mushala", "surau", "langgar"] as const;
 const ACCEPTED_CLASS_TYPE_PAIRS = new Set(["amenity:place_of_worship", "building:yes", "building:mosque"]);
+const GENERIC_NAME_PATTERNS = [
+  /^masjid$/i,
+  /^mosque$/i,
+  /^mushol+?a$/i,
+  /^mushol+?ah$/i,
+  /^mushala$/i,
+  /^musala$/i,
+  /^surau$/i,
+  /^langgar$/i,
+  /^bangunan masjid$/i,
+  /^area masjid$/i,
+] as const;
 
 type NormalizedSourceFields = {
   displayName: string | null;
@@ -81,6 +93,19 @@ function mentionsPrayerPlace(haystack: string): boolean {
   return PRAYER_PLACE_TERMS.some((term) => haystack.includes(term));
 }
 
+function normalizeNameForQualityCheck(name: string): string {
+  return name
+    .normalize("NFKD")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function isGenericPrayerPlaceName(name: string): boolean {
+  const normalizedName = normalizeNameForQualityCheck(name);
+  return GENERIC_NAME_PATTERNS.some((pattern) => pattern.test(normalizedName));
+}
+
 function hasAcceptedSourceType(fields: NormalizedSourceFields): boolean {
   const key = `${fields.sourceClass?.toLowerCase() ?? ""}:${fields.sourceType?.toLowerCase() ?? ""}`;
   return ACCEPTED_CLASS_TYPE_PAIRS.has(key);
@@ -91,6 +116,10 @@ export function isLikelyMuslimPrayerPlace(item: NominatimSearchResult, name: str
   const classTypeKey = `${fields.sourceClass?.toLowerCase() ?? ""}:${fields.sourceType?.toLowerCase() ?? ""}`;
 
   if (EXCLUDED_CLASS_TYPE_PAIRS.has(classTypeKey)) {
+    return false;
+  }
+
+  if (isGenericPrayerPlaceName(name)) {
     return false;
   }
 
