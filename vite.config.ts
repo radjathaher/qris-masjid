@@ -15,6 +15,9 @@ const config = defineConfig({
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     tanstackStart({
+      router: {
+        routeFileIgnorePattern: "\\.test\\.(ts|tsx)$",
+      },
       prerender: {
         enabled: true,
         autoStaticPathsDiscovery: false,
