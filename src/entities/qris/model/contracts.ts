@@ -18,7 +18,13 @@ export const masjidQrisResponseSchema = z.object({
   canUpload: z.boolean(),
   uploadPolicy: z.enum(["open-upload", "report-first", "review-pending"]),
   imageDeliveryConfigured: z.boolean(),
-  imageDeliveryMode: z.enum(["unconfigured", "invalid", "public-custom-domain", "public-r2-dev"]),
+  imageDeliveryMode: z.enum([
+    "worker-proxy",
+    "unconfigured",
+    "invalid",
+    "public-custom-domain",
+    "public-r2-dev",
+  ]),
   items: z.array(qrisItemSchema),
 });
 

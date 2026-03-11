@@ -75,9 +75,7 @@ describe("/api/masjids/$masjidId/qris", () => {
 
     const response = await getGetHandler()({
       context: {
-        env: createEnv({
-          R2_PUBLIC_BASE_URL: "https://cdn.example.com/",
-        }),
+        env: createEnv(),
       },
       params: {
         masjidId: "masjid-1",
@@ -91,7 +89,7 @@ describe("/api/masjids/$masjidId/qris", () => {
       canUpload: false,
       uploadPolicy: "report-first",
       imageDeliveryConfigured: true,
-      imageDeliveryMode: "public-custom-domain",
+      imageDeliveryMode: "worker-proxy",
       items: [
         {
           id: "qris-active",
@@ -100,7 +98,7 @@ describe("/api/masjids/$masjidId/qris", () => {
           merchantCity: "Jakarta",
           pointOfInitiationMethod: "11",
           nmid: "ID102030",
-          imageUrl: "https://cdn.example.com/qris/masjid-1/active.png",
+          imageUrl: "/api/qris-images/qris-active",
           isActive: true,
           updatedAt: "2026-03-10T00:00:00.000Z",
         },
@@ -147,8 +145,8 @@ describe("/api/masjids/$masjidId/qris", () => {
       hasActiveQris: false,
       canUpload: true,
       uploadPolicy: "open-upload",
-      imageDeliveryConfigured: false,
-      imageDeliveryMode: "unconfigured",
+      imageDeliveryConfigured: true,
+      imageDeliveryMode: "worker-proxy",
       items: [],
     });
   });
@@ -179,9 +177,7 @@ describe("/api/masjids/$masjidId/qris", () => {
 
     const response = await getGetHandler()({
       context: {
-        env: createEnv({
-          R2_PUBLIC_BASE_URL: "https://cdn.example.com/",
-        }),
+        env: createEnv(),
       },
       params: {
         masjidId: "masjid-1",
@@ -195,106 +191,8 @@ describe("/api/masjids/$masjidId/qris", () => {
       canUpload: false,
       uploadPolicy: "review-pending",
       imageDeliveryConfigured: true,
-      imageDeliveryMode: "public-custom-domain",
+      imageDeliveryMode: "worker-proxy",
       items: [],
-    });
-  });
-
-  it("marks r2.dev delivery as configured but non-production", async () => {
-    createDbMock.mockReturnValue({
-      select: vi.fn(() => ({
-        from: () => ({
-          where: () => ({
-            orderBy: async () => [
-              {
-                id: "qris-active",
-                payloadHash: "hash-1",
-                merchantName: "Masjid Istiqlal",
-                merchantCity: "Jakarta",
-                pointOfInitiationMethod: "11",
-                nmid: "ID102030",
-                imageR2Key: "qris/masjid-1/active.png",
-                isActive: 1,
-                reviewStatus: "active",
-                updatedAt: "2026-03-10T00:00:00.000Z",
-              },
-            ],
-          }),
-        }),
-      })),
-    });
-
-    const response = await getGetHandler()({
-      context: {
-        env: createEnv({
-          R2_PUBLIC_BASE_URL: "https://pub-12345.r2.dev",
-        }),
-      },
-      params: {
-        masjidId: "masjid-1",
-      },
-    } as never);
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({
-      masjidId: "masjid-1",
-      imageDeliveryConfigured: true,
-      imageDeliveryMode: "public-r2-dev",
-      items: [
-        {
-          id: "qris-active",
-          imageUrl: "https://pub-12345.r2.dev/qris/masjid-1/active.png",
-        },
-      ],
-    });
-  });
-
-  it("marks malformed public base urls as invalid instead of configured", async () => {
-    createDbMock.mockReturnValue({
-      select: vi.fn(() => ({
-        from: () => ({
-          where: () => ({
-            orderBy: async () => [
-              {
-                id: "qris-active",
-                payloadHash: "hash-1",
-                merchantName: "Masjid Istiqlal",
-                merchantCity: "Jakarta",
-                pointOfInitiationMethod: "11",
-                nmid: "ID102030",
-                imageR2Key: "qris/masjid-1/active.png",
-                isActive: 1,
-                reviewStatus: "active",
-                updatedAt: "2026-03-10T00:00:00.000Z",
-              },
-            ],
-          }),
-        }),
-      })),
-    });
-
-    const response = await getGetHandler()({
-      context: {
-        env: createEnv({
-          R2_PUBLIC_BASE_URL: "not-a-url",
-        }),
-      },
-      params: {
-        masjidId: "masjid-1",
-      },
-    } as never);
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({
-      masjidId: "masjid-1",
-      imageDeliveryConfigured: false,
-      imageDeliveryMode: "invalid",
-      items: [
-        {
-          id: "qris-active",
-          imageUrl: null,
-        },
-      ],
     });
   });
 });

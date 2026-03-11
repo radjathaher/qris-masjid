@@ -13,6 +13,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMasjidsRouteImport } from './routes/api/masjids'
 import { Route as ApiTurnstileSiteKeyRouteImport } from './routes/api/turnstile.site-key'
+import { Route as ApiQrisImagesQrisIdRouteImport } from './routes/api/qris-images/$qrisId'
 import { Route as ApiMasjidsSearchRouteImport } from './routes/api/masjids.search'
 import { Route as ApiMasjidsMasjidIdRouteImport } from './routes/api/masjids.$masjidId'
 import { Route as ApiContributionsUpsertRouteImport } from './routes/api/contributions.upsert'
@@ -45,6 +46,11 @@ const ApiMasjidsRoute = ApiMasjidsRouteImport.update({
 const ApiTurnstileSiteKeyRoute = ApiTurnstileSiteKeyRouteImport.update({
   id: '/api/turnstile/site-key',
   path: '/api/turnstile/site-key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiQrisImagesQrisIdRoute = ApiQrisImagesQrisIdRouteImport.update({
+  id: '/api/qris-images/$qrisId',
+  path: '/api/qris-images/$qrisId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMasjidsSearchRoute = ApiMasjidsSearchRouteImport.update({
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/masjids/$masjidId': typeof ApiMasjidsMasjidIdRouteWithChildren
   '/api/masjids/search': typeof ApiMasjidsSearchRoute
+  '/api/qris-images/$qrisId': typeof ApiQrisImagesQrisIdRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/masjids/$masjidId': typeof ApiMasjidsMasjidIdRouteWithChildren
   '/api/masjids/search': typeof ApiMasjidsSearchRoute
+  '/api/qris-images/$qrisId': typeof ApiQrisImagesQrisIdRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
   '/api/masjids/$masjidId': typeof ApiMasjidsMasjidIdRouteWithChildren
   '/api/masjids/search': typeof ApiMasjidsSearchRoute
+  '/api/qris-images/$qrisId': typeof ApiQrisImagesQrisIdRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/api/contributions/upsert'
     | '/api/masjids/$masjidId'
     | '/api/masjids/search'
+    | '/api/qris-images/$qrisId'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/api/contributions/upsert'
     | '/api/masjids/$masjidId'
     | '/api/masjids/search'
+    | '/api/qris-images/$qrisId'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/api/contributions/upsert'
     | '/api/masjids/$masjidId'
     | '/api/masjids/search'
+    | '/api/qris-images/$qrisId'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
@@ -242,6 +254,7 @@ export interface RootRouteChildren {
   ApiAdminReportsRoute: typeof ApiAdminReportsRouteWithChildren
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiContributionsUpsertRoute: typeof ApiContributionsUpsertRoute
+  ApiQrisImagesQrisIdRoute: typeof ApiQrisImagesQrisIdRoute
   ApiTurnstileSiteKeyRoute: typeof ApiTurnstileSiteKeyRoute
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
   ApiAuthGoogleStartRoute: typeof ApiAuthGoogleStartRoute
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/api/turnstile/site-key'
       fullPath: '/api/turnstile/site-key'
       preLoaderRoute: typeof ApiTurnstileSiteKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/qris-images/$qrisId': {
+      id: '/api/qris-images/$qrisId'
+      path: '/api/qris-images/$qrisId'
+      fullPath: '/api/qris-images/$qrisId'
+      preLoaderRoute: typeof ApiQrisImagesQrisIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/masjids/search': {
@@ -429,6 +449,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminReportsRoute: ApiAdminReportsRouteWithChildren,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiContributionsUpsertRoute: ApiContributionsUpsertRoute,
+  ApiQrisImagesQrisIdRoute: ApiQrisImagesQrisIdRoute,
   ApiTurnstileSiteKeyRoute: ApiTurnstileSiteKeyRoute,
   ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
   ApiAuthGoogleStartRoute: ApiAuthGoogleStartRoute,

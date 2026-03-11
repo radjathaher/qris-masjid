@@ -1,10 +1,11 @@
 import { desc, eq } from "drizzle-orm";
 import { createFileRoute } from "@tanstack/react-router";
+import { buildQrisImageUrl } from "#/entities/qris/lib/image-url";
 import { createDb } from "#/shared/db/client";
 import { masjids, qris, users } from "#/shared/db/schema";
 import { readAuthenticatedUserId } from "#/shared/lib/server/auth";
 import { readAuthenticatedAdminUserId } from "#/shared/lib/server/admin";
-import { getEnv, readPublicR2Delivery } from "#/shared/lib/server/env";
+import { getEnv } from "#/shared/lib/server/env";
 
 export const Route = createFileRoute("/api/admin/pending-qris")({
   server: {
@@ -45,14 +46,10 @@ export const Route = createFileRoute("/api/admin/pending-qris")({
           .where(eq(qris.reviewStatus, "pending"))
           .orderBy(desc(qris.createdAt));
 
-        const imageDelivery = readPublicR2Delivery(env);
-
         return Response.json({
           items: rows.map((row) => ({
             ...row,
-            imageUrl: imageDelivery.configured
-              ? `${imageDelivery.baseUrl}/${row.imageR2Key}`
-              : null,
+            imageUrl: buildQrisImageUrl(row.id),
           })),
         });
       },

@@ -27,8 +27,8 @@ const qrisData: MasjidQrisResponse = {
   hasActiveQris: true,
   canUpload: false,
   uploadPolicy: "report-first",
-  imageDeliveryConfigured: false,
-  imageDeliveryMode: "unconfigured",
+  imageDeliveryConfigured: true,
+  imageDeliveryMode: "worker-proxy",
   items: [
     {
       id: "qris-1",
@@ -37,7 +37,7 @@ const qrisData: MasjidQrisResponse = {
       merchantCity: "Jakarta",
       pointOfInitiationMethod: null,
       nmid: null,
-      imageUrl: null,
+      imageUrl: "/api/qris-images/qris-1",
       isActive: true,
       updatedAt: "2026-03-10T00:00:00.000Z",
     },
@@ -63,9 +63,7 @@ describe("MasjidDetailModal", () => {
       />,
     );
 
-    expect(
-      screen.getByText("Gambar QR tersimpan, tapi URL publik R2 belum dikonfigurasi."),
-    ).toBeTruthy();
+    expect(screen.getByText("Buka gambar QR")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Laporkan QRIS" }));
     fireEvent.change(screen.getByLabelText("Kenapa QRIS ini perlu ditinjau?"), {
@@ -139,5 +137,28 @@ describe("MasjidDetailModal", () => {
         return element?.textContent === "URL publik R2 tidak valid. Periksa nilai R2_PUBLIC_BASE_URL.";
       }),
     ).toBeTruthy();
+  });
+
+  it("renders a neutral message when proxy mode has no image url", () => {
+    render(
+      <MasjidDetailModal
+        masjid={masjid}
+        qrisData={{
+          ...qrisData,
+          items: [
+            {
+              ...qrisData.items[0],
+              imageUrl: null,
+            },
+          ],
+        }}
+        loading={false}
+        error={null}
+        onContributeQris={() => {}}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByText("Gambar QR belum tersedia.")).toBeTruthy();
   });
 });

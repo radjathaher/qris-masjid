@@ -50,9 +50,11 @@ describe("AdminConfigHealthCard", () => {
 
     expect(screen.getByText("Admin Access:")).toBeTruthy();
     expect(screen.getByText("Placeholder Config")).toBeTruthy();
-    expect(screen.getByText("Not Configured")).toBeTruthy();
+    expect(screen.getByText("Proxy Only")).toBeTruthy();
     expect(
-      screen.getByText("R2_PUBLIC_BASE_URL belum diatur. Gambar tersimpan, tapi URL publik belum bisa dibuat."),
+      screen.getByText(
+        "R2_PUBLIC_BASE_URL belum diatur. Worker proxy tetap melayani gambar, tetapi direct bucket delivery belum aktif.",
+      ),
     ).toBeTruthy();
     expect(screen.getByText("belum diatur")).toBeTruthy();
   });
@@ -62,7 +64,9 @@ describe("AdminConfigHealthCard", () => {
 
     expect(screen.getByText("Invalid Config")).toBeTruthy();
     expect(
-      screen.getByText("Nilai R2_PUBLIC_BASE_URL tidak valid. Perbaiki env var sebelum link gambar dipakai."),
+      screen.getByText(
+        "Nilai R2_PUBLIC_BASE_URL tidak valid. Worker proxy tetap berjalan, tetapi direct bucket delivery dimatikan.",
+      ),
     ).toBeTruthy();
     expect(screen.getByText("not-a-url")).toBeTruthy();
   });
@@ -72,9 +76,22 @@ describe("AdminConfigHealthCard", () => {
 
     expect(screen.getByText("Dev Only")).toBeTruthy();
     expect(
-      screen.getByText("Delivery gambar masih memakai .r2.dev. Ganti ke custom domain sebelum produksi."),
+      screen.getByText(
+        "Direct bucket delivery masih memakai .r2.dev. Worker proxy tetap bisa dipakai, tapi jalur ini belum layak produksi.",
+      ),
     ).toBeTruthy();
     expect(screen.getByText("https://pub-12345.r2.dev")).toBeTruthy();
+  });
+
+  it("renders direct delivery ready state", () => {
+    render(<AdminConfigHealthCard data={buildHealth("public-custom-domain")} error={null} loading={false} />);
+
+    expect(screen.getByText("Direct Delivery Ready")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Direct bucket delivery memakai custom domain. Ini opsional karena Worker proxy sudah bisa melayani gambar.",
+      ),
+    ).toBeTruthy();
   });
 
   it("renders configured admin access", () => {

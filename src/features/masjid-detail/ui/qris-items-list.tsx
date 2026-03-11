@@ -35,6 +35,8 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
               >
                 Buka gambar QR
               </a>
+            ) : data.imageDeliveryMode === "worker-proxy" ? (
+              <p className="text-emerald-900/70">Gambar QR belum tersedia.</p>
             ) : !data.imageDeliveryConfigured ? (
               data.imageDeliveryMode === "invalid" ? (
                 <p className="text-amber-800/80">

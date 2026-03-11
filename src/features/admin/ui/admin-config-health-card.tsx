@@ -11,23 +11,27 @@ function describeImageDelivery(mode: AdminConfigHealth["imageDelivery"]["mode"])
   switch (mode) {
     case "public-custom-domain":
       return {
-        title: "Production Ready",
-        description: "Delivery gambar memakai custom domain dan siap dipakai di produksi.",
+        title: "Direct Delivery Ready",
+        description:
+          "Direct bucket delivery memakai custom domain. Ini opsional karena Worker proxy sudah bisa melayani gambar.",
       };
     case "public-r2-dev":
       return {
         title: "Dev Only",
-        description: "Delivery gambar masih memakai .r2.dev. Ganti ke custom domain sebelum produksi.",
+        description:
+          "Direct bucket delivery masih memakai .r2.dev. Worker proxy tetap bisa dipakai, tapi jalur ini belum layak produksi.",
       };
     case "invalid":
       return {
         title: "Invalid Config",
-        description: "Nilai R2_PUBLIC_BASE_URL tidak valid. Perbaiki env var sebelum link gambar dipakai.",
+        description:
+          "Nilai R2_PUBLIC_BASE_URL tidak valid. Worker proxy tetap berjalan, tetapi direct bucket delivery dimatikan.",
       };
     case "unconfigured":
       return {
-        title: "Not Configured",
-        description: "R2_PUBLIC_BASE_URL belum diatur. Gambar tersimpan, tapi URL publik belum bisa dibuat.",
+        title: "Proxy Only",
+        description:
+          "R2_PUBLIC_BASE_URL belum diatur. Worker proxy tetap melayani gambar, tetapi direct bucket delivery belum aktif.",
       };
   }
 }

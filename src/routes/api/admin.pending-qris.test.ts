@@ -84,9 +84,7 @@ describe("/api/admin/pending-qris", () => {
 
     const response = await getGetHandler()({
       context: {
-        env: createEnv({
-          R2_PUBLIC_BASE_URL: "https://cdn.example.com",
-        }),
+        env: createEnv(),
       },
     } as never);
 
@@ -103,7 +101,7 @@ describe("/api/admin/pending-qris", () => {
           pointOfInitiationMethod: "11",
           nmid: "ID123",
           imageR2Key: "qris/masjid-1/pending.png",
-          imageUrl: "https://cdn.example.com/qris/masjid-1/pending.png",
+          imageUrl: "/api/qris-images/qris-1",
           contributorId: "user-2",
           contributorEmail: "user@example.com",
           createdAt: "2026-03-11T00:00:00.000Z",
