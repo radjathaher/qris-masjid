@@ -127,6 +127,11 @@ function normalizeProvince(value: string | null): string | null {
   return PROVINCE_ALIASES.get(normalizeLookupKey(trimmed)) ?? trimmed;
 }
 
+function normalizeCity(value: string | null): string | null {
+  const trimmed = trimToNull(value ?? undefined);
+  return trimmed ? trimmed : null;
+}
+
 function readAddressField(
   address: Record<string, string | undefined> | undefined,
   candidates: string[],
@@ -205,7 +210,7 @@ function buildPoi(input: {
     name: input.name,
     lat: input.lat,
     lon: input.lon,
-    city: input.city,
+    city: normalizeCity(input.city),
     province: input.province,
     subtype: inferSubtype({
       name: input.name,
@@ -220,6 +225,74 @@ function buildPoi(input: {
     lastSeenAt: input.fetchedAt,
     sourceQuery: input.queryText,
   };
+}
+
+function buildUniqueCityProvinceMap(pois: BootstrapPoi[]): Map<string, string> {
+  const provinceCandidates = new Map<string, Set<string>>();
+
+  for (const poi of pois) {
+    if (!poi.city || !poi.province) {
+      continue;
+    }
+
+    const key = normalizeLookupKey(poi.city);
+    const provinces = provinceCandidates.get(key) ?? new Set<string>();
+    provinces.add(poi.province);
+    provinceCandidates.set(key, provinces);
+  }
+
+  const uniqueMap = new Map<string, string>();
+
+  for (const [cityKey, provinces] of provinceCandidates.entries()) {
+    if (provinces.size !== 1) {
+      continue;
+    }
+
+    uniqueMap.set(cityKey, provinces.values().next().value as string);
+  }
+
+  return uniqueMap;
+}
+
+function extractCityFromDisplayName(displayName: string | null, knownCities: Set<string>): string | null {
+  if (!displayName) {
+    return null;
+  }
+
+  const parts = displayName
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length < 3) {
+    return null;
+  }
+
+  for (const part of parts.slice(1, -1).reverse()) {
+    if (knownCities.has(normalizeLookupKey(part))) {
+      return part;
+    }
+  }
+
+  return null;
+}
+
+export function enrichBootstrapPois(pois: BootstrapPoi[]): BootstrapPoi[] {
+  const cityProvinceMap = buildUniqueCityProvinceMap(pois);
+  const knownCities = new Set(cityProvinceMap.keys());
+
+  return pois.map((poi) => {
+    const inferredCity = poi.city ?? extractCityFromDisplayName(poi.displayName, knownCities);
+    const inferredProvince =
+      poi.province ??
+      (inferredCity ? cityProvinceMap.get(normalizeLookupKey(inferredCity)) ?? null : null);
+
+    return {
+      ...poi,
+      city: normalizeCity(inferredCity),
+      province: normalizeProvince(inferredProvince),
+    };
+  });
 }
 
 function classifyBootstrapItem(input: BootstrapClassificationInput): AcceptedBootstrapClassification | RejectedBootstrapClassification {
@@ -375,13 +448,18 @@ export function normalizeStructuredExportItems(input: {
   sourceVersion: string;
   fetchedAt: string;
 }): { accepted: BootstrapPoi[]; rejected: RejectedBootstrapItem[] } {
-  return collectNormalizationResults(input.items, (item) =>
+  const normalized = collectNormalizationResults(input.items, (item) =>
     normalizeStructuredExportItem({
       item,
       fetchedAt: input.fetchedAt,
       sourceVersion: input.sourceVersion,
     }),
   );
+
+  return {
+    accepted: enrichBootstrapPois(normalized.accepted),
+    rejected: normalized.rejected,
+  };
 }
 
 export function normalizeBootstrapItems(input: {
@@ -390,7 +468,7 @@ export function normalizeBootstrapItems(input: {
   fetchedAt: string;
   sourceVersion: string;
 }): { accepted: BootstrapPoi[]; rejected: RejectedBootstrapItem[] } {
-  return collectNormalizationResults(input.items, (item) =>
+  const normalized = collectNormalizationResults(input.items, (item) =>
     classifyBootstrapItem({
       item,
       query: input.query,
@@ -398,4 +476,9 @@ export function normalizeBootstrapItems(input: {
       sourceVersion: input.sourceVersion,
     }),
   );
+
+  return {
+    accepted: enrichBootstrapPois(normalized.accepted),
+    rejected: normalized.rejected,
+  };
 }
