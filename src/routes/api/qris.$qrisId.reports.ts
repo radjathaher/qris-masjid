@@ -8,6 +8,7 @@ import { createDb } from "#/shared/db/client";
 import { qris, qrisReports } from "#/shared/db/schema";
 import { readAuthenticatedUserId } from "#/shared/lib/server/auth";
 import { getEnv } from "#/shared/lib/server/env";
+import { consumeRateLimit, createRateLimitResponse } from "#/shared/lib/server/rate-limit";
 
 export const Route = createFileRoute("/api/qris/$qrisId/reports")({
   server: {
@@ -23,6 +24,19 @@ export const Route = createFileRoute("/api/qris/$qrisId/reports")({
         const parsed = createQrisReportRequestSchema.safeParse(await request.json());
         if (!parsed.success) {
           return new Response("Payload laporan tidak valid", { status: 400 });
+        }
+
+        const rateLimit = await consumeRateLimit({
+          env,
+          request,
+          scope: "qris-report-create",
+          userId,
+          limit: 10,
+          windowSeconds: 600,
+        });
+
+        if (!rateLimit.ok) {
+          return createRateLimitResponse(rateLimit);
         }
 
         const db = createDb(env.DB);

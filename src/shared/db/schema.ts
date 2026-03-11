@@ -88,3 +88,25 @@ export const qrisReports = sqliteTable(
     statusIdx: index("qris_reports_status_idx").on(table.status),
   }),
 );
+
+export const requestRateLimits = sqliteTable(
+  "request_rate_limits",
+  {
+    id: text("id").primaryKey(),
+    scope: text("scope").notNull(),
+    subjectKey: text("subject_key").notNull(),
+    windowStartedAt: text("window_started_at").notNull(),
+    hits: integer("hits").notNull().default(0),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => ({
+    scopeSubjectWindowUnique: uniqueIndex("request_rate_limits_scope_subject_window_unique_idx").on(
+      table.scope,
+      table.subjectKey,
+      table.windowStartedAt,
+    ),
+    scopeIdx: index("request_rate_limits_scope_idx").on(table.scope),
+    updatedAtIdx: index("request_rate_limits_updated_at_idx").on(table.updatedAt),
+  }),
+);

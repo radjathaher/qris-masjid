@@ -17,6 +17,7 @@ import {
 } from "#/shared/lib/server/image";
 import { decodeQrTextFromImage } from "#/shared/lib/server/qr-image";
 import { validateQrisPayload } from "#/shared/lib/server/qris-payload";
+import { consumeRateLimit, createRateLimitResponse } from "#/shared/lib/server/rate-limit";
 import { verifyTurnstileToken } from "#/shared/lib/server/turnstile";
 
 async function parseContributionRequest(request: Request): Promise<ContributionRequest | null> {
@@ -164,6 +165,19 @@ export const Route = createFileRoute("/api/contributions/upsert")({
         const input = await parseContributionRequest(request);
         if (!input) {
           return new Response("Payload permintaan tidak valid", { status: 400 });
+        }
+
+        const rateLimit = await consumeRateLimit({
+          env,
+          request,
+          scope: "contributions-upsert",
+          userId,
+          limit: 5,
+          windowSeconds: 600,
+        });
+
+        if (!rateLimit.ok) {
+          return createRateLimitResponse(rateLimit);
         }
 
         const turnstileValid = await verifyTurnstileToken(

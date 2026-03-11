@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createDbMock, readAuthenticatedUserIdMock } = vi.hoisted(() => ({
+const { createDbMock, readAuthenticatedUserIdMock, consumeRateLimitMock } = vi.hoisted(() => ({
   createDbMock: vi.fn(),
   readAuthenticatedUserIdMock: vi.fn(),
+  consumeRateLimitMock: vi.fn(),
 }));
 
 vi.mock("#/shared/db/client", () => ({
@@ -11,6 +12,17 @@ vi.mock("#/shared/db/client", () => ({
 
 vi.mock("#/shared/lib/server/auth", () => ({
   readAuthenticatedUserId: readAuthenticatedUserIdMock,
+}));
+
+vi.mock("#/shared/lib/server/rate-limit", () => ({
+  consumeRateLimit: consumeRateLimitMock,
+  createRateLimitResponse: (decision: { retryAfterSeconds: number }) =>
+    new Response("Terlalu banyak permintaan", {
+      status: 429,
+      headers: {
+        "retry-after": String(decision.retryAfterSeconds),
+      },
+    }),
 }));
 
 import { Route } from "#/routes/api/qris.$qrisId.reports";
@@ -37,7 +49,12 @@ function createSelectBuilder(results: unknown[]) {
 
 describe("/api/qris/$qrisId/reports", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     readAuthenticatedUserIdMock.mockResolvedValue("user-1");
+    consumeRateLimitMock.mockResolvedValue({
+      ok: true,
+      retryAfterSeconds: 60,
+    });
   });
 
   it("returns the existing open report for the same reporter", async () => {
@@ -150,5 +167,45 @@ describe("/api/qris/$qrisId/reports", () => {
     );
 
     randomUuidSpy.mockRestore();
+  });
+
+  it("returns 429 when report rate limit is exceeded", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({
+      ok: false,
+      retryAfterSeconds: 30,
+    });
+
+    const response = await getPostHandler()({
+      request: new Request("http://localhost/api/qris/qris-1/reports", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "cf-connecting-ip": "127.0.0.1",
+        },
+        body: JSON.stringify({
+          reasonCode: "manual-review",
+          reasonText: "merchant mismatch",
+        }),
+      }),
+      context: {
+        env: {
+          APP_BASE_URL: "http://localhost:3000",
+          APP_SESSION_SECRET: "secret",
+          GOOGLE_OAUTH_CLIENT_ID: "id",
+          GOOGLE_OAUTH_CLIENT_SECRET: "secret",
+          GOOGLE_OAUTH_REDIRECT_URI: "http://localhost/callback",
+          TURNSTILE_SECRET_KEY: "turnstile-secret",
+          TURNSTILE_SITE_KEY: "turnstile-site-key",
+          DB: {} as D1Database,
+          QRIS_IMAGES: {} as R2Bucket,
+        },
+      },
+      params: {
+        qrisId: "qris-1",
+      },
+    } as never);
+
+    expect(response.status).toBe(429);
+    await expect(response.text()).resolves.toBe("Terlalu banyak permintaan");
   });
 });

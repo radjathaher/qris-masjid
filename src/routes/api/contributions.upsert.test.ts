@@ -9,6 +9,7 @@ const {
   decodeQrTextFromImageMock,
   validateQrisPayloadMock,
   sha256HexTextMock,
+  consumeRateLimitMock,
 } = vi.hoisted(() => ({
   createDbMock: vi.fn(),
   readAuthenticatedUserIdMock: vi.fn(),
@@ -17,6 +18,7 @@ const {
   decodeQrTextFromImageMock: vi.fn(),
   validateQrisPayloadMock: vi.fn(),
   sha256HexTextMock: vi.fn(),
+  consumeRateLimitMock: vi.fn(),
 }));
 
 vi.mock("#/shared/db/client", () => ({
@@ -42,6 +44,17 @@ vi.mock("#/shared/lib/server/qr-image", () => ({
 
 vi.mock("#/shared/lib/server/qris-payload", () => ({
   validateQrisPayload: validateQrisPayloadMock,
+}));
+
+vi.mock("#/shared/lib/server/rate-limit", () => ({
+  consumeRateLimit: consumeRateLimitMock,
+  createRateLimitResponse: (decision: { retryAfterSeconds: number }) =>
+    new Response("Terlalu banyak permintaan", {
+      status: 429,
+      headers: {
+        "retry-after": String(decision.retryAfterSeconds),
+      },
+    }),
 }));
 
 import { Route } from "#/routes/api/contributions.upsert";
@@ -86,8 +99,13 @@ function createEnv(overrides?: Partial<AppEnv>) {
 
 describe("/api/contributions/upsert", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     readAuthenticatedUserIdMock.mockResolvedValue("user-1");
     verifyTurnstileTokenMock.mockResolvedValue(true);
+    consumeRateLimitMock.mockResolvedValue({
+      ok: true,
+      retryAfterSeconds: 60,
+    });
     decodeBase64ImageMock.mockReturnValue({
       bytes: new Uint8Array([1, 2, 3]),
       mimeType: "image/png",
@@ -144,8 +162,40 @@ describe("/api/contributions/upsert", () => {
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
+  it("returns 429 when upload rate limit is exceeded", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({
+      ok: false,
+      retryAfterSeconds: 30,
+    });
+
+    const response = await getPostHandler()({
+      request: new Request("http://localhost/api/contributions/upsert", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "cf-connecting-ip": "127.0.0.1",
+        },
+        body: JSON.stringify({
+          masjidId: "masjid-1",
+          imageBase64: "data:image/png;base64,abc",
+          turnstileToken: "token-1",
+        }),
+      }),
+      context: {
+        env: createEnv(),
+      },
+    } as never);
+
+    expect(response.status).toBe(429);
+    await expect(response.text()).resolves.toBe("Terlalu banyak permintaan");
+    expect(verifyTurnstileTokenMock).not.toHaveBeenCalled();
+  });
+
   it("returns duplicate when the active QRIS payload already matches", async () => {
-    const selectQueue = [[{ id: "masjid-1" }], [{ id: "active-qris-1", payloadHash: "new-payload-hash" }]];
+    const selectQueue = [
+      [{ id: "masjid-1" }],
+      [{ id: "active-qris-1", payloadHash: "new-payload-hash" }],
+    ];
     const insertSpy = vi.fn();
 
     createDbMock.mockReturnValue({

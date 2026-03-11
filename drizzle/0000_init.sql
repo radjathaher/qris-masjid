@@ -64,6 +64,16 @@ CREATE TABLE IF NOT EXISTS qris_reports (
   FOREIGN KEY (reviewed_by_nullable) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS request_rate_limits (
+  id TEXT PRIMARY KEY NOT NULL,
+  scope TEXT NOT NULL,
+  subject_key TEXT NOT NULL,
+  window_started_at TEXT NOT NULL,
+  hits INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS qris_masjid_id_idx ON qris (masjid_id);
 CREATE INDEX IF NOT EXISTS qris_is_active_idx ON qris (is_active);
 CREATE UNIQUE INDEX IF NOT EXISTS qris_masjid_payload_unique_idx ON qris (masjid_id, payload_hash);
@@ -72,3 +82,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS qris_active_masjid_unique_idx ON qris (masjid_
 CREATE INDEX IF NOT EXISTS qris_reports_qris_id_idx ON qris_reports (qris_id);
 CREATE INDEX IF NOT EXISTS qris_reports_masjid_id_idx ON qris_reports (masjid_id);
 CREATE INDEX IF NOT EXISTS qris_reports_status_idx ON qris_reports (status);
+CREATE UNIQUE INDEX IF NOT EXISTS request_rate_limits_scope_subject_window_unique_idx
+  ON request_rate_limits (scope, subject_key, window_started_at);
+CREATE INDEX IF NOT EXISTS request_rate_limits_scope_idx ON request_rate_limits (scope);
+CREATE INDEX IF NOT EXISTS request_rate_limits_updated_at_idx ON request_rate_limits (updated_at);
