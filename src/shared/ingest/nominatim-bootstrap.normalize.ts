@@ -286,11 +286,21 @@ export function enrichBootstrapPois(pois: BootstrapPoi[]): BootstrapPoi[] {
     const inferredProvince =
       poi.province ??
       (inferredCity ? cityProvinceMap.get(normalizeLookupKey(inferredCity)) ?? null : null);
+    const normalizedCity = normalizeCity(inferredCity);
+    const normalizedProvince = normalizeProvince(inferredProvince);
+    const effectiveCity =
+      normalizedCity && normalizedProvince && normalizeLookupKey(normalizedCity) === normalizeLookupKey(normalizedProvince)
+        ? null
+        : normalizedCity &&
+            ((!normalizedProvince && PROVINCE_ALIASES.has(normalizeLookupKey(normalizedCity))) ||
+              normalizeLookupKey(normalizedCity) === "indonesia")
+          ? null
+          : normalizedCity;
 
     return {
       ...poi,
-      city: normalizeCity(inferredCity),
-      province: normalizeProvince(inferredProvince),
+      city: effectiveCity,
+      province: normalizedProvince,
     };
   });
 }
