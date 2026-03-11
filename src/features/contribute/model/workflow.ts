@@ -23,12 +23,17 @@ export function getContributionStartError(input: {
   masjid: Masjid | null;
   uploadAllowed: boolean;
   authSessionLoading: boolean;
+  uploadPolicy?: "open-upload" | "report-first" | "review-pending";
 }): string | null {
   if (!input.masjid) {
     return "Pilih masjid terlebih dahulu.";
   }
 
   if (!input.uploadAllowed) {
+    if (input.uploadPolicy === "review-pending") {
+      return "Kontribusi QRIS untuk masjid ini sedang ditinjau admin.";
+    }
+
     return "QRIS aktif sudah ada. Laporkan data saat ini jika tidak sesuai.";
   }
 

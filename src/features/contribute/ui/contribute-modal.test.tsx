@@ -57,6 +57,7 @@ describe("ContributeModal", () => {
       created: true,
       qrisId: "qris-1",
       masjidId: masjid.id,
+      reviewStatus: "pending",
     });
   });
 
@@ -68,6 +69,7 @@ describe("ContributeModal", () => {
         open
         masjid={masjid}
         uploadAllowed
+        uploadPolicy="open-upload"
         defaultOpenForm
         isAuthenticated
         authSessionLoading={false}
@@ -89,7 +91,7 @@ describe("ContributeModal", () => {
       });
     });
 
-    expect(await screen.findByText(/Kontribusi berhasil dikirim/i)).toBeTruthy();
+    expect(await screen.findByText(/masuk antrean review admin/i)).toBeTruthy();
     expect(onSuccess).toHaveBeenCalled();
   });
 });

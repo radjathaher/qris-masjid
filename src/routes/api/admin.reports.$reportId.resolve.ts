@@ -81,6 +81,7 @@ async function applyResolutionActions(
       .update(qris)
       .set({
         isActive: 0,
+        reviewStatus: "rejected",
         updatedAt: now,
       })
       .where(and(eq(qris.id, report.qrisId), eq(qris.isActive, 1)));

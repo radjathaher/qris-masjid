@@ -125,7 +125,7 @@ describe("/api/contributions/upsert", () => {
   it("returns conflict when a different active QRIS already exists for the masjid", async () => {
     const selectQueue = [
       [{ id: "masjid-1" }],
-      [{ id: "active-qris-1", payloadHash: "existing-payload-hash" }],
+      [{ id: "active-qris-1", payloadHash: "existing-payload-hash", reviewStatus: "active" }],
     ];
     const insertSpy = vi.fn();
 
@@ -194,7 +194,7 @@ describe("/api/contributions/upsert", () => {
   it("returns duplicate when the active QRIS payload already matches", async () => {
     const selectQueue = [
       [{ id: "masjid-1" }],
-      [{ id: "active-qris-1", payloadHash: "new-payload-hash" }],
+      [{ id: "active-qris-1", payloadHash: "new-payload-hash", reviewStatus: "active" }],
     ];
     const insertSpy = vi.fn();
 
@@ -228,6 +228,7 @@ describe("/api/contributions/upsert", () => {
       created: false,
       qrisId: "active-qris-1",
       masjidId: "masjid-1",
+      reviewStatus: "active",
     });
     expect(insertSpy).not.toHaveBeenCalled();
   });
@@ -277,6 +278,7 @@ describe("/api/contributions/upsert", () => {
       created: true,
       qrisId: "00000000-0000-0000-0000-000000000999",
       masjidId: "masjid-1",
+      reviewStatus: "pending",
     });
     expect(putSpy).toHaveBeenCalledWith(
       "qris/masjid-1/00000000-0000-0000-0000-000000000999.png",
@@ -296,10 +298,51 @@ describe("/api/contributions/upsert", () => {
         merchantCity: "Jakarta",
         contributorId: "user-1",
         imageR2Key: "qris/masjid-1/00000000-0000-0000-0000-000000000999.png",
-        isActive: 1,
+        reviewStatus: "pending",
+        isActive: 0,
       }),
     );
 
     randomUuidSpy.mockRestore();
+  });
+
+  it("returns conflict when another pending QRIS already exists for the masjid", async () => {
+    const selectQueue = [
+      [{ id: "masjid-1" }],
+      [{ id: "pending-qris-1", payloadHash: "different-hash", reviewStatus: "pending" }],
+    ];
+    const insertSpy = vi.fn();
+
+    createDbMock.mockReturnValue({
+      select: vi.fn(() => createSelectBuilder(selectQueue.shift() ?? [])),
+      insert: insertSpy,
+    });
+
+    const response = await getPostHandler()({
+      request: new Request("http://localhost/api/contributions/upsert", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "cf-connecting-ip": "127.0.0.1",
+        },
+        body: JSON.stringify({
+          masjidId: "masjid-1",
+          imageBase64: "data:image/png;base64,abc",
+          turnstileToken: "token-1",
+        }),
+      }),
+      context: {
+        env: createEnv(),
+      },
+    } as never);
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      code: "PENDING_QRIS_REVIEW_EXISTS",
+      masjidId: "masjid-1",
+      pendingQrisId: "pending-qris-1",
+    });
+    expect(insertSpy).not.toHaveBeenCalled();
   });
 });

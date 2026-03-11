@@ -46,6 +46,10 @@ export const qris = sqliteTable(
     contributorId: text("contributor_id")
       .notNull()
       .references(() => users.id),
+    reviewStatus: text("review_status").notNull().default("active"),
+    reviewedByNullable: text("reviewed_by_nullable").references(() => users.id),
+    reviewNoteNullable: text("review_note_nullable"),
+    reviewedAtNullable: text("reviewed_at_nullable"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
     isActive: integer("is_active").notNull().default(1),
@@ -57,6 +61,7 @@ export const qris = sqliteTable(
       table.masjidId,
       table.payloadHash,
     ),
+    reviewStatusIdx: index("qris_review_status_idx").on(table.reviewStatus),
   }),
 );
 

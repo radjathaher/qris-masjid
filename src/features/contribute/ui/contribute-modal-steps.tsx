@@ -10,6 +10,7 @@ type ContributeModalStepContentProps = {
   step: ContributeStep;
   authSessionLoading: boolean;
   uploadAllowed: boolean;
+  uploadPolicy: "open-upload" | "report-first" | "review-pending";
   canContinueGoogleAuth: boolean;
   authPending: boolean;
   turnstileSiteKey: string;
@@ -24,10 +25,43 @@ type ContributeModalStepContentProps = {
   onClose: () => void;
 };
 
+function renderUploadAvailabilityMessage(
+  uploadAllowed: boolean,
+  uploadPolicy: "open-upload" | "report-first" | "review-pending",
+  variant: "entry" | "form",
+) {
+  if (uploadAllowed) {
+    return variant === "entry" ? (
+      <p className="text-sm text-emerald-900/70">
+        Kirim data QRIS untuk membantu jamaah berdonasi ke masjid yang tepat.
+      </p>
+    ) : null;
+  }
+
+  if (uploadPolicy === "review-pending") {
+    return (
+      <p className="text-sm text-emerald-900/70">
+        {variant === "entry"
+          ? "Masjid ini sudah punya kontribusi QRIS yang sedang ditinjau admin."
+          : "Kontribusi QRIS untuk masjid ini sedang ditinjau admin."}
+      </p>
+    );
+  }
+
+  return (
+    <p className="text-sm text-emerald-900/70">
+      {variant === "entry"
+        ? "Masjid ini sudah punya QRIS aktif. Laporkan QRIS saat ini jika ada masalah."
+        : "Masjid ini sudah punya QRIS aktif. Laporkan QRIS saat ini jika datanya salah."}
+    </p>
+  );
+}
+
 export function ContributeModalStepContent({
   step,
   authSessionLoading,
   uploadAllowed,
+  uploadPolicy,
   canContinueGoogleAuth,
   authPending,
   turnstileSiteKey,
@@ -44,15 +78,7 @@ export function ContributeModalStepContent({
   if (step === "entry") {
     return (
       <div className="space-y-4">
-        {!uploadAllowed ? (
-          <p className="text-sm text-emerald-900/70">
-            Masjid ini sudah punya QRIS aktif. Laporkan QRIS saat ini jika ada masalah.
-          </p>
-        ) : (
-          <p className="text-sm text-emerald-900/70">
-            Kirim data QRIS untuk membantu jamaah berdonasi ke masjid yang tepat.
-          </p>
-        )}
+        {renderUploadAvailabilityMessage(uploadAllowed, uploadPolicy, "entry")}
         {authSessionLoading ? (
           <p className="text-sm text-emerald-900/70">Memeriksa status login...</p>
         ) : null}
@@ -98,11 +124,7 @@ export function ContributeModalStepContent({
   if (step === "form") {
     return (
       <form className="space-y-4" onSubmit={onSubmit}>
-        {!uploadAllowed ? (
-          <p className="text-sm text-emerald-900/70">
-            Masjid ini sudah punya QRIS aktif. Laporkan QRIS saat ini jika datanya salah.
-          </p>
-        ) : null}
+        {renderUploadAvailabilityMessage(uploadAllowed, uploadPolicy, "form")}
         <div className="space-y-2">
           <Label htmlFor="image">Gambar QR</Label>
           <Input
@@ -144,7 +166,8 @@ export function ContributeModalStepContent({
   return (
     <div className="space-y-4">
       <p className="text-sm text-emerald-900/80">
-        Kontribusi berhasil dikirim. Terima kasih sudah membantu memperbaiki data QRIS masjid.
+        Kontribusi berhasil dikirim dan masuk antrean review admin. Terima kasih sudah membantu
+        memperbaiki data QRIS masjid.
       </p>
       <DialogFooter>
         <Button onClick={onClose}>Tutup</Button>

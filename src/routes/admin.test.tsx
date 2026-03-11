@@ -2,15 +2,25 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-const { fetchAdminReportsMock, fetchAdminConfigHealthMock, resolveAdminReportMock } = vi.hoisted(() => ({
+const {
+  fetchAdminReportsMock,
+  fetchAdminConfigHealthMock,
+  fetchAdminPendingQrisMock,
+  resolveAdminPendingQrisMock,
+  resolveAdminReportMock,
+} = vi.hoisted(() => ({
   fetchAdminReportsMock: vi.fn(),
   fetchAdminConfigHealthMock: vi.fn(),
+  fetchAdminPendingQrisMock: vi.fn(),
+  resolveAdminPendingQrisMock: vi.fn(),
   resolveAdminReportMock: vi.fn(),
 }));
 
 vi.mock("#/features/admin/api/client", () => ({
   fetchAdminReports: fetchAdminReportsMock,
   fetchAdminConfigHealth: fetchAdminConfigHealthMock,
+  fetchAdminPendingQris: fetchAdminPendingQrisMock,
+  resolveAdminPendingQris: resolveAdminPendingQrisMock,
   resolveAdminReport: resolveAdminReportMock,
 }));
 
@@ -48,6 +58,9 @@ describe("/admin", () => {
         mode: "public-custom-domain",
         baseUrl: "https://cdn.example.com",
       },
+    });
+    fetchAdminPendingQrisMock.mockResolvedValue({
+      items: [],
     });
 
     fetchAdminReportsMock.mockResolvedValue({
@@ -112,7 +125,12 @@ describe("/admin", () => {
   });
 
   it("renders config-health fetch errors without hiding the report queue", async () => {
-    fetchAdminConfigHealthMock.mockRejectedValue(new Error("Gagal memuat status konfigurasi admin"));
+    fetchAdminConfigHealthMock.mockRejectedValue(
+      new Error("Gagal memuat status konfigurasi admin"),
+    );
+    fetchAdminPendingQrisMock.mockResolvedValue({
+      items: [],
+    });
     fetchAdminReportsMock.mockResolvedValue({
       items: [
         {

@@ -38,11 +38,16 @@ CREATE TABLE IF NOT EXISTS qris (
   nmid_nullable TEXT,
   image_r2_key TEXT NOT NULL,
   contributor_id TEXT NOT NULL,
+  review_status TEXT NOT NULL DEFAULT 'active',
+  reviewed_by_nullable TEXT,
+  review_note_nullable TEXT,
+  reviewed_at_nullable TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   is_active INTEGER NOT NULL DEFAULT 1,
   FOREIGN KEY (masjid_id) REFERENCES masjids(id),
-  FOREIGN KEY (contributor_id) REFERENCES users(id)
+  FOREIGN KEY (contributor_id) REFERENCES users(id),
+  FOREIGN KEY (reviewed_by_nullable) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS qris_reports (
@@ -76,6 +81,7 @@ CREATE TABLE IF NOT EXISTS request_rate_limits (
 
 CREATE INDEX IF NOT EXISTS qris_masjid_id_idx ON qris (masjid_id);
 CREATE INDEX IF NOT EXISTS qris_is_active_idx ON qris (is_active);
+CREATE INDEX IF NOT EXISTS qris_review_status_idx ON qris (review_status);
 CREATE UNIQUE INDEX IF NOT EXISTS qris_masjid_payload_unique_idx ON qris (masjid_id, payload_hash);
 CREATE UNIQUE INDEX IF NOT EXISTS qris_active_masjid_unique_idx ON qris (masjid_id) WHERE is_active = 1;
 

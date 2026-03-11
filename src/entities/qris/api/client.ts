@@ -53,6 +53,10 @@ export async function upsertContribution(input: ContributionRequest) {
     const conflict = contributionConflictResponseSchema.safeParse(json);
 
     if (conflict.success) {
+      if (conflict.data.code === "PENDING_QRIS_REVIEW_EXISTS") {
+        throw new Error("Kontribusi QRIS untuk masjid ini sedang ditinjau admin.");
+      }
+
       throw new Error("QRIS aktif sudah ada. Laporkan data saat ini terlebih dahulu.");
     }
   }

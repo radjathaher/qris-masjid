@@ -16,7 +16,7 @@ export const masjidQrisResponseSchema = z.object({
   masjidId: z.string(),
   hasActiveQris: z.boolean(),
   canUpload: z.boolean(),
-  uploadPolicy: z.literal("report-first"),
+  uploadPolicy: z.enum(["open-upload", "report-first", "review-pending"]),
   imageDeliveryConfigured: z.boolean(),
   imageDeliveryMode: z.enum(["unconfigured", "invalid", "public-custom-domain", "public-r2-dev"]),
   items: z.array(qrisItemSchema),
@@ -34,13 +34,15 @@ export const contributionResponseSchema = z.object({
   created: z.boolean(),
   qrisId: z.string(),
   masjidId: z.string(),
+  reviewStatus: z.enum(["pending", "active", "rejected"]),
 });
 
 export const contributionConflictResponseSchema = z.object({
   ok: z.literal(false),
-  code: z.literal("ACTIVE_QRIS_EXISTS_REPORT_REQUIRED"),
+  code: z.enum(["ACTIVE_QRIS_EXISTS_REPORT_REQUIRED", "PENDING_QRIS_REVIEW_EXISTS"]),
   masjidId: z.string(),
-  activeQrisId: z.string(),
+  activeQrisId: z.string().optional(),
+  pendingQrisId: z.string().optional(),
 });
 
 export const createQrisReportRequestSchema = z.object({

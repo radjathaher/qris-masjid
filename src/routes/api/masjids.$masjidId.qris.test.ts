@@ -52,6 +52,7 @@ describe("/api/masjids/$masjidId/qris", () => {
                 nmid: "ID102030",
                 imageR2Key: "qris/masjid-1/active.png",
                 isActive: 1,
+                reviewStatus: "active",
                 updatedAt: "2026-03-10T00:00:00.000Z",
               },
               {
@@ -63,6 +64,7 @@ describe("/api/masjids/$masjidId/qris", () => {
                 nmid: null,
                 imageR2Key: "qris/masjid-1/old.png",
                 isActive: 0,
+                reviewStatus: "rejected",
                 updatedAt: "2026-03-09T00:00:00.000Z",
               },
             ],
@@ -102,17 +104,6 @@ describe("/api/masjids/$masjidId/qris", () => {
           isActive: true,
           updatedAt: "2026-03-10T00:00:00.000Z",
         },
-        {
-          id: "qris-old",
-          payloadHash: "hash-0",
-          merchantName: "Masjid Istiqlal",
-          merchantCity: "Jakarta",
-          pointOfInitiationMethod: null,
-          nmid: null,
-          imageUrl: "https://cdn.example.com/qris/masjid-1/old.png",
-          isActive: false,
-          updatedAt: "2026-03-09T00:00:00.000Z",
-        },
       ],
     });
   });
@@ -132,6 +123,7 @@ describe("/api/masjids/$masjidId/qris", () => {
                 nmid: null,
                 imageR2Key: "qris/masjid-1/old.png",
                 isActive: 0,
+                reviewStatus: "rejected",
                 updatedAt: "2026-03-09T00:00:00.000Z",
               },
             ],
@@ -154,22 +146,57 @@ describe("/api/masjids/$masjidId/qris", () => {
       masjidId: "masjid-1",
       hasActiveQris: false,
       canUpload: true,
-      uploadPolicy: "report-first",
+      uploadPolicy: "open-upload",
       imageDeliveryConfigured: false,
       imageDeliveryMode: "unconfigured",
-      items: [
-        {
-          id: "qris-old",
-          payloadHash: "hash-0",
-          merchantName: "Masjid Istiqlal",
-          merchantCity: "Jakarta",
-          pointOfInitiationMethod: null,
-          nmid: null,
-          imageUrl: null,
-          isActive: false,
-          updatedAt: "2026-03-09T00:00:00.000Z",
-        },
-      ],
+      items: [],
+    });
+  });
+
+  it("hides pending qris from public response and blocks new uploads during review", async () => {
+    createDbMock.mockReturnValue({
+      select: vi.fn(() => ({
+        from: () => ({
+          where: () => ({
+            orderBy: async () => [
+              {
+                id: "qris-pending",
+                payloadHash: "hash-2",
+                merchantName: "Masjid Istiqlal",
+                merchantCity: "Jakarta",
+                pointOfInitiationMethod: "11",
+                nmid: "ID202020",
+                imageR2Key: "qris/masjid-1/pending.png",
+                isActive: 0,
+                reviewStatus: "pending",
+                updatedAt: "2026-03-11T00:00:00.000Z",
+              },
+            ],
+          }),
+        }),
+      })),
+    });
+
+    const response = await getGetHandler()({
+      context: {
+        env: createEnv({
+          R2_PUBLIC_BASE_URL: "https://cdn.example.com/",
+        }),
+      },
+      params: {
+        masjidId: "masjid-1",
+      },
+    } as never);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      masjidId: "masjid-1",
+      hasActiveQris: false,
+      canUpload: false,
+      uploadPolicy: "review-pending",
+      imageDeliveryConfigured: true,
+      imageDeliveryMode: "public-custom-domain",
+      items: [],
     });
   });
 
@@ -188,6 +215,7 @@ describe("/api/masjids/$masjidId/qris", () => {
                 nmid: "ID102030",
                 imageR2Key: "qris/masjid-1/active.png",
                 isActive: 1,
+                reviewStatus: "active",
                 updatedAt: "2026-03-10T00:00:00.000Z",
               },
             ],
@@ -236,6 +264,7 @@ describe("/api/masjids/$masjidId/qris", () => {
                 nmid: "ID102030",
                 imageR2Key: "qris/masjid-1/active.png",
                 isActive: 1,
+                reviewStatus: "active",
                 updatedAt: "2026-03-10T00:00:00.000Z",
               },
             ],

@@ -35,15 +35,49 @@ const adminConfigHealthResponseSchema = z.object({
   }),
 });
 
+const adminPendingQrisSchema = z.object({
+  id: z.string(),
+  masjidId: z.string(),
+  masjidName: z.string().nullable(),
+  payloadHash: z.string(),
+  merchantName: z.string(),
+  merchantCity: z.string(),
+  pointOfInitiationMethod: z.string().nullable(),
+  nmid: z.string().nullable(),
+  imageR2Key: z.string(),
+  imageUrl: z.string().nullable(),
+  contributorId: z.string(),
+  contributorEmail: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  reviewStatus: z.literal("pending"),
+});
+
+const adminPendingQrisResponseSchema = z.object({
+  items: z.array(adminPendingQrisSchema),
+});
+
+const resolveAdminPendingQrisResponseSchema = z.object({
+  ok: z.literal(true),
+  qrisId: z.string(),
+  status: z.enum(["approved", "rejected"]),
+});
+
 export type AdminReport = z.infer<typeof adminReportSchema>;
 export type AdminReportStatus = AdminReport["status"];
 export type AdminConfigHealth = z.infer<typeof adminConfigHealthResponseSchema>;
+export type AdminPendingQris = z.infer<typeof adminPendingQrisSchema>;
 
 export type ResolveAdminReportInput = {
   decision: "dismissed" | "confirmed";
   qrisAction: "none" | "deactivate_qris";
   userAction: "none" | "block_user";
   resolutionNote?: string;
+};
+
+export type ResolveAdminPendingQrisInput = {
+  decision: "approved" | "rejected";
+  reviewNote?: string;
 };
 
 export async function fetchAdminReports(status: AdminReportStatus) {
@@ -91,4 +125,37 @@ export async function fetchAdminConfigHealth() {
 
   const data = await response.json();
   return adminConfigHealthResponseSchema.parse(data);
+}
+
+export async function fetchAdminPendingQris() {
+  const response = await fetch("/api/admin/pending-qris", {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Gagal memuat antrean review QRIS");
+  }
+
+  const data = await response.json();
+  return adminPendingQrisResponseSchema.parse(data);
+}
+
+export async function resolveAdminPendingQris(qrisId: string, input: ResolveAdminPendingQrisInput) {
+  const response = await fetch(`/api/admin/pending-qris/${encodeURIComponent(qrisId)}/resolve`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Gagal menyelesaikan review QRIS");
+  }
+
+  const data = await response.json();
+  return resolveAdminPendingQrisResponseSchema.parse(data);
 }

@@ -58,6 +58,7 @@ export function MapHomePage() {
         open={contributeOpen && Boolean(selectedMasjid)}
         masjid={selectedMasjid}
         uploadAllowed={qrisQuery.data?.canUpload ?? true}
+        uploadPolicy={qrisQuery.data?.uploadPolicy ?? "open-upload"}
         defaultOpenForm={authReturnDetected}
         isAuthenticated={authSessionQuery.data?.authenticated ?? false}
         authSessionLoading={authSessionQuery.isLoading}

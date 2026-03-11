@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Masjid } from "#/entities/masjid/model/types";
+import type { MasjidQrisResponse } from "#/entities/qris/model/contracts";
 import { upsertContribution } from "#/entities/qris/api/client";
 import { PENDING_CONTRIBUTE_MASJID_ID_KEY } from "#/features/contribute/model/constants";
 import {
@@ -25,6 +26,7 @@ type ContributeModalProps = {
   open: boolean;
   masjid: Masjid | null;
   uploadAllowed: boolean;
+  uploadPolicy: MasjidQrisResponse["uploadPolicy"];
   defaultOpenForm: boolean;
   isAuthenticated: boolean;
   authSessionLoading: boolean;
@@ -36,6 +38,7 @@ export function ContributeModal({
   open,
   masjid,
   uploadAllowed,
+  uploadPolicy,
   defaultOpenForm,
   isAuthenticated,
   authSessionLoading,
@@ -107,6 +110,7 @@ export function ContributeModal({
       masjid,
       uploadAllowed,
       authSessionLoading,
+      uploadPolicy,
     });
 
     if (startError) {
@@ -227,6 +231,7 @@ export function ContributeModal({
           step={step}
           authSessionLoading={authSessionLoading}
           uploadAllowed={uploadAllowed}
+          uploadPolicy={uploadPolicy}
           canContinueGoogleAuth={canContinueGoogleAuth}
           authPending={authPending}
           turnstileSiteKey={turnstileSiteKey}
