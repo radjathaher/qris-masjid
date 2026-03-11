@@ -1,17 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
-import { fetchMasjids } from "#/entities/masjid/api/client";
+import { useCallback, useDeferredValue, useEffect, useState } from "react";
+import { fetchMasjidById, searchMasjids } from "#/entities/masjid/api/client";
 import type { Masjid } from "#/entities/masjid/model/types";
 import { fetchAuthSessionStatus, fetchMasjidQris } from "#/entities/qris/api/client";
 import { PENDING_CONTRIBUTE_MASJID_ID_KEY } from "#/features/contribute/model/constants";
 
-function restoreAuthReturnState(input: {
-  masjids: Masjid[] | undefined;
-  masjidsPending: boolean;
+async function restoreAuthReturnState(input: {
   setSelectedMasjid: (masjid: Masjid | null) => void;
   setContributeOpen: (open: boolean) => void;
   setAuthReturnDetected: (detected: boolean) => void;
-}): void {
+}): Promise<void> {
   if (typeof window === "undefined") {
     return;
   }
@@ -28,14 +26,17 @@ function restoreAuthReturnState(input: {
     return;
   }
 
-  if (input.masjidsPending) {
-    return;
+  try {
+    const pendingMasjid = await fetchMasjidById(pendingMasjidId);
+    input.setSelectedMasjid(pendingMasjid);
+    input.setContributeOpen(true);
+    input.setAuthReturnDetected(true);
+  } catch {
+    input.setSelectedMasjid(null);
+    input.setContributeOpen(false);
+    input.setAuthReturnDetected(false);
   }
 
-  const pendingMasjid = input.masjids?.find((item) => item.id === pendingMasjidId) ?? null;
-  input.setSelectedMasjid(pendingMasjid);
-  input.setContributeOpen(Boolean(pendingMasjid));
-  input.setAuthReturnDetected(Boolean(pendingMasjid));
   window.sessionStorage.removeItem(PENDING_CONTRIBUTE_MASJID_ID_KEY);
   window.history.replaceState({}, "", "/");
 }
@@ -44,11 +45,15 @@ export function useMapHomeState() {
   const [selectedMasjid, setSelectedMasjid] = useState<Masjid | null>(null);
   const [contributeOpen, setContributeOpen] = useState(false);
   const [authReturnDetected, setAuthReturnDetected] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const normalizedSearchQuery = deferredSearchQuery.trim();
 
-  const masjidsQuery = useQuery({
-    queryKey: ["masjids"],
-    queryFn: fetchMasjids,
-    staleTime: 60_000,
+  const searchResultsQuery = useQuery({
+    queryKey: ["masjid-search", normalizedSearchQuery],
+    queryFn: () => searchMasjids(normalizedSearchQuery),
+    enabled: normalizedSearchQuery.length > 0,
+    staleTime: 30_000,
   });
 
   const authSessionQuery = useQuery({
@@ -57,17 +62,13 @@ export function useMapHomeState() {
     staleTime: 60_000,
   });
 
-  const masjids = masjidsQuery.data?.items;
-
   useEffect(() => {
-    restoreAuthReturnState({
-      masjids,
-      masjidsPending: masjidsQuery.isPending,
+    void restoreAuthReturnState({
       setSelectedMasjid,
       setContributeOpen,
       setAuthReturnDetected,
     });
-  }, [masjids, masjidsQuery.isPending]);
+  }, []);
 
   const qrisQuery = useQuery({
     queryKey: ["masjid-qris", selectedMasjid?.id],
@@ -78,6 +79,7 @@ export function useMapHomeState() {
   const onSelectMasjid = useCallback((masjid: Masjid) => {
     setSelectedMasjid(masjid);
     setContributeOpen(false);
+    setSearchQuery("");
   }, []);
 
   const onCloseDetailModal = useCallback(() => {
@@ -99,8 +101,10 @@ export function useMapHomeState() {
   }, [qrisQuery]);
 
   return {
-    masjids: masjids ?? [],
-    masjidsQuery,
+    searchQuery,
+    setSearchQuery,
+    searchResults: searchResultsQuery.data?.items ?? [],
+    searchResultsQuery,
     authSessionQuery,
     selectedMasjid,
     contributeOpen,

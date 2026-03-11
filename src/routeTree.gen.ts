@@ -11,11 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiMasjidsRouteImport } from './routes/api/masjids'
 import { Route as ApiTurnstileSiteKeyRouteImport } from './routes/api/turnstile.site-key'
+import { Route as ApiMasjidsSearchRouteImport } from './routes/api/masjids.search'
+import { Route as ApiMasjidsMasjidIdRouteImport } from './routes/api/masjids.$masjidId'
 import { Route as ApiContributionsUpsertRouteImport } from './routes/api/contributions.upsert'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth.session'
 import { Route as ApiAdminReportsRouteImport } from './routes/api/admin.reports'
-import { Route as ApiMasjidsRouteImport } from './routes/api/masjids'
+import { Route as ApiAdminConfigHealthRouteImport } from './routes/api/admin.config-health'
 import { Route as ApiQrisQrisIdReportsRouteImport } from './routes/api/qris.$qrisId.reports'
 import { Route as ApiMasjidsMasjidIdQrisRouteImport } from './routes/api/masjids.$masjidId.qris'
 import { Route as ApiAuthGoogleStartRouteImport } from './routes/api/auth.google.start'
@@ -32,10 +35,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMasjidsRoute = ApiMasjidsRouteImport.update({
+  id: '/api/masjids',
+  path: '/api/masjids',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTurnstileSiteKeyRoute = ApiTurnstileSiteKeyRouteImport.update({
   id: '/api/turnstile/site-key',
   path: '/api/turnstile/site-key',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMasjidsSearchRoute = ApiMasjidsSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => ApiMasjidsRoute,
+} as any)
+const ApiMasjidsMasjidIdRoute = ApiMasjidsMasjidIdRouteImport.update({
+  id: '/$masjidId',
+  path: '/$masjidId',
+  getParentRoute: () => ApiMasjidsRoute,
 } as any)
 const ApiContributionsUpsertRoute = ApiContributionsUpsertRouteImport.update({
   id: '/api/contributions/upsert',
@@ -52,9 +70,9 @@ const ApiAdminReportsRoute = ApiAdminReportsRouteImport.update({
   path: '/api/admin/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiMasjidsRoute = ApiMasjidsRouteImport.update({
-  id: '/api/masjids',
-  path: '/api/masjids',
+const ApiAdminConfigHealthRoute = ApiAdminConfigHealthRouteImport.update({
+  id: '/api/admin/config-health',
+  path: '/api/admin/config-health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiQrisQrisIdReportsRoute = ApiQrisQrisIdReportsRouteImport.update({
@@ -63,9 +81,9 @@ const ApiQrisQrisIdReportsRoute = ApiQrisQrisIdReportsRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMasjidsMasjidIdQrisRoute = ApiMasjidsMasjidIdQrisRouteImport.update({
-  id: '/api/masjids/$masjidId/qris',
-  path: '/api/masjids/$masjidId/qris',
-  getParentRoute: () => rootRouteImport,
+  id: '/qris',
+  path: '/qris',
+  getParentRoute: () => ApiMasjidsMasjidIdRoute,
 } as any)
 const ApiAuthGoogleStartRoute = ApiAuthGoogleStartRouteImport.update({
   id: '/api/auth/google/start',
@@ -85,12 +103,15 @@ const ApiAdminReportsReportIdResolveRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/admin': typeof AdminRoute
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/api/masjids': typeof ApiMasjidsRouteWithChildren
+  '/api/admin/config-health': typeof ApiAdminConfigHealthRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
-  '/api/masjids': typeof ApiMasjidsRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
+  '/api/masjids/$masjidId': typeof ApiMasjidsMasjidIdRouteWithChildren
+  '/api/masjids/search': typeof ApiMasjidsSearchRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
@@ -99,12 +120,15 @@ export interface FileRoutesByFullPath {
   '/api/admin/reports/$reportId/resolve': typeof ApiAdminReportsReportIdResolveRoute
 }
 export interface FileRoutesByTo {
-  '/admin': typeof AdminRoute
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/api/masjids': typeof ApiMasjidsRouteWithChildren
+  '/api/admin/config-health': typeof ApiAdminConfigHealthRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
-  '/api/masjids': typeof ApiMasjidsRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
+  '/api/masjids/$masjidId': typeof ApiMasjidsMasjidIdRouteWithChildren
+  '/api/masjids/search': typeof ApiMasjidsSearchRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
@@ -114,12 +138,15 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/admin': typeof AdminRoute
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/api/masjids': typeof ApiMasjidsRouteWithChildren
+  '/api/admin/config-health': typeof ApiAdminConfigHealthRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
-  '/api/masjids': typeof ApiMasjidsRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
+  '/api/masjids/$masjidId': typeof ApiMasjidsMasjidIdRouteWithChildren
+  '/api/masjids/search': typeof ApiMasjidsSearchRoute
   '/api/turnstile/site-key': typeof ApiTurnstileSiteKeyRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/start': typeof ApiAuthGoogleStartRoute
@@ -130,12 +157,15 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/admin'
     | '/'
-    | '/api/admin/reports'
+    | '/admin'
     | '/api/masjids'
+    | '/api/admin/config-health'
+    | '/api/admin/reports'
     | '/api/auth/session'
     | '/api/contributions/upsert'
+    | '/api/masjids/$masjidId'
+    | '/api/masjids/search'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
@@ -144,12 +174,15 @@ export interface FileRouteTypes {
     | '/api/admin/reports/$reportId/resolve'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/admin'
     | '/'
-    | '/api/admin/reports'
+    | '/admin'
     | '/api/masjids'
+    | '/api/admin/config-health'
+    | '/api/admin/reports'
     | '/api/auth/session'
     | '/api/contributions/upsert'
+    | '/api/masjids/$masjidId'
+    | '/api/masjids/search'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
@@ -158,12 +191,15 @@ export interface FileRouteTypes {
     | '/api/admin/reports/$reportId/resolve'
   id:
     | '__root__'
-    | '/admin'
     | '/'
-    | '/api/admin/reports'
+    | '/admin'
     | '/api/masjids'
+    | '/api/admin/config-health'
+    | '/api/admin/reports'
     | '/api/auth/session'
     | '/api/contributions/upsert'
+    | '/api/masjids/$masjidId'
+    | '/api/masjids/search'
     | '/api/turnstile/site-key'
     | '/api/auth/google/callback'
     | '/api/auth/google/start'
@@ -173,21 +209,28 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AdminRoute: typeof AdminRoute
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  ApiMasjidsRoute: typeof ApiMasjidsRouteWithChildren
+  ApiAdminConfigHealthRoute: typeof ApiAdminConfigHealthRoute
   ApiAdminReportsRoute: typeof ApiAdminReportsRouteWithChildren
-  ApiMasjidsRoute: typeof ApiMasjidsRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiContributionsUpsertRoute: typeof ApiContributionsUpsertRoute
   ApiTurnstileSiteKeyRoute: typeof ApiTurnstileSiteKeyRoute
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
   ApiAuthGoogleStartRoute: typeof ApiAuthGoogleStartRoute
-  ApiMasjidsMasjidIdQrisRoute: typeof ApiMasjidsMasjidIdQrisRoute
   ApiQrisQrisIdReportsRoute: typeof ApiQrisQrisIdReportsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -195,11 +238,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/api/masjids': {
+      id: '/api/masjids'
+      path: '/api/masjids'
+      fullPath: '/api/masjids'
+      preLoaderRoute: typeof ApiMasjidsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/turnstile/site-key': {
@@ -208,6 +251,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/turnstile/site-key'
       preLoaderRoute: typeof ApiTurnstileSiteKeyRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/masjids/search': {
+      id: '/api/masjids/search'
+      path: '/search'
+      fullPath: '/api/masjids/search'
+      preLoaderRoute: typeof ApiMasjidsSearchRouteImport
+      parentRoute: typeof ApiMasjidsRoute
+    }
+    '/api/masjids/$masjidId': {
+      id: '/api/masjids/$masjidId'
+      path: '/$masjidId'
+      fullPath: '/api/masjids/$masjidId'
+      preLoaderRoute: typeof ApiMasjidsMasjidIdRouteImport
+      parentRoute: typeof ApiMasjidsRoute
     }
     '/api/contributions/upsert': {
       id: '/api/contributions/upsert'
@@ -230,11 +287,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/masjids': {
-      id: '/api/masjids'
-      path: '/api/masjids'
-      fullPath: '/api/masjids'
-      preLoaderRoute: typeof ApiMasjidsRouteImport
+    '/api/admin/config-health': {
+      id: '/api/admin/config-health'
+      path: '/api/admin/config-health'
+      fullPath: '/api/admin/config-health'
+      preLoaderRoute: typeof ApiAdminConfigHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/qris/$qrisId/reports': {
@@ -246,10 +303,10 @@ declare module '@tanstack/react-router' {
     }
     '/api/masjids/$masjidId/qris': {
       id: '/api/masjids/$masjidId/qris'
-      path: '/api/masjids/$masjidId/qris'
+      path: '/qris'
       fullPath: '/api/masjids/$masjidId/qris'
       preLoaderRoute: typeof ApiMasjidsMasjidIdQrisRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiMasjidsMasjidIdRoute
     }
     '/api/auth/google/start': {
       id: '/api/auth/google/start'
@@ -275,6 +332,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ApiMasjidsMasjidIdRouteChildren {
+  ApiMasjidsMasjidIdQrisRoute: typeof ApiMasjidsMasjidIdQrisRoute
+}
+
+const ApiMasjidsMasjidIdRouteChildren: ApiMasjidsMasjidIdRouteChildren = {
+  ApiMasjidsMasjidIdQrisRoute: ApiMasjidsMasjidIdQrisRoute,
+}
+
+const ApiMasjidsMasjidIdRouteWithChildren =
+  ApiMasjidsMasjidIdRoute._addFileChildren(ApiMasjidsMasjidIdRouteChildren)
+
+interface ApiMasjidsRouteChildren {
+  ApiMasjidsMasjidIdRoute: typeof ApiMasjidsMasjidIdRouteWithChildren
+  ApiMasjidsSearchRoute: typeof ApiMasjidsSearchRoute
+}
+
+const ApiMasjidsRouteChildren: ApiMasjidsRouteChildren = {
+  ApiMasjidsMasjidIdRoute: ApiMasjidsMasjidIdRouteWithChildren,
+  ApiMasjidsSearchRoute: ApiMasjidsSearchRoute,
+}
+
+const ApiMasjidsRouteWithChildren = ApiMasjidsRoute._addFileChildren(
+  ApiMasjidsRouteChildren,
+)
+
 interface ApiAdminReportsRouteChildren {
   ApiAdminReportsReportIdResolveRoute: typeof ApiAdminReportsReportIdResolveRoute
 }
@@ -288,16 +370,16 @@ const ApiAdminReportsRouteWithChildren = ApiAdminReportsRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  AdminRoute: AdminRoute,
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  ApiMasjidsRoute: ApiMasjidsRouteWithChildren,
+  ApiAdminConfigHealthRoute: ApiAdminConfigHealthRoute,
   ApiAdminReportsRoute: ApiAdminReportsRouteWithChildren,
-  ApiMasjidsRoute: ApiMasjidsRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiContributionsUpsertRoute: ApiContributionsUpsertRoute,
   ApiTurnstileSiteKeyRoute: ApiTurnstileSiteKeyRoute,
   ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
   ApiAuthGoogleStartRoute: ApiAuthGoogleStartRoute,
-  ApiMasjidsMasjidIdQrisRoute: ApiMasjidsMasjidIdQrisRoute,
   ApiQrisQrisIdReportsRoute: ApiQrisQrisIdReportsRoute,
 }
 export const routeTree = rootRouteImport

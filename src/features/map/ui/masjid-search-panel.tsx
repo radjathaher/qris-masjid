@@ -1,11 +1,12 @@
-import { useDeferredValue, useMemo, useState } from "react";
 import { formatMasjidLocation, type Masjid } from "#/entities/masjid/model/types";
 import { Input } from "#/shared/ui/input";
 
 type MasjidSearchPanelProps = {
-  masjids: Masjid[];
   loading: boolean;
+  query: string;
+  results: Masjid[];
   selectedMasjidId: string | null;
+  onQueryChange: (query: string) => void;
   onSelectMasjid: (masjid: Masjid) => void;
 };
 
@@ -17,31 +18,15 @@ const SUBTYPE_LABELS: Record<Masjid["subtype"], string> = {
   unknown: "Muslim POI",
 };
 
-const RESULT_LIMIT = 8;
-
-function buildSearchText(masjid: Masjid): string {
-  return [masjid.name, masjid.city, masjid.province, masjid.subtype].filter(Boolean).join(" ").toLowerCase();
-}
-
 export function MasjidSearchPanel({
-  masjids,
   loading,
+  query,
+  results,
   selectedMasjidId,
+  onQueryChange,
   onSelectMasjid,
 }: MasjidSearchPanelProps) {
-  const [query, setQuery] = useState("");
-  const deferredQuery = useDeferredValue(query);
-  const normalizedQuery = deferredQuery.trim().toLowerCase();
-
-  const results = useMemo(() => {
-    if (normalizedQuery.length === 0) {
-      return [];
-    }
-
-    return masjids
-      .filter((masjid) => buildSearchText(masjid).includes(normalizedQuery))
-      .slice(0, RESULT_LIMIT);
-  }, [masjids, normalizedQuery]);
+  const normalizedQuery = query.trim().toLowerCase();
 
   const showEmpty = normalizedQuery.length > 0 && !loading && results.length === 0;
   const showResults = results.length > 0;
@@ -57,7 +42,7 @@ export function MasjidSearchPanel({
           type="search"
           value={query}
           onChange={(event) => {
-            setQuery(event.target.value);
+            onQueryChange(event.target.value);
           }}
           placeholder="Masjid Istiqlal, Bandung, Aceh..."
           autoComplete="off"
@@ -78,12 +63,14 @@ export function MasjidSearchPanel({
                   className={`map-search-result ${active ? "is-active" : ""}`}
                   onClick={() => {
                     onSelectMasjid(masjid);
-                    setQuery("");
+                    onQueryChange("");
                   }}
                 >
                   <span className="map-search-result-body">
                     <span className="map-search-result-title">{masjid.name}</span>
-                    <span className="map-search-result-subtitle">{formatMasjidLocation(masjid)}</span>
+                    <span className="map-search-result-subtitle">
+                      {formatMasjidLocation(masjid)}
+                    </span>
                   </span>
                   <span className="map-search-result-badge">{SUBTYPE_LABELS[masjid.subtype]}</span>
                 </button>

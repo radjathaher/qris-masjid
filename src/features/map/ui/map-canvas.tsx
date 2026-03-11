@@ -7,8 +7,7 @@ let protocolRegistered = false;
 let protocol: Protocol | null = null;
 
 type MapCanvasProps = {
-  masjids: Masjid[];
-  selectedMasjidId: string | null;
+  selectedMasjid: Masjid | null;
   onSelectMasjid: (masjid: Masjid) => void;
 };
 
@@ -36,7 +35,9 @@ function coerceFeatureCoordinate(value: unknown): number | null {
   return null;
 }
 
-function readFeaturePointCoordinates(feature: MapGeoJSONFeature): { lat: number; lon: number } | null {
+function readFeaturePointCoordinates(
+  feature: MapGeoJSONFeature,
+): { lat: number; lon: number } | null {
   if (feature.geometry.type !== "Point") {
     return null;
   }
@@ -53,7 +54,9 @@ function readFeaturePointCoordinates(feature: MapGeoJSONFeature): { lat: number;
 
 function coerceMasjidSubtype(value: unknown): Masjid["subtype"] {
   const subtype = coerceFeatureString(value);
-  return subtype && VALID_SUBTYPES.has(subtype as Masjid["subtype"]) ? (subtype as Masjid["subtype"]) : "unknown";
+  return subtype && VALID_SUBTYPES.has(subtype as Masjid["subtype"])
+    ? (subtype as Masjid["subtype"])
+    : "unknown";
 }
 
 function buildMasjidFromFeatureProperties(
@@ -79,16 +82,11 @@ function buildMasjidFromFeatureProperties(
   };
 }
 
-function resolveMasjidFromFeature(feature: MapGeoJSONFeature, masjids: Masjid[]): Masjid | null {
+function resolveMasjidFromFeature(feature: MapGeoJSONFeature): Masjid | null {
   const properties = feature.properties ?? {};
   const id = coerceFeatureString(properties.id);
   if (!id) {
     return null;
-  }
-
-  const existing = masjids.find((masjid) => masjid.id === id);
-  if (existing) {
-    return existing;
   }
 
   return buildMasjidFromFeatureProperties(id, feature, properties);
@@ -106,18 +104,16 @@ function isTrackpadPanGesture(event: WheelEvent): boolean {
   return Math.abs(event.deltaX) > 0 || Math.abs(event.deltaY) < TRACKPAD_PAN_DELTA_THRESHOLD;
 }
 
-export function MapCanvas({ masjids, selectedMasjidId, onSelectMasjid }: MapCanvasProps) {
+export function MapCanvas({ selectedMasjid, onSelectMasjid }: MapCanvasProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
-  const masjidsRef = useRef(masjids);
   const onSelectMasjidRef = useRef(onSelectMasjid);
-  const selectedMasjidIdRef = useRef(selectedMasjidId);
+  const selectedMasjidRef = useRef(selectedMasjid);
 
   useEffect(() => {
-    masjidsRef.current = masjids;
     onSelectMasjidRef.current = onSelectMasjid;
-    selectedMasjidIdRef.current = selectedMasjidId;
-  }, [masjids, onSelectMasjid, selectedMasjidId]);
+    selectedMasjidRef.current = selectedMasjid;
+  }, [onSelectMasjid, selectedMasjid]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -179,19 +175,7 @@ export function MapCanvas({ masjids, selectedMasjidId, onSelectMasjid }: MapCanv
         source: MASJID_SOURCE_ID,
         "source-layer": MASJID_SOURCE_LAYER,
         paint: {
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            4,
-            4.5,
-            8,
-            6,
-            12,
-            8,
-            15,
-            10,
-          ],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 4.5, 8, 6, 12, 8, 15, 10],
           "circle-color": "#0f766e",
           "circle-stroke-width": 2,
           "circle-stroke-color": "#f0fdfa",
@@ -204,23 +188,11 @@ export function MapCanvas({ masjids, selectedMasjidId, onSelectMasjid }: MapCanv
         type: "circle",
         source: MASJID_SOURCE_ID,
         "source-layer": MASJID_SOURCE_LAYER,
-        filter: selectedMasjidIdRef.current
-          ? ["==", ["get", "id"], selectedMasjidIdRef.current]
+        filter: selectedMasjidRef.current?.id
+          ? ["==", ["get", "id"], selectedMasjidRef.current.id]
           : ["==", ["get", "id"], ""],
         paint: {
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            4,
-            8,
-            8,
-            11,
-            12,
-            14,
-            15,
-            16,
-          ],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 8, 8, 11, 12, 14, 15, 16],
           "circle-color": "#14b8a6",
           "circle-stroke-width": 3,
           "circle-stroke-color": "#042f2e",
@@ -242,7 +214,7 @@ export function MapCanvas({ masjids, selectedMasjidId, onSelectMasjid }: MapCanv
           return;
         }
 
-        const masjid = resolveMasjidFromFeature(feature, masjidsRef.current);
+        const masjid = resolveMasjidFromFeature(feature);
         if (!masjid) {
           return;
         }
@@ -281,26 +253,21 @@ export function MapCanvas({ masjids, selectedMasjidId, onSelectMasjid }: MapCanv
     if (map.getLayer(MASJID_SELECTED_LAYER_ID)) {
       map.setFilter(
         MASJID_SELECTED_LAYER_ID,
-        selectedMasjidId ? ["==", ["get", "id"], selectedMasjidId] : ["==", ["get", "id"], ""],
+        selectedMasjid?.id ? ["==", ["get", "id"], selectedMasjid.id] : ["==", ["get", "id"], ""],
       );
     }
 
-    if (!selectedMasjidId) {
-      return;
-    }
-
-    const masjid = masjids.find((item) => item.id === selectedMasjidId);
-    if (!masjid) {
+    if (!selectedMasjid) {
       return;
     }
 
     map.flyTo({
-      center: [masjid.lon, masjid.lat],
+      center: [selectedMasjid.lon, selectedMasjid.lat],
       zoom: Math.max(map.getZoom(), 14),
       duration: 900,
       essential: true,
     });
-  }, [masjids, selectedMasjidId]);
+  }, [selectedMasjid]);
 
   return <div ref={mapContainerRef} className="map-canvas" />;
 }

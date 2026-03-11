@@ -14,8 +14,10 @@ function renderMasjidLoadError(error: unknown) {
 
 export function MapHomePage() {
   const {
-    masjids,
-    masjidsQuery,
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    searchResultsQuery,
     authSessionQuery,
     selectedMasjid,
     contributeOpen,
@@ -30,20 +32,18 @@ export function MapHomePage() {
 
   return (
     <main className="map-page">
-      {renderMasjidLoadError(masjidsQuery.error)}
+      {renderMasjidLoadError(searchResultsQuery.error)}
 
       <MasjidSearchPanel
-        masjids={masjids}
-        loading={masjidsQuery.isLoading}
+        query={searchQuery}
+        loading={searchResultsQuery.isLoading}
+        results={searchResults}
         selectedMasjidId={selectedMasjid?.id ?? null}
+        onQueryChange={setSearchQuery}
         onSelectMasjid={onSelectMasjid}
       />
 
-      <MapCanvas
-        masjids={masjids}
-        selectedMasjidId={selectedMasjid?.id ?? null}
-        onSelectMasjid={onSelectMasjid}
-      />
+      <MapCanvas selectedMasjid={selectedMasjid} onSelectMasjid={onSelectMasjid} />
 
       <MasjidDetailModal
         masjid={selectedMasjid}

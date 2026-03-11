@@ -1,19 +1,22 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { MasjidListResponse } from "#/entities/masjid/model/types";
+import type { Masjid, MasjidListResponse } from "#/entities/masjid/model/types";
 import type { MasjidQrisResponse } from "#/entities/qris/model/contracts";
 import { PENDING_CONTRIBUTE_MASJID_ID_KEY } from "#/features/contribute/model/constants";
 import { MapHomePage } from "#/pages/map-home/ui/map-home-page";
 
-const { fetchMasjidsMock, fetchAuthSessionStatusMock, fetchMasjidQrisMock } = vi.hoisted(() => ({
-  fetchMasjidsMock: vi.fn<() => Promise<MasjidListResponse>>(),
-  fetchAuthSessionStatusMock: vi.fn<() => Promise<{ authenticated: boolean }>>(),
-  fetchMasjidQrisMock: vi.fn<(masjidId: string) => Promise<MasjidQrisResponse>>(),
-}));
+const { searchMasjidsMock, fetchMasjidByIdMock, fetchAuthSessionStatusMock, fetchMasjidQrisMock } =
+  vi.hoisted(() => ({
+    searchMasjidsMock: vi.fn<(query: string) => Promise<MasjidListResponse>>(),
+    fetchMasjidByIdMock: vi.fn<(masjidId: string) => Promise<Masjid>>(),
+    fetchAuthSessionStatusMock: vi.fn<() => Promise<{ authenticated: boolean }>>(),
+    fetchMasjidQrisMock: vi.fn<(masjidId: string) => Promise<MasjidQrisResponse>>(),
+  }));
 
 vi.mock("#/entities/masjid/api/client", () => ({
-  fetchMasjids: fetchMasjidsMock,
+  searchMasjids: searchMasjidsMock,
+  fetchMasjidById: fetchMasjidByIdMock,
 }));
 
 vi.mock("#/entities/qris/api/client", () => ({
@@ -22,8 +25,8 @@ vi.mock("#/entities/qris/api/client", () => ({
 }));
 
 vi.mock("#/features/map/ui/map-canvas", () => ({
-  MapCanvas: ({ selectedMasjidId }: { selectedMasjidId: string | null }) => (
-    <div data-testid="map-canvas">{selectedMasjidId ?? "none"}</div>
+  MapCanvas: ({ selectedMasjid }: { selectedMasjid: { id: string } | null }) => (
+    <div data-testid="map-canvas">{selectedMasjid?.id ?? "none"}</div>
   ),
 }));
 
@@ -90,7 +93,18 @@ describe("MapHomePage", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
     window.sessionStorage.clear();
-    fetchMasjidsMock.mockResolvedValue(masjids);
+    searchMasjidsMock.mockImplementation(async (query) => ({
+      items: masjids.items.filter((item) => item.name.toLowerCase().includes(query.toLowerCase())),
+    }));
+    fetchMasjidByIdMock.mockImplementation(async (masjidId) => {
+      const masjid = masjids.items.find((item) => item.id === masjidId);
+
+      if (!masjid) {
+        throw new Error("Masjid tidak ditemukan");
+      }
+
+      return masjid;
+    });
     fetchAuthSessionStatusMock.mockResolvedValue({ authenticated: false });
     fetchMasjidQrisMock.mockImplementation(async (masjidId) => ({
       masjidId,
@@ -140,8 +154,12 @@ describe("MapHomePage", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("contribute-modal").textContent).toContain('"open":true');
-      expect(screen.getByTestId("contribute-modal").textContent).toContain('"defaultOpenForm":true');
-      expect(screen.getByTestId("contribute-modal").textContent).toContain('"masjidId":"masjid-istiqlal"');
+      expect(screen.getByTestId("contribute-modal").textContent).toContain(
+        '"defaultOpenForm":true',
+      );
+      expect(screen.getByTestId("contribute-modal").textContent).toContain(
+        '"masjidId":"masjid-istiqlal"',
+      );
     });
 
     expect(window.sessionStorage.getItem(PENDING_CONTRIBUTE_MASJID_ID_KEY)).toBeNull();
