@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
@@ -91,6 +92,9 @@ export const qrisReports = sqliteTable(
     qrisIdIdx: index("qris_reports_qris_id_idx").on(table.qrisId),
     masjidIdIdx: index("qris_reports_masjid_id_idx").on(table.masjidId),
     statusIdx: index("qris_reports_status_idx").on(table.status),
+    qrisReporterOpenUnique: uniqueIndex("qris_reports_qris_reporter_open_unique_idx")
+      .on(table.qrisId, table.reporterId)
+      .where(eq(table.status, "open")),
   }),
 );
 

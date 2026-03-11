@@ -88,6 +88,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS qris_active_masjid_unique_idx ON qris (masjid_
 CREATE INDEX IF NOT EXISTS qris_reports_qris_id_idx ON qris_reports (qris_id);
 CREATE INDEX IF NOT EXISTS qris_reports_masjid_id_idx ON qris_reports (masjid_id);
 CREATE INDEX IF NOT EXISTS qris_reports_status_idx ON qris_reports (status);
+CREATE UNIQUE INDEX IF NOT EXISTS qris_reports_qris_reporter_open_unique_idx
+  ON qris_reports (qris_id, reporter_id)
+  WHERE status = 'open';
 CREATE UNIQUE INDEX IF NOT EXISTS request_rate_limits_scope_subject_window_unique_idx
   ON request_rate_limits (scope, subject_key, window_started_at);
 CREATE INDEX IF NOT EXISTS request_rate_limits_scope_idx ON request_rate_limits (scope);
