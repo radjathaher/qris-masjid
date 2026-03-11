@@ -13,15 +13,7 @@ type CliOptions = {
 
 type CanonicalMasjidRow = Pick<
   BootstrapPoi,
-  | "id"
-  | "osmId"
-  | "name"
-  | "lat"
-  | "lon"
-  | "city"
-  | "province"
-  | "subtype"
-  | "sourceVersion"
+  "id" | "osmId" | "name" | "lat" | "lon" | "city" | "province" | "subtype" | "sourceVersion"
 >;
 
 type FeatureCollection = {
@@ -119,7 +111,9 @@ function validateCanonicalMasjidRows(input: unknown): CanonicalMasjidRow[] {
       lon,
       city: typeof row.city === "string" && row.city.trim().length > 0 ? row.city.trim() : null,
       province:
-        typeof row.province === "string" && row.province.trim().length > 0 ? row.province.trim() : null,
+        typeof row.province === "string" && row.province.trim().length > 0
+          ? row.province.trim()
+          : null,
       subtype:
         row.subtype === "masjid" ||
         row.subtype === "musholla" ||

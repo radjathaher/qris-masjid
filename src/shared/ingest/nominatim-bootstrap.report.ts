@@ -1,10 +1,17 @@
-import type { BootstrapPoi, QueryRunResult, RejectedBootstrapItem } from "./nominatim-bootstrap.types";
+import type {
+  BootstrapPoi,
+  QueryRunResult,
+  RejectedBootstrapItem,
+} from "./nominatim-bootstrap.types";
 
 const SUBTYPE_ORDER = ["masjid", "musholla", "surau", "langgar", "unknown"] as const;
 
 function countBySubtype(items: BootstrapPoi[]) {
   return Object.fromEntries(
-    SUBTYPE_ORDER.map((subtype) => [subtype, items.filter((item) => item.subtype === subtype).length]),
+    SUBTYPE_ORDER.map((subtype) => [
+      subtype,
+      items.filter((item) => item.subtype === subtype).length,
+    ]),
   );
 }
 
@@ -47,6 +54,8 @@ export function buildBootstrapReport(input: {
     rejectedReasonCounts: countRejectedReasons(input.rejected),
     subtypeCounts: countBySubtype(input.deduped),
     provinceCounts: countByProvince(input.deduped),
-    failedQueryLabels: input.queryResults.filter((result) => !result.ok).map((result) => result.query.label),
+    failedQueryLabels: input.queryResults
+      .filter((result) => !result.ok)
+      .map((result) => result.query.label),
   };
 }

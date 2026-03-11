@@ -42,8 +42,11 @@ body {
   flex-direction: column;
   gap: 0.65rem;
   border: 1px solid color-mix(in oklab, #115e59 16%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, white 94%, transparent), color-mix(in oklab, #ecfdf5 88%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, white 94%, transparent),
+    color-mix(in oklab, #ecfdf5 88%, transparent)
+  );
   backdrop-filter: blur(14px);
   border-radius: 1.25rem;
   box-shadow:

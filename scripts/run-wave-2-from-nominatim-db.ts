@@ -52,7 +52,10 @@ function makeSourceVersion(): string {
   return `${date}-nominatim-db-export-v1`;
 }
 
-function parseCliOptions(argv: string[] = Bun.argv, env: NodeJS.ProcessEnv = process.env): CliOptions {
+function parseCliOptions(
+  argv: string[] = Bun.argv,
+  env: NodeJS.ProcessEnv = process.env,
+): CliOptions {
   const localD1 = parseBooleanOption("local-d1", argv, true);
   const remoteD1 = parseBooleanOption("remote-d1", argv, false);
 
@@ -64,8 +67,10 @@ function parseCliOptions(argv: string[] = Bun.argv, env: NodeJS.ProcessEnv = pro
 
   return {
     outputRoot: readOption("output-root", argv) ?? "data/ingest/nominatim",
-    databaseUrl: readOption("database-url", argv) ?? env.NOMINATIM_DATABASE_URL ?? env.DATABASE_URL ?? null,
-    sourceVersion: readOption("source-version", argv) ?? env.NOMINATIM_SOURCE_VERSION ?? makeSourceVersion(),
+    databaseUrl:
+      readOption("database-url", argv) ?? env.NOMINATIM_DATABASE_URL ?? env.DATABASE_URL ?? null,
+    sourceVersion:
+      readOption("source-version", argv) ?? env.NOMINATIM_SOURCE_VERSION ?? makeSourceVersion(),
     countryCode: (readOption("country-code", argv) ?? "id").trim().toLowerCase(),
     limit: limitRaw ? parsePositiveInteger(limitRaw, "limit") : null,
     reverseEnrich: parseBooleanOption("reverse-enrich", argv, false),

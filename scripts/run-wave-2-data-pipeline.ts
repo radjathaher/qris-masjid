@@ -53,7 +53,9 @@ export function parseCliOptions(
   const exportUrl = readOption("export-url", argv);
 
   if (!exportFile && !exportUrl) {
-    throw new Error("Missing source. Provide --export-url=<url> or --export-file=/path/to/export.json");
+    throw new Error(
+      "Missing source. Provide --export-url=<url> or --export-file=/path/to/export.json",
+    );
   }
 
   if (exportFile && exportUrl) {
@@ -71,7 +73,8 @@ export function parseCliOptions(
     exportFile,
     exportUrl,
     outputRoot: readOption("output-root", argv) ?? "data/ingest/nominatim",
-    baseUrl: readOption("base-url", argv) ?? env.NOMINATIM_BASE_URL ?? "https://nominatim.cakrawala.ai",
+    baseUrl:
+      readOption("base-url", argv) ?? env.NOMINATIM_BASE_URL ?? "https://nominatim.cakrawala.ai",
     reverseEnrich: parseBooleanOption("reverse-enrich", argv, true),
     localD1,
     remoteD1,
@@ -199,10 +202,22 @@ async function main() {
   if (!options.skipD1Apply) {
     if (options.remoteD1) {
       d1Target = "remote";
-      await runCommand("wrangler", ["d1", "execute", "qris-masjid", "--remote", `--file=${d1SyncPath}`]);
+      await runCommand("wrangler", [
+        "d1",
+        "execute",
+        "qris-masjid",
+        "--remote",
+        `--file=${d1SyncPath}`,
+      ]);
     } else {
       d1Target = "local";
-      await runCommand("wrangler", ["d1", "execute", "qris-masjid", "--local", `--file=${d1SyncPath}`]);
+      await runCommand("wrangler", [
+        "d1",
+        "execute",
+        "qris-masjid",
+        "--local",
+        `--file=${d1SyncPath}`,
+      ]);
     }
   }
 

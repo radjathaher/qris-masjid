@@ -49,7 +49,8 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
               )
             ) : data.imageDeliveryMode === "public-r2-dev" ? (
               <p className="text-amber-800/80">
-                URL gambar memakai domain <code>.r2.dev</code>. Aman untuk dev, bukan jalur produksi.
+                URL gambar memakai domain <code>.r2.dev</code>. Aman untuk dev, bukan jalur
+                produksi.
               </p>
             ) : (
               <p className="text-emerald-900/70">URL gambar belum tersedia.</p>

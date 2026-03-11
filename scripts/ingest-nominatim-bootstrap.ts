@@ -52,7 +52,8 @@ function parseIntegerOption(name: string, fallback: number): number {
 
 function parseCliOptions(): CliOptions {
   return {
-    baseUrl: readOption("base-url") ?? process.env.NOMINATIM_BASE_URL ?? "https://nominatim.cakrawala.ai",
+    baseUrl:
+      readOption("base-url") ?? process.env.NOMINATIM_BASE_URL ?? "https://nominatim.cakrawala.ai",
     outputRoot: readOption("output-root") ?? "data/ingest/nominatim",
     limit: parseIntegerOption("limit", 50),
     throttleMs: parseIntegerOption("throttle-ms", 250),
@@ -111,7 +112,10 @@ async function readQueriesFromFile(path: string): Promise<BootstrapQuery[]> {
   return queries.map((query) => ({
     label: query.label.trim(),
     q: query.q.trim(),
-    city: typeof query.city === "string" && query.city.trim().length > 0 ? query.city.trim() : undefined,
+    city:
+      typeof query.city === "string" && query.city.trim().length > 0
+        ? query.city.trim()
+        : undefined,
     province:
       typeof query.province === "string" && query.province.trim().length > 0
         ? query.province.trim()
@@ -283,7 +287,8 @@ async function reverseGeocodePoi(
       address.state_district?.trim() ||
       null;
 
-    const province = address.state?.trim() || address.region?.trim() || address.province?.trim() || null;
+    const province =
+      address.state?.trim() || address.region?.trim() || address.province?.trim() || null;
 
     return { city, province };
   } catch {
@@ -345,7 +350,11 @@ async function main() {
       fetchedAt,
     });
     const reverseEnriched = options.reverseEnrich
-      ? await enrichPoisWithReverseGeocode(options.baseUrl, normalizedResult.accepted, options.throttleMs)
+      ? await enrichPoisWithReverseGeocode(
+          options.baseUrl,
+          normalizedResult.accepted,
+          options.throttleMs,
+        )
       : normalizedResult.accepted;
     const { deduped, duplicateCount } = dedupeBootstrapPois(reverseEnriched);
     const report = buildBootstrapReport({
@@ -358,9 +367,7 @@ async function main() {
     await writeJson(join(outputDir, "manifest.json"), {
       sourceVersion,
       baseUrl: options.baseUrl,
-      querySource: options.exportUrl
-        ? `url:${options.exportUrl}`
-        : `file:${options.exportFile}`,
+      querySource: options.exportUrl ? `url:${options.exportUrl}` : `file:${options.exportFile}`,
       reverseEnrich: options.reverseEnrich,
       queryCount: 0,
       limitPerQuery: options.limit,

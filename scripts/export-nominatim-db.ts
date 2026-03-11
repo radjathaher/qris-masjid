@@ -30,14 +30,19 @@ function makeSourceVersion(): string {
   return `${date}-nominatim-db-export-v1`;
 }
 
-function parseCliOptions(argv: string[] = Bun.argv, env: NodeJS.ProcessEnv = process.env): CliOptions {
-  const sourceVersion = readOption("source-version", argv) ?? env.NOMINATIM_SOURCE_VERSION ?? makeSourceVersion();
+function parseCliOptions(
+  argv: string[] = Bun.argv,
+  env: NodeJS.ProcessEnv = process.env,
+): CliOptions {
+  const sourceVersion =
+    readOption("source-version", argv) ?? env.NOMINATIM_SOURCE_VERSION ?? makeSourceVersion();
   const output =
     readOption("output", argv) ?? resolve("data/exports/nominatim", `${sourceVersion}.json`);
   const limitRaw = readOption("limit", argv);
 
   return {
-    databaseUrl: readOption("database-url", argv) ?? env.NOMINATIM_DATABASE_URL ?? env.DATABASE_URL ?? null,
+    databaseUrl:
+      readOption("database-url", argv) ?? env.NOMINATIM_DATABASE_URL ?? env.DATABASE_URL ?? null,
     output,
     sourceVersion,
     countryCode: (readOption("country-code", argv) ?? "id").trim().toLowerCase(),

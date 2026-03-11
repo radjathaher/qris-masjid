@@ -63,54 +63,66 @@ function describeAdminAccess(mode: AdminConfigHealth["adminAccess"]["mode"]) {
   }
 }
 
+function renderAdminAccessSection(adminAccess: AdminConfigHealth["adminAccess"]) {
+  const adminState = describeAdminAccess(adminAccess.mode);
+
+  return (
+    <>
+      <p className="pt-1">
+        <strong>Admin Access:</strong> {adminState.title}
+      </p>
+      <p>{adminState.description}</p>
+      <p>
+        <strong>Mode:</strong> {adminAccess.mode}
+      </p>
+      <p>
+        <strong>Allowed Admins:</strong> {adminAccess.count}
+      </p>
+      {adminAccess.bootstrapDomain ? (
+        <p>
+          <strong>Bootstrap Domain:</strong> {adminAccess.bootstrapDomain}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function renderImageDeliverySection(imageDelivery: AdminConfigHealth["imageDelivery"]) {
+  const imageState = describeImageDelivery(imageDelivery.mode);
+
+  return (
+    <>
+      <p className="pt-1">
+        <strong>Image Delivery:</strong> {imageState.title}
+      </p>
+      <p>{imageState.description}</p>
+      <p>
+        <strong>Mode:</strong> {imageDelivery.mode}
+      </p>
+      <p>
+        <strong>Base URL:</strong> {imageDelivery.baseUrl || "belum diatur"}
+      </p>
+    </>
+  );
+}
+
 export function AdminConfigHealthCard({ data, error, loading }: AdminConfigHealthCardProps) {
-  const imageDelivery = data?.imageDelivery;
-  const imageState = imageDelivery ? describeImageDelivery(imageDelivery.mode) : null;
   const adminAccess = data?.adminAccess;
-  const adminState = adminAccess ? describeAdminAccess(adminAccess.mode) : null;
+  const imageDelivery = data?.imageDelivery;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Config Health</CardTitle>
-        <CardDescription>Status operasional untuk akses admin dan delivery gambar QRIS.</CardDescription>
+        <CardDescription>
+          Status operasional untuk akses admin dan delivery gambar QRIS.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         {error ? <p className="text-red-600">{error}</p> : null}
         {loading ? <p className="text-emerald-900/70">Memuat status konfigurasi...</p> : null}
-        {adminState && adminAccess ? (
-          <>
-            <p className="pt-1">
-              <strong>Admin Access:</strong> {adminState.title}
-            </p>
-            <p>{adminState.description}</p>
-            <p>
-              <strong>Mode:</strong> {adminAccess.mode}
-            </p>
-            <p>
-              <strong>Allowed Admins:</strong> {adminAccess.count}
-            </p>
-            {adminAccess.bootstrapDomain ? (
-              <p>
-                <strong>Bootstrap Domain:</strong> {adminAccess.bootstrapDomain}
-              </p>
-            ) : null}
-          </>
-        ) : null}
-        {imageState && imageDelivery ? (
-          <>
-            <p className="pt-1">
-              <strong>Image Delivery:</strong> {imageState.title}
-            </p>
-            <p>{imageState.description}</p>
-            <p>
-              <strong>Mode:</strong> {imageDelivery.mode}
-            </p>
-            <p>
-              <strong>Base URL:</strong> {imageDelivery.baseUrl || "belum diatur"}
-            </p>
-          </>
-        ) : null}
+        {adminAccess ? renderAdminAccessSection(adminAccess) : null}
+        {imageDelivery ? renderImageDeliverySection(imageDelivery) : null}
       </CardContent>
     </Card>
   );

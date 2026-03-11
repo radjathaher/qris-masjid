@@ -22,7 +22,11 @@ export const Route = createFileRoute("/api/masjids")({
             subtype: masjids.subtype,
           })
           .from(masjids)
-          .orderBy(asc(sql`COALESCE(${masjids.province}, '')`), asc(sql`COALESCE(${masjids.city}, '')`), asc(masjids.name));
+          .orderBy(
+            asc(sql`COALESCE(${masjids.province}, '')`),
+            asc(sql`COALESCE(${masjids.city}, '')`),
+            asc(masjids.name),
+          );
 
         return Response.json(
           masjidListResponseSchema.parse({

@@ -12,8 +12,20 @@ const EXCLUDED_CLASS_TYPE_PAIRS = new Set([
   "waterway:floodgate",
 ]);
 
-const PRAYER_PLACE_TERMS = ["masjid", "mosque", "musholla", "musala", "mushala", "surau", "langgar"] as const;
-const ACCEPTED_CLASS_TYPE_PAIRS = new Set(["amenity:place_of_worship", "building:yes", "building:mosque"]);
+const PRAYER_PLACE_TERMS = [
+  "masjid",
+  "mosque",
+  "musholla",
+  "musala",
+  "mushala",
+  "surau",
+  "langgar",
+] as const;
+const ACCEPTED_CLASS_TYPE_PAIRS = new Set([
+  "amenity:place_of_worship",
+  "building:yes",
+  "building:mosque",
+]);
 const GENERIC_NAME_PATTERNS = [
   /^masjid$/i,
   /^mosque$/i,
@@ -53,7 +65,11 @@ export function normalizeSourceFields(item: {
   };
 }
 
-function buildSubtypeHaystack(input: { name: string; displayName: string | null; type: string | null }): string {
+function buildSubtypeHaystack(input: {
+  name: string;
+  displayName: string | null;
+  type: string | null;
+}): string {
   return [input.name, input.displayName ?? "", input.type ?? ""].join(" ").toLowerCase();
 }
 
@@ -72,7 +88,11 @@ export function inferSubtype(input: {
     return "surau";
   }
 
-  if (haystack.includes("musholla") || haystack.includes("musala") || haystack.includes("mushala")) {
+  if (
+    haystack.includes("musholla") ||
+    haystack.includes("musala") ||
+    haystack.includes("mushala")
+  ) {
     return "musholla";
   }
 
@@ -84,7 +104,12 @@ export function inferSubtype(input: {
 }
 
 function buildPrayerPlaceHaystack(name: string, fields: NormalizedSourceFields): string {
-  return [name.toLowerCase(), fields.displayName?.toLowerCase() ?? "", fields.sourceType?.toLowerCase() ?? "", fields.sourceCategory?.toLowerCase() ?? ""]
+  return [
+    name.toLowerCase(),
+    fields.displayName?.toLowerCase() ?? "",
+    fields.sourceType?.toLowerCase() ?? "",
+    fields.sourceCategory?.toLowerCase() ?? "",
+  ]
     .join(" ")
     .trim();
 }

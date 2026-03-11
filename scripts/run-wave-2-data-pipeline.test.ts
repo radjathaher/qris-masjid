@@ -25,8 +25,12 @@ describe("parseBooleanOption", () => {
   });
 
   it("parses explicit true and false values", () => {
-    expect(parseBooleanOption("skip-pmtiles", ["bun", "script.ts", "--skip-pmtiles=true"], false)).toBe(true);
-    expect(parseBooleanOption("skip-pmtiles", ["bun", "script.ts", "--skip-pmtiles=false"], true)).toBe(false);
+    expect(
+      parseBooleanOption("skip-pmtiles", ["bun", "script.ts", "--skip-pmtiles=true"], false),
+    ).toBe(true);
+    expect(
+      parseBooleanOption("skip-pmtiles", ["bun", "script.ts", "--skip-pmtiles=false"], true),
+    ).toBe(false);
   });
 
   it("rejects invalid boolean values", () => {
@@ -62,7 +66,12 @@ describe("parseCliOptions", () => {
     );
 
     expect(() =>
-      parseCliOptions(["bun", "script.ts", "--export-file=/tmp/export.json", "--export-url=https://example.com"]),
+      parseCliOptions([
+        "bun",
+        "script.ts",
+        "--export-file=/tmp/export.json",
+        "--export-url=https://example.com",
+      ]),
     ).toThrow("Choose one source only: --export-url or --export-file");
   });
 

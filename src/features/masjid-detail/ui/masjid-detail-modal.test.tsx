@@ -105,7 +105,10 @@ describe("MasjidDetailModal", () => {
 
     expect(
       screen.getByText((_, element) => {
-        return element?.textContent === "URL gambar memakai domain .r2.dev. Aman untuk dev, bukan jalur produksi.";
+        return (
+          element?.textContent ===
+          "URL gambar memakai domain .r2.dev. Aman untuk dev, bukan jalur produksi."
+        );
       }),
     ).toBeTruthy();
   });
@@ -134,7 +137,9 @@ describe("MasjidDetailModal", () => {
 
     expect(
       screen.getByText((_, element) => {
-        return element?.textContent === "URL publik R2 tidak valid. Periksa nilai R2_PUBLIC_BASE_URL.";
+        return (
+          element?.textContent === "URL publik R2 tidak valid. Periksa nilai R2_PUBLIC_BASE_URL."
+        );
       }),
     ).toBeTruthy();
   });

@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import type { AdminConfigHealth } from "#/features/admin/api/client";
 import { AdminConfigHealthCard } from "#/features/admin/ui/admin-config-health-card";
 
-function buildHealth(mode: AdminConfigHealth["imageDelivery"]["mode"], overrides?: Partial<AdminConfigHealth>) {
+function buildHealth(
+  mode: AdminConfigHealth["imageDelivery"]["mode"],
+  overrides?: Partial<AdminConfigHealth>,
+) {
   return {
     adminAccess: {
       configured: false,
@@ -47,7 +50,9 @@ describe("AdminConfigHealthCard", () => {
   });
 
   it("renders the not configured state", () => {
-    render(<AdminConfigHealthCard data={buildHealth("unconfigured")} error={null} loading={false} />);
+    render(
+      <AdminConfigHealthCard data={buildHealth("unconfigured")} error={null} loading={false} />,
+    );
 
     expect(screen.getByText("Admin Access:")).toBeTruthy();
     expect(screen.getByText("Placeholder Config")).toBeTruthy();
@@ -73,7 +78,9 @@ describe("AdminConfigHealthCard", () => {
   });
 
   it("renders the dev-only state", () => {
-    render(<AdminConfigHealthCard data={buildHealth("public-r2-dev")} error={null} loading={false} />);
+    render(
+      <AdminConfigHealthCard data={buildHealth("public-r2-dev")} error={null} loading={false} />,
+    );
 
     expect(screen.getByText("Dev Only")).toBeTruthy();
     expect(
@@ -85,7 +92,13 @@ describe("AdminConfigHealthCard", () => {
   });
 
   it("renders direct delivery ready state", () => {
-    render(<AdminConfigHealthCard data={buildHealth("public-custom-domain")} error={null} loading={false} />);
+    render(
+      <AdminConfigHealthCard
+        data={buildHealth("public-custom-domain")}
+        error={null}
+        loading={false}
+      />,
+    );
 
     expect(screen.getByText("Direct Delivery Ready")).toBeTruthy();
     expect(

@@ -74,7 +74,8 @@ export function AdminReportCard({ report, pending, onResolve }: AdminReportCardP
           </p>
           {report.reviewedAtNullable ? (
             <p>
-              <strong>Reviewed:</strong> {new Date(report.reviewedAtNullable).toLocaleString("id-ID")}
+              <strong>Reviewed:</strong>{" "}
+              {new Date(report.reviewedAtNullable).toLocaleString("id-ID")}
             </p>
           ) : null}
           {report.resolutionNoteNullable ? (
@@ -136,7 +137,11 @@ export function AdminReportCard({ report, pending, onResolve }: AdminReportCardP
             </div>
 
             <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="outline" disabled={pending} onClick={() => void resolveWith("dismissed")}>
+              <Button
+                variant="outline"
+                disabled={pending}
+                onClick={() => void resolveWith("dismissed")}
+              >
                 {pending ? "Menyimpan..." : "Dismiss"}
               </Button>
               <Button disabled={pending} onClick={() => void resolveWith("confirmed")}>

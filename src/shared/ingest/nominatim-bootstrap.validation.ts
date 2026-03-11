@@ -38,7 +38,8 @@ function parseStructuredExportItem(item: unknown, index: number): StructuredExpo
 
   return {
     osm_type: optionalTrimmedString(row.osm_type),
-    osm_id: typeof row.osm_id === "string" || typeof row.osm_id === "number" ? row.osm_id : undefined,
+    osm_id:
+      typeof row.osm_id === "string" || typeof row.osm_id === "number" ? row.osm_id : undefined,
     lat: assertNumberLike(row.lat, `items[${index}].lat`),
     lon: assertNumberLike(row.lon, `items[${index}].lon`),
     name: assertNonEmptyString(row.name, `items[${index}].name`),
@@ -63,7 +64,7 @@ export function validateStructuredExportShape(input: unknown): StructuredExportS
   const sourceVersion = assertNonEmptyString(root.sourceVersion, "sourceVersion");
 
   if (!Array.isArray(root.items)) {
-    throw new Error('Invalid structured export: items must be an array');
+    throw new Error("Invalid structured export: items must be an array");
   }
 
   return {

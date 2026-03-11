@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AppEnv } from "#/shared/lib/server/env";
+import {
+  createEnv,
+  createSelectBuilder,
+  getPostHandler,
+} from "#/routes/api/contributions.upsert.test-helpers";
 
 const {
   createDbMock,
@@ -56,46 +60,6 @@ vi.mock("#/shared/lib/server/rate-limit", () => ({
       },
     }),
 }));
-
-import { Route } from "#/routes/api/contributions.upsert";
-
-function getPostHandler() {
-  const server = Route.options.server;
-
-  if (!server) {
-    throw new Error("Expected route server config");
-  }
-
-  return (server.handlers as { POST: (input: unknown) => Promise<Response> }).POST;
-}
-
-function createSelectBuilder(results: unknown[]) {
-  return {
-    from: () => ({
-      where: () => ({
-        limit: async () => results,
-      }),
-    }),
-  };
-}
-
-function createEnv(overrides?: Partial<AppEnv>) {
-  return {
-    APP_BASE_URL: "http://localhost:3000",
-    APP_SESSION_SECRET: "secret",
-    GOOGLE_OAUTH_CLIENT_ID: "id",
-    GOOGLE_OAUTH_CLIENT_SECRET: "secret",
-    GOOGLE_OAUTH_REDIRECT_URI: "http://localhost/callback",
-    TURNSTILE_SECRET_KEY: "turnstile-secret",
-    TURNSTILE_SITE_KEY: "turnstile-site-key",
-    DB: {} as D1Database,
-    QRIS_IMAGES: {
-      put: vi.fn(),
-      delete: vi.fn(),
-    } as unknown as R2Bucket,
-    ...overrides,
-  } satisfies AppEnv;
-}
 
 describe("/api/contributions/upsert", () => {
   beforeEach(() => {
