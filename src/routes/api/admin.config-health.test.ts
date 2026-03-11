@@ -49,6 +49,7 @@ describe("/api/admin/config-health", () => {
     const response = await getGetHandler()({
       context: {
         env: createEnv({
+          APP_ADMIN_EMAILS: "admin@example.com",
           R2_PUBLIC_BASE_URL: "https://cdn.example.com",
         }),
       },
@@ -56,6 +57,11 @@ describe("/api/admin/config-health", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
+      adminAccess: {
+        configured: false,
+        mode: "placeholder",
+        count: 1,
+      },
       imageDelivery: {
         configured: true,
         mode: "public-custom-domain",
@@ -90,5 +96,27 @@ describe("/api/admin/config-health", () => {
 
     expect(response.status).toBe(403);
     await expect(response.text()).resolves.toBe("Akses ditolak");
+  });
+
+  it("reports configured admin access when allowlist uses real emails", async () => {
+    readAuthenticatedUserIdMock.mockResolvedValue("user-1");
+    readAuthenticatedAdminUserIdMock.mockResolvedValue("user-1");
+
+    const response = await getGetHandler()({
+      context: {
+        env: createEnv({
+          APP_ADMIN_EMAILS: "admin@cakrawala.ai,ops@cakrawala.ai",
+        }),
+      },
+    } as never);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      adminAccess: {
+        configured: true,
+        mode: "configured",
+        count: 2,
+      },
+    });
   });
 });

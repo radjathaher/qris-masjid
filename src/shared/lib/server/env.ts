@@ -19,6 +19,12 @@ export type PublicR2Delivery = {
   mode: "unconfigured" | "invalid" | "public-custom-domain" | "public-r2-dev";
 };
 
+export type AdminAllowlistHealth = {
+  configured: boolean;
+  mode: "configured" | "placeholder" | "unconfigured";
+  count: number;
+};
+
 type HandlerInput = {
   context?: {
     cloudflare?: {
@@ -84,5 +90,46 @@ export function readPublicR2Delivery(env: AppEnv): PublicR2Delivery {
     baseUrl,
     configured: true,
     mode: hostname.endsWith(".r2.dev") ? "public-r2-dev" : "public-custom-domain",
+  };
+}
+
+function readNormalizedEmails(raw: string | undefined): string[] {
+  if (!raw) {
+    return [];
+  }
+
+  return raw
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter((value) => value.length > 0);
+}
+
+function isPlaceholderAdminEmail(email: string): boolean {
+  return email.endsWith("@example.com") || email.endsWith("@example.org");
+}
+
+export function readAdminAllowlistHealth(env: AppEnv): AdminAllowlistHealth {
+  const emails = readNormalizedEmails(env.APP_ADMIN_EMAILS);
+
+  if (emails.length === 0) {
+    return {
+      configured: false,
+      mode: "unconfigured",
+      count: 0,
+    };
+  }
+
+  if (emails.some((email) => isPlaceholderAdminEmail(email))) {
+    return {
+      configured: false,
+      mode: "placeholder",
+      count: emails.length,
+    };
+  }
+
+  return {
+    configured: true,
+    mode: "configured",
+    count: emails.length,
   };
 }

@@ -2,9 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { readAuthenticatedUserId } from "#/shared/lib/server/auth";
 import { readAuthenticatedAdminUserId } from "#/shared/lib/server/admin";
-import { getEnv, readPublicR2Delivery } from "#/shared/lib/server/env";
+import { getEnv, readAdminAllowlistHealth, readPublicR2Delivery } from "#/shared/lib/server/env";
 
 const configHealthResponseSchema = z.object({
+  adminAccess: z.object({
+    configured: z.boolean(),
+    mode: z.enum(["configured", "placeholder", "unconfigured"]),
+    count: z.number().int().nonnegative(),
+  }),
   imageDelivery: z.object({
     configured: z.boolean(),
     mode: z.enum(["unconfigured", "invalid", "public-custom-domain", "public-r2-dev"]),
@@ -29,9 +34,15 @@ export const Route = createFileRoute("/api/admin/config-health")({
         }
 
         const imageDelivery = readPublicR2Delivery(env);
+        const adminAccess = readAdminAllowlistHealth(env);
 
         return Response.json(
           configHealthResponseSchema.parse({
+            adminAccess: {
+              configured: adminAccess.configured,
+              mode: adminAccess.mode,
+              count: adminAccess.count,
+            },
             imageDelivery: {
               configured: imageDelivery.configured,
               mode: imageDelivery.mode,

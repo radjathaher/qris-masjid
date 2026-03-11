@@ -28,6 +28,11 @@ const resolveAdminReportResponseSchema = z.object({
 });
 
 const adminConfigHealthResponseSchema = z.object({
+  adminAccess: z.object({
+    configured: z.boolean(),
+    mode: z.enum(["configured", "placeholder", "unconfigured"]),
+    count: z.number().int().nonnegative(),
+  }),
   imageDelivery: z.object({
     configured: z.boolean(),
     mode: z.enum(["unconfigured", "invalid", "public-custom-domain", "public-r2-dev"]),

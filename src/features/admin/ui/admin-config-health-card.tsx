@@ -32,25 +32,62 @@ function describeImageDelivery(mode: AdminConfigHealth["imageDelivery"]["mode"])
   }
 }
 
+function describeAdminAccess(mode: AdminConfigHealth["adminAccess"]["mode"]) {
+  switch (mode) {
+    case "configured":
+      return {
+        title: "Configured",
+        description: "Admin allowlist terisi dan tidak terlihat seperti placeholder.",
+      };
+    case "placeholder":
+      return {
+        title: "Placeholder Config",
+        description:
+          "APP_ADMIN_EMAILS masih placeholder. Ganti ke email admin asli sebelum moderasi dipakai.",
+      };
+    case "unconfigured":
+      return {
+        title: "Not Configured",
+        description: "APP_ADMIN_EMAILS kosong. Tidak ada admin yang bisa mengakses panel moderasi.",
+      };
+  }
+}
+
 export function AdminConfigHealthCard({ data, error, loading }: AdminConfigHealthCardProps) {
   const imageDelivery = data?.imageDelivery;
-  const state = imageDelivery ? describeImageDelivery(imageDelivery.mode) : null;
+  const imageState = imageDelivery ? describeImageDelivery(imageDelivery.mode) : null;
+  const adminAccess = data?.adminAccess;
+  const adminState = adminAccess ? describeAdminAccess(adminAccess.mode) : null;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Config Health</CardTitle>
-        <CardDescription>Status operasional untuk delivery gambar QRIS.</CardDescription>
+        <CardDescription>Status operasional untuk akses admin dan delivery gambar QRIS.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         {error ? <p className="text-red-600">{error}</p> : null}
         {loading ? <p className="text-emerald-900/70">Memuat status konfigurasi...</p> : null}
-        {state && imageDelivery ? (
+        {adminState && adminAccess ? (
           <>
-            <p>
-              <strong>Status:</strong> {state.title}
+            <p className="pt-1">
+              <strong>Admin Access:</strong> {adminState.title}
             </p>
-            <p>{state.description}</p>
+            <p>{adminState.description}</p>
+            <p>
+              <strong>Mode:</strong> {adminAccess.mode}
+            </p>
+            <p>
+              <strong>Allowed Admins:</strong> {adminAccess.count}
+            </p>
+          </>
+        ) : null}
+        {imageState && imageDelivery ? (
+          <>
+            <p className="pt-1">
+              <strong>Image Delivery:</strong> {imageState.title}
+            </p>
+            <p>{imageState.description}</p>
             <p>
               <strong>Mode:</strong> {imageDelivery.mode}
             </p>

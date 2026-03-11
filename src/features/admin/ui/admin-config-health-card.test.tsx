@@ -5,6 +5,11 @@ import { AdminConfigHealthCard } from "#/features/admin/ui/admin-config-health-c
 
 function buildHealth(mode: AdminConfigHealth["imageDelivery"]["mode"], overrides?: Partial<AdminConfigHealth>) {
   return {
+    adminAccess: {
+      configured: false,
+      mode: "placeholder",
+      count: 1,
+    },
     imageDelivery: {
       configured: mode === "public-custom-domain" || mode === "public-r2-dev",
       mode,
@@ -43,6 +48,8 @@ describe("AdminConfigHealthCard", () => {
   it("renders the not configured state", () => {
     render(<AdminConfigHealthCard data={buildHealth("unconfigured")} error={null} loading={false} />);
 
+    expect(screen.getByText("Admin Access:")).toBeTruthy();
+    expect(screen.getByText("Placeholder Config")).toBeTruthy();
     expect(screen.getByText("Not Configured")).toBeTruthy();
     expect(
       screen.getByText("R2_PUBLIC_BASE_URL belum diatur. Gambar tersimpan, tapi URL publik belum bisa dibuat."),
@@ -68,5 +75,25 @@ describe("AdminConfigHealthCard", () => {
       screen.getByText("Delivery gambar masih memakai .r2.dev. Ganti ke custom domain sebelum produksi."),
     ).toBeTruthy();
     expect(screen.getByText("https://pub-12345.r2.dev")).toBeTruthy();
+  });
+
+  it("renders configured admin access", () => {
+    render(
+      <AdminConfigHealthCard
+        data={buildHealth("public-custom-domain", {
+          adminAccess: {
+            configured: true,
+            mode: "configured",
+            count: 2,
+          },
+        })}
+        error={null}
+        loading={false}
+      />,
+    );
+
+    expect(screen.getByText("Configured")).toBeTruthy();
+    expect(screen.getByText("Allowed Admins:")).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
   });
 });
