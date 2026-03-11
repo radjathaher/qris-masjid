@@ -125,6 +125,15 @@ WITH base_candidates AS (
       OR p.type IN ('bus_stop', 'village', 'town', 'city', 'hamlet', 'administrative', 'tower', 'library', 'school', 'minaret')
     )
 ),
+filtered_candidates AS (
+  SELECT *
+  FROM base_candidates
+  WHERE name IS NOT NULL
+    AND name !~ '^[[:space:][:punct:][:digit:]]+$'
+    AND name_haystack ~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)'
+    AND lat IS NOT NULL
+    AND lon IS NOT NULL
+),
 address_enrichment AS (
   SELECT
     pal.place_id,
@@ -179,29 +188,28 @@ address_enrichment AS (
       )
     ) AS province_fallback
   FROM place_addressline pal
-  JOIN base_candidates bc ON bc.place_id = pal.place_id
+  JOIN filtered_candidates fc ON fc.place_id = pal.place_id
   JOIN placex ap ON ap.place_id = pal.address_place_id
   GROUP BY pal.place_id
 ),
 candidates AS (
   SELECT
-    bc.osm_type,
-    bc.osm_id,
-    bc.name,
-    bc.lat,
-    bc.lon,
-    bc.class,
-    bc.type,
-    bc.category,
-    bc.importance,
-    bc.city,
-    bc.province,
-    bc.religion,
-    bc.name_haystack,
-    ae.city_fallback,
-    ae.province_fallback
-  FROM base_candidates bc
-  LEFT JOIN address_enrichment ae ON ae.place_id = bc.place_id
+    fc.osm_type,
+    fc.osm_id,
+    fc.name,
+    fc.lat,
+    fc.lon,
+    fc.class,
+    fc.type,
+    fc.category,
+    fc.importance,
+    fc.city,
+    fc.province,
+    fc.religion,
+    ae.city_fallback AS addressline_city_fallback,
+    ae.province_fallback AS addressline_province_fallback
+  FROM filtered_candidates fc
+  LEFT JOIN address_enrichment ae ON ae.place_id = fc.place_id
 ),
 filtered AS (
   SELECT
@@ -213,24 +221,19 @@ filtered AS (
     CONCAT_WS(
       ', ',
       name,
-      COALESCE(city, city_fallback),
-      COALESCE(province, province_fallback),
+      COALESCE(city, addressline_city_fallback),
+      COALESCE(province, addressline_province_fallback),
       'Indonesia'
     ) AS display_name,
     class,
     type,
     category,
     importance,
-    COALESCE(city, city_fallback) AS city,
-    COALESCE(province, province_fallback) AS province,
+    COALESCE(city, addressline_city_fallback) AS city,
+    COALESCE(province, addressline_province_fallback) AS province,
     CASE WHEN religion = '' THEN NULL ELSE religion END AS religion,
     'nominatim-db-export' AS source_query
   FROM candidates
-  WHERE name IS NOT NULL
-    AND name !~ '^[[:space:][:punct:][:digit:]]+$'
-    AND name_haystack ~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)'
-    AND lat IS NOT NULL
-    AND lon IS NOT NULL
   ORDER BY importance DESC NULLS LAST, name ASC, osm_id ASC
   ${limitClause}
 )
