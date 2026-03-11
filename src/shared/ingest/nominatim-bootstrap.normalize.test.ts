@@ -102,4 +102,24 @@ describe("normalizeStructuredExportItems", () => {
       province: "Jawa Timur",
     });
   });
+
+  it("fills province from auxiliary city overrides when the current batch lacks a city match", () => {
+    const result = normalizeStructuredExportItems({
+      sourceVersion: "test-v1",
+      fetchedAt: "2026-03-12T00:00:00.000Z",
+      items: [
+        makeItem({
+          osm_id: 7,
+          name: "Masjid Al Irsyad",
+          display_name: "Masjid Al Irsyad, Kediri, Indonesia",
+          city: "Kediri",
+        }),
+      ],
+    });
+
+    expect(result.accepted[0]).toMatchObject({
+      city: "Kediri",
+      province: "Jawa Timur",
+    });
+  });
 });

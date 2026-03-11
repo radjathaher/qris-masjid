@@ -120,6 +120,32 @@ const CITY_ALIAS_ENTRIES = [
 ] as const satisfies ReadonlyArray<readonly [string, string]>;
 
 const CITY_ALIASES = new Map<string, string>(CITY_ALIAS_ENTRIES);
+const CITY_PROVINCE_OVERRIDE_ENTRIES = [
+  ["ambon", "Maluku"],
+  ["banda neira", "Maluku"],
+  ["banjar", "Kalimantan Selatan"],
+  ["banjarmasin", "Kalimantan Selatan"],
+  ["banyumas", "Jawa Tengah"],
+  ["bontang", "Kalimantan Timur"],
+  ["brebes", "Jawa Tengah"],
+  ["dumai", "Riau"],
+  ["gresik", "Jawa Timur"],
+  ["kediri", "Jawa Timur"],
+  ["kerinci", "Jambi"],
+  ["kutai kartanegara", "Kalimantan Timur"],
+  ["lombok barat", "Nusa Tenggara Barat"],
+  ["metro", "Lampung"],
+  ["penajam paser utara", "Kalimantan Timur"],
+  ["pesawaran", "Lampung"],
+  ["purworejo", "Jawa Tengah"],
+  ["samarinda", "Kalimantan Timur"],
+  ["sungai penuh", "Jambi"],
+  ["surakarta", "Jawa Tengah"],
+  ["temanggung", "Jawa Tengah"],
+  ["tuban", "Jawa Timur"],
+] as const satisfies ReadonlyArray<readonly [string, string]>;
+
+const CITY_PROVINCE_OVERRIDES = new Map<string, string>(CITY_PROVINCE_OVERRIDE_ENTRIES);
 const PROVINCE_CANONICAL_VALUES = [...new Set(PROVINCE_ALIASES.values())].sort((left, right) => right.length - left.length);
 const NOISY_CITY_PATTERN =
   /(?:^|\b)(rt\.?\s*\d+|rw\.?\s*\d+|rt\/rw|jalan|jl\.|gang|gg\.|perum\.?|komplek|kompleks|kel\.|kelurahan)(?:\b|$)|\d/i;
@@ -368,7 +394,11 @@ export function enrichBootstrapPois(pois: BootstrapPoi[]): BootstrapPoi[] {
     const inferredProvince =
       poi.province ??
       extractProvinceFromDisplayName(poi.displayName) ??
-      (inferredCity ? cityProvinceMap.get(normalizeLookupKey(inferredCity)) ?? null : null);
+      (inferredCity
+        ? cityProvinceMap.get(normalizeLookupKey(inferredCity)) ??
+          CITY_PROVINCE_OVERRIDES.get(normalizeLookupKey(inferredCity)) ??
+          null
+        : null);
     const normalizedCity = normalizeCity(inferredCity);
     const normalizedProvince = normalizeProvince(inferredProvince);
     const effectiveCity =
