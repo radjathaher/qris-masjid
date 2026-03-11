@@ -101,6 +101,31 @@ To run the full Wave 2 path in one command:
 bun run run:wave2 --export-url=https://nominatim.cakrawala.ai/internal/exports/muslim-place-of-worship.json
 ```
 
+Preferred path now is direct export from your self-hosted Nominatim Postgres database, skipping the HTTP API entirely:
+
+```bash
+bun run export:nominatim-db --output=data/exports/nominatim/$(date +%F)-export.json
+```
+
+Then feed that artifact into the existing Wave 2 pipeline:
+
+```bash
+bun run run:wave2 --export-file=data/exports/nominatim/<source-version>.json --skip-tippecanoe=true
+```
+
+Or run the export + ingest + D1 sync chain in one command:
+
+```bash
+bun run run:wave2:db --skip-tippecanoe=true
+```
+
+Notes:
+
+- `export:nominatim-db` uses `NOMINATIM_DATABASE_URL`, or falls back to `DATABASE_URL`, or plain `psql` env vars.
+- Default country filter is `id`.
+- Default source version format is `<yyyy-mm-dd>-nominatim-db-export-v1`.
+- This keeps runtime fully decoupled from live Nominatim.
+
 Source-side endpoint guidance:
 
 - [docs/nominatim-export-contract.md](/Users/radjathaher/github.com/radjathaher/qris-masjid/docs/nominatim-export-contract.md)

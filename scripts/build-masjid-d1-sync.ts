@@ -100,7 +100,12 @@ function validateCanonicalMasjidRows(input: unknown): CanonicalMasjidRow[] {
     const name = typeof row.name === "string" ? row.name.trim() : "";
     const id = typeof row.id === "string" ? row.id.trim() : "";
     const sourceVersion = typeof row.sourceVersion === "string" ? row.sourceVersion.trim() : "";
-    const sourceSystem = row.sourceSystem === "nominatim-http" ? row.sourceSystem : "";
+    const sourceSystem =
+      row.sourceSystem === "nominatim-http" ||
+      row.sourceSystem === "nominatim-export" ||
+      row.sourceSystem === "nominatim-db"
+        ? row.sourceSystem
+        : "";
     const lastSeenAt = typeof row.lastSeenAt === "string" ? row.lastSeenAt.trim() : "";
     const lat = typeof row.lat === "number" ? row.lat : Number(row.lat);
     const lon = typeof row.lon === "number" ? row.lon : Number(row.lon);

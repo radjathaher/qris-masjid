@@ -19,7 +19,7 @@ export type BootstrapSubtype = "masjid" | "musholla" | "surau" | "langgar" | "un
 export type BootstrapPoi = {
   id: string;
   osmId: string | null;
-  sourceSystem: "nominatim-http";
+  sourceSystem: "nominatim-http" | "nominatim-export" | "nominatim-db";
   sourceVersion: string;
   name: string;
   lat: number;

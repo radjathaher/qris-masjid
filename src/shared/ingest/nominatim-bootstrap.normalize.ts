@@ -10,6 +10,7 @@ import {
   isLikelyMuslimPrayerPlace,
   normalizeSourceFields,
 } from "./nominatim-bootstrap.matching";
+import type { BootstrapPoi as CanonicalBootstrapPoi } from "./nominatim-bootstrap.types";
 
 const CITY_FIELDS = ["city", "town", "municipality", "county", "regency", "state_district"];
 const PROVINCE_FIELDS = ["state", "region", "province"];
@@ -106,13 +107,14 @@ function buildPoi(input: {
   name: string;
   province: string | null;
   queryText: string;
+  sourceSystem: CanonicalBootstrapPoi["sourceSystem"];
   sourceVersion: string;
   fields: NormalizedSourceFields;
 }): BootstrapPoi {
   return {
     id: buildStableId(input.item, input.name),
     osmId: buildOsmId(input.item),
-    sourceSystem: "nominatim-http",
+    sourceSystem: input.sourceSystem,
     sourceVersion: input.sourceVersion,
     name: input.name,
     lat: input.lat,
@@ -190,6 +192,7 @@ function classifyBootstrapItem(input: BootstrapClassificationInput): AcceptedBoo
       name,
       province: readAddressField(input.item.address, PROVINCE_FIELDS) ?? input.query.province ?? null,
       queryText: input.query.q,
+      sourceSystem: "nominatim-http",
       sourceVersion: input.sourceVersion,
       fields,
     }),
@@ -244,6 +247,7 @@ function normalizeStructuredExportItem(input: {
       name,
       province: trimToNull(input.item.province),
       queryText,
+      sourceSystem: queryText.startsWith("nominatim-db") ? "nominatim-db" : "nominatim-export",
       sourceVersion: input.sourceVersion,
       fields,
     }),
