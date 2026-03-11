@@ -120,6 +120,9 @@ const CITY_ALIAS_ENTRIES = [
 ] as const satisfies ReadonlyArray<readonly [string, string]>;
 
 const CITY_ALIASES = new Map<string, string>(CITY_ALIAS_ENTRIES);
+const PROVINCE_CANONICAL_VALUES = [...new Set(PROVINCE_ALIASES.values())].sort((left, right) => right.length - left.length);
+const NOISY_CITY_PATTERN =
+  /(?:^|\b)(rt\.?\s*\d+|rw\.?\s*\d+|rt\/rw|jalan|jl\.|gang|gg\.|perum\.?|komplek|kompleks|kel\.|kelurahan)(?:\b|$)|\d/i;
 
 function normalizeLookupKey(value: string): string {
   return value
@@ -150,10 +153,22 @@ function normalizeCity(value: string | null): string | null {
   }
 
   let normalized = CITY_ALIASES.get(normalizeLookupKey(trimmed)) ?? trimmed;
-  normalized = normalized.replace(/^(kabupaten|kab\.?|kota)\s+/iu, "").replace(/\s+city$/iu, "").trim();
+  normalized = normalized
+    .replace(/^(kabupaten|kab\.?|kota)\s+/iu, "")
+    .replace(/\s+(regency|city)$/iu, "")
+    .trim();
+
+  for (const province of PROVINCE_CANONICAL_VALUES) {
+    const escapedProvince = province.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    normalized = normalized.replace(new RegExp(`(?:,|\\s)+${escapedProvince}$`, "iu"), "").trim();
+  }
 
   if (!normalized) {
     return null;
+  }
+
+  if (/^[\p{L}\s-]+$/u.test(normalized) && normalized === normalized.toLowerCase()) {
+    normalized = normalized.replace(/\b\p{L}[\p{L}]*/gu, (part) => part.charAt(0).toUpperCase() + part.slice(1));
   }
 
   return CITY_ALIASES.get(normalizeLookupKey(normalized)) ?? normalized;
@@ -258,13 +273,16 @@ function buildUniqueCityProvinceMap(pois: BootstrapPoi[]): Map<string, string> {
   const provinceCandidates = new Map<string, Set<string>>();
 
   for (const poi of pois) {
-    if (!poi.city || !poi.province) {
+    const normalizedCity = normalizeCity(poi.city);
+    const normalizedProvince = normalizeProvince(poi.province);
+
+    if (!normalizedCity || !normalizedProvince) {
       continue;
     }
 
-    const key = normalizeLookupKey(poi.city);
+    const key = normalizeLookupKey(normalizedCity);
     const provinces = provinceCandidates.get(key) ?? new Set<string>();
-    provinces.add(poi.province);
+    provinces.add(normalizedProvince);
     provinceCandidates.set(key, provinces);
   }
 
@@ -329,12 +347,24 @@ function extractProvinceFromDisplayName(displayName: string | null): string | nu
   return null;
 }
 
+function isLikelyNoisyCity(value: string | null): boolean {
+  if (!value) {
+    return true;
+  }
+
+  return NOISY_CITY_PATTERN.test(value) || value.split(",").length >= 2;
+}
+
 export function enrichBootstrapPois(pois: BootstrapPoi[]): BootstrapPoi[] {
   const cityProvinceMap = buildUniqueCityProvinceMap(pois);
   const knownCities = new Set(cityProvinceMap.keys());
 
   return pois.map((poi) => {
-    const inferredCity = poi.city ?? extractCityFromDisplayName(poi.displayName, knownCities);
+    const normalizedSourceCity = normalizeCity(poi.city);
+    const inferredCity =
+      !normalizedSourceCity || isLikelyNoisyCity(normalizedSourceCity)
+        ? extractCityFromDisplayName(poi.displayName, knownCities) ?? normalizedSourceCity
+        : normalizedSourceCity;
     const inferredProvince =
       poi.province ??
       extractProvinceFromDisplayName(poi.displayName) ??
