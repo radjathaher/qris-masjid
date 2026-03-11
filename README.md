@@ -174,6 +174,15 @@ bun install
 cp .dev.vars.example .dev.vars
 ```
 
+Admin bootstrap notes:
+
+- Leave `APP_ADMIN_EMAILS` empty to use bootstrap-domain admin access.
+- In bootstrap mode, any authenticated Google account on the root domain derived from `APP_BASE_URL` can access `/admin`.
+- Example:
+  - `APP_BASE_URL=https://qris-masjid.cakrawala.ai`
+  - bootstrap admin domain becomes `cakrawala.ai`
+- Set `APP_ADMIN_EMAILS` later if you want an explicit comma-separated allowlist instead.
+
 3. Initialize local D1 schema:
 
 ```bash

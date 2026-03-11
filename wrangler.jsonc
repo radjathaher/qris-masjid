@@ -40,7 +40,7 @@
   ],
   "vars": {
     "APP_BASE_URL": "https://qris-masjid.cakrawala.ai",
-    "APP_ADMIN_EMAILS": "admin@example.com",
+    "APP_ADMIN_EMAILS": "",
     "GOOGLE_OAUTH_CLIENT_ID": "715553769920-caef86h4b8662bfiadu65hmo283pdjnp.apps.googleusercontent.com",
     "GOOGLE_OAUTH_REDIRECT_URI": "https://qris-masjid.cakrawala.ai/api/auth/google/callback",
     "R2_PUBLIC_BASE_URL": "",
