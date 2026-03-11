@@ -105,6 +105,22 @@ const PROVINCE_ALIAS_ENTRIES = [
 
 const PROVINCE_ALIASES = new Map<string, string>(PROVINCE_ALIAS_ENTRIES);
 
+const CITY_ALIAS_ENTRIES = [
+  ["south jakarta", "Jakarta Selatan"],
+  ["west jakarta", "Jakarta Barat"],
+  ["east jakarta", "Jakarta Timur"],
+  ["north jakarta", "Jakarta Utara"],
+  ["central jakarta", "Jakarta Pusat"],
+  ["kota sby", "Surabaya"],
+  ["kota surabaya", "Surabaya"],
+  ["surabaya city", "Surabaya"],
+  ["jambi city", "Jambi"],
+  ["bandarlampung", "Bandar Lampung"],
+  ["belang city", "Belang"],
+] as const satisfies ReadonlyArray<readonly [string, string]>;
+
+const CITY_ALIASES = new Map<string, string>(CITY_ALIAS_ENTRIES);
+
 function normalizeLookupKey(value: string): string {
   return value
     .normalize("NFKD")
@@ -129,7 +145,18 @@ function normalizeProvince(value: string | null): string | null {
 
 function normalizeCity(value: string | null): string | null {
   const trimmed = trimToNull(value ?? undefined);
-  return trimmed ? trimmed : null;
+  if (!trimmed) {
+    return null;
+  }
+
+  let normalized = CITY_ALIASES.get(normalizeLookupKey(trimmed)) ?? trimmed;
+  normalized = normalized.replace(/^(kabupaten|kab\.?|kota)\s+/iu, "").replace(/\s+city$/iu, "").trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  return CITY_ALIASES.get(normalizeLookupKey(normalized)) ?? normalized;
 }
 
 function readAddressField(
@@ -269,8 +296,33 @@ function extractCityFromDisplayName(displayName: string | null, knownCities: Set
   }
 
   for (const part of parts.slice(1, -1).reverse()) {
-    if (knownCities.has(normalizeLookupKey(part))) {
-      return part;
+    const normalizedPart = normalizeCity(part);
+    if (normalizedPart && knownCities.has(normalizeLookupKey(normalizedPart))) {
+      return normalizedPart;
+    }
+  }
+
+  return null;
+}
+
+function extractProvinceFromDisplayName(displayName: string | null): string | null {
+  if (!displayName) {
+    return null;
+  }
+
+  const parts = displayName
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  for (const part of parts.slice(1, -1).reverse()) {
+    const normalizedPart = normalizeProvince(part);
+    if (!normalizedPart) {
+      continue;
+    }
+
+    if (PROVINCE_ALIASES.has(normalizeLookupKey(part)) || PROVINCE_ALIASES.has(normalizeLookupKey(normalizedPart))) {
+      return normalizedPart;
     }
   }
 
@@ -285,6 +337,7 @@ export function enrichBootstrapPois(pois: BootstrapPoi[]): BootstrapPoi[] {
     const inferredCity = poi.city ?? extractCityFromDisplayName(poi.displayName, knownCities);
     const inferredProvince =
       poi.province ??
+      extractProvinceFromDisplayName(poi.displayName) ??
       (inferredCity ? cityProvinceMap.get(normalizeLookupKey(inferredCity)) ?? null : null);
     const normalizedCity = normalizeCity(inferredCity);
     const normalizedProvince = normalizeProvince(inferredProvince);
