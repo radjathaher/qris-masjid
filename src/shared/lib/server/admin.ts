@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { createDb } from "#/shared/db/client";
 import { users } from "#/shared/db/schema";
 import { readAuthenticatedUserId } from "#/shared/lib/server/auth";
-import type { AppEnv } from "#/shared/lib/server/env";
+import { readAdminAllowlistHealth, type AppEnv } from "#/shared/lib/server/env";
 
 function parseAdminEmailAllowlist(raw: string | undefined): Set<string> {
   if (!raw) {
@@ -17,6 +17,14 @@ function parseAdminEmailAllowlist(raw: string | undefined): Set<string> {
   );
 }
 
+function emailMatchesBootstrapDomain(email: string, domain: string | null): boolean {
+  if (!domain) {
+    return false;
+  }
+
+  return email.endsWith(`@${domain}`);
+}
+
 export async function readAuthenticatedAdminUserId(env: AppEnv): Promise<string | null> {
   const userId = await readAuthenticatedUserId(env);
   if (!userId) {
@@ -24,9 +32,7 @@ export async function readAuthenticatedAdminUserId(env: AppEnv): Promise<string 
   }
 
   const allowlist = parseAdminEmailAllowlist(env.APP_ADMIN_EMAILS);
-  if (allowlist.size === 0) {
-    return null;
-  }
+  const accessHealth = readAdminAllowlistHealth(env);
 
   const db = createDb(env.DB);
   const rows = await db
@@ -42,5 +48,13 @@ export async function readAuthenticatedAdminUserId(env: AppEnv): Promise<string 
     return null;
   }
 
-  return allowlist.has(email) ? userId : null;
+  if (allowlist.has(email)) {
+    return userId;
+  }
+
+  if (accessHealth.mode === "bootstrap-domain") {
+    return emailMatchesBootstrapDomain(email, accessHealth.bootstrapDomain) ? userId : null;
+  }
+
+  return null;
 }

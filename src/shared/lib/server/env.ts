@@ -21,8 +21,9 @@ export type PublicR2Delivery = {
 
 export type AdminAllowlistHealth = {
   configured: boolean;
-  mode: "configured" | "placeholder" | "unconfigured";
+  mode: "configured" | "bootstrap-domain" | "placeholder" | "unconfigured";
   count: number;
+  bootstrapDomain: string | null;
 };
 
 type HandlerInput = {
@@ -108,22 +109,66 @@ function isPlaceholderAdminEmail(email: string): boolean {
   return email.endsWith("@example.com") || email.endsWith("@example.org");
 }
 
+function deriveRootDomain(hostname: string): string | null {
+  const parts = hostname
+    .split(".")
+    .map((part) => part.trim().toLowerCase())
+    .filter((part) => part.length > 0);
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  return `${parts.at(-2)}.${parts.at(-1)}`;
+}
+
+export function readBootstrapAdminDomain(env: AppEnv): string | null {
+  try {
+    const parsed = new URL(env.APP_BASE_URL);
+    return deriveRootDomain(parsed.hostname);
+  } catch {
+    return null;
+  }
+}
+
 export function readAdminAllowlistHealth(env: AppEnv): AdminAllowlistHealth {
   const emails = readNormalizedEmails(env.APP_ADMIN_EMAILS);
 
   if (emails.length === 0) {
+    const bootstrapDomain = readBootstrapAdminDomain(env);
+    if (bootstrapDomain) {
+      return {
+        configured: true,
+        mode: "bootstrap-domain",
+        count: 0,
+        bootstrapDomain,
+      };
+    }
+
     return {
       configured: false,
       mode: "unconfigured",
       count: 0,
+      bootstrapDomain: null,
     };
   }
 
   if (emails.some((email) => isPlaceholderAdminEmail(email))) {
+    const bootstrapDomain = readBootstrapAdminDomain(env);
+    if (bootstrapDomain) {
+      return {
+        configured: true,
+        mode: "bootstrap-domain",
+        count: emails.length,
+        bootstrapDomain,
+      };
+    }
+
     return {
       configured: false,
       mode: "placeholder",
       count: emails.length,
+      bootstrapDomain: null,
     };
   }
 
@@ -131,5 +176,6 @@ export function readAdminAllowlistHealth(env: AppEnv): AdminAllowlistHealth {
     configured: true,
     mode: "configured",
     count: emails.length,
+    bootstrapDomain: null,
   };
 }

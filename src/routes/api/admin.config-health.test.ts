@@ -49,6 +49,7 @@ describe("/api/admin/config-health", () => {
     const response = await getGetHandler()({
       context: {
         env: createEnv({
+          APP_BASE_URL: "https://qris-masjid.cakrawala.ai",
           APP_ADMIN_EMAILS: "admin@example.com",
           R2_PUBLIC_BASE_URL: "https://cdn.example.com",
         }),
@@ -58,9 +59,10 @@ describe("/api/admin/config-health", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       adminAccess: {
-        configured: false,
-        mode: "placeholder",
+        configured: true,
+        mode: "bootstrap-domain",
         count: 1,
+        bootstrapDomain: "cakrawala.ai",
       },
       imageDelivery: {
         configured: true,
@@ -116,6 +118,7 @@ describe("/api/admin/config-health", () => {
         configured: true,
         mode: "configured",
         count: 2,
+        bootstrapDomain: null,
       },
     });
   });

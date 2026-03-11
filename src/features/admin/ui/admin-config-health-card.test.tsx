@@ -9,6 +9,7 @@ function buildHealth(mode: AdminConfigHealth["imageDelivery"]["mode"], overrides
       configured: false,
       mode: "placeholder",
       count: 1,
+      bootstrapDomain: null,
     },
     imageDelivery: {
       configured: mode === "public-custom-domain" || mode === "public-r2-dev",
@@ -102,6 +103,7 @@ describe("AdminConfigHealthCard", () => {
             configured: true,
             mode: "configured",
             count: 2,
+            bootstrapDomain: null,
           },
         })}
         error={null}
@@ -112,5 +114,25 @@ describe("AdminConfigHealthCard", () => {
     expect(screen.getByText("Configured")).toBeTruthy();
     expect(screen.getByText("Allowed Admins:")).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();
+  });
+
+  it("renders bootstrap-domain admin access", () => {
+    render(
+      <AdminConfigHealthCard
+        data={buildHealth("public-custom-domain", {
+          adminAccess: {
+            configured: true,
+            mode: "bootstrap-domain",
+            count: 1,
+            bootstrapDomain: "cakrawala.ai",
+          },
+        })}
+        error={null}
+        loading={false}
+      />,
+    );
+
+    expect(screen.getByText("Bootstrap Domain")).toBeTruthy();
+    expect(screen.getByText("cakrawala.ai")).toBeTruthy();
   });
 });

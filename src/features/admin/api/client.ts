@@ -30,8 +30,9 @@ const resolveAdminReportResponseSchema = z.object({
 const adminConfigHealthResponseSchema = z.object({
   adminAccess: z.object({
     configured: z.boolean(),
-    mode: z.enum(["configured", "placeholder", "unconfigured"]),
+    mode: z.enum(["configured", "bootstrap-domain", "placeholder", "unconfigured"]),
     count: z.number().int().nonnegative(),
+    bootstrapDomain: z.string().nullable(),
   }),
   imageDelivery: z.object({
     configured: z.boolean(),

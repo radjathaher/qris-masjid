@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { readPublicR2BaseUrl, readPublicR2Delivery, type AppEnv } from "#/shared/lib/server/env";
+import {
+  readAdminAllowlistHealth,
+  readBootstrapAdminDomain,
+  readPublicR2BaseUrl,
+  readPublicR2Delivery,
+  type AppEnv,
+} from "#/shared/lib/server/env";
 
 function createEnv(overrides?: Partial<AppEnv>): AppEnv {
   return {
@@ -80,6 +86,56 @@ describe("readPublicR2Delivery", () => {
       baseUrl: "https://cdn.example.com",
       configured: true,
       mode: "public-custom-domain",
+    });
+  });
+});
+
+describe("readBootstrapAdminDomain", () => {
+  it("derives the root domain from app base url", () => {
+    expect(
+      readBootstrapAdminDomain(
+        createEnv({
+          APP_BASE_URL: "https://qris-masjid.cakrawala.ai",
+        }),
+      ),
+    ).toBe("cakrawala.ai");
+  });
+
+  it("returns null for localhost", () => {
+    expect(readBootstrapAdminDomain(createEnv())).toBeNull();
+  });
+});
+
+describe("readAdminAllowlistHealth", () => {
+  it("uses bootstrap-domain when allowlist is placeholder on a real domain", () => {
+    expect(
+      readAdminAllowlistHealth(
+        createEnv({
+          APP_BASE_URL: "https://qris-masjid.cakrawala.ai",
+          APP_ADMIN_EMAILS: "admin@example.com",
+        }),
+      ),
+    ).toEqual({
+      configured: true,
+      mode: "bootstrap-domain",
+      count: 1,
+      bootstrapDomain: "cakrawala.ai",
+    });
+  });
+
+  it("keeps explicit allowlist as configured", () => {
+    expect(
+      readAdminAllowlistHealth(
+        createEnv({
+          APP_BASE_URL: "https://qris-masjid.cakrawala.ai",
+          APP_ADMIN_EMAILS: "admin@cakrawala.ai,ops@cakrawala.ai",
+        }),
+      ),
+    ).toEqual({
+      configured: true,
+      mode: "configured",
+      count: 2,
+      bootstrapDomain: null,
     });
   });
 });

@@ -43,6 +43,12 @@ function describeAdminAccess(mode: AdminConfigHealth["adminAccess"]["mode"]) {
         title: "Configured",
         description: "Admin allowlist terisi dan tidak terlihat seperti placeholder.",
       };
+    case "bootstrap-domain":
+      return {
+        title: "Bootstrap Domain",
+        description:
+          "Allowlist eksplisit belum siap. Sementara, akun Google dengan domain perusahaan bisa masuk sebagai admin.",
+      };
     case "placeholder":
       return {
         title: "Placeholder Config",
@@ -84,6 +90,11 @@ export function AdminConfigHealthCard({ data, error, loading }: AdminConfigHealt
             <p>
               <strong>Allowed Admins:</strong> {adminAccess.count}
             </p>
+            {adminAccess.bootstrapDomain ? (
+              <p>
+                <strong>Bootstrap Domain:</strong> {adminAccess.bootstrapDomain}
+              </p>
+            ) : null}
           </>
         ) : null}
         {imageState && imageDelivery ? (

@@ -7,8 +7,9 @@ import { getEnv, readAdminAllowlistHealth, readPublicR2Delivery } from "#/shared
 const configHealthResponseSchema = z.object({
   adminAccess: z.object({
     configured: z.boolean(),
-    mode: z.enum(["configured", "placeholder", "unconfigured"]),
+    mode: z.enum(["configured", "bootstrap-domain", "placeholder", "unconfigured"]),
     count: z.number().int().nonnegative(),
+    bootstrapDomain: z.string().nullable(),
   }),
   imageDelivery: z.object({
     configured: z.boolean(),
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/api/admin/config-health")({
               configured: adminAccess.configured,
               mode: adminAccess.mode,
               count: adminAccess.count,
+              bootstrapDomain: adminAccess.bootstrapDomain,
             },
             imageDelivery: {
               configured: imageDelivery.configured,
