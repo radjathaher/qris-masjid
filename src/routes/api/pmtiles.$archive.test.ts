@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { AppEnv } from "#/shared/lib/server/env";
 import { Route } from "#/routes/api/pmtiles/$archive";
 
@@ -15,6 +15,43 @@ function getHandlers() {
   };
 }
 
+function createObject(bytes: number[], range?: R2Range): R2ObjectBody {
+  const payload = new Uint8Array(bytes);
+
+  return {
+    key: "pmtiles/masjids.pmtiles",
+    version: "v1",
+    size: 6,
+    etag: "etag",
+    httpEtag: '"etag"',
+    checksums: {},
+    uploaded: new Date("2026-03-13T00:00:00.000Z"),
+    httpMetadata: {
+      contentType: "application/octet-stream",
+      cacheControl: "public, max-age=3600",
+    },
+    customMetadata: {},
+    range,
+    storageClass: "Standard",
+    writeHttpMetadata(headers: Headers) {
+      headers.set("content-type", "application/octet-stream");
+      headers.set("cache-control", "public, max-age=3600");
+    },
+    body: new ReadableStream({
+      start(controller) {
+        controller.enqueue(payload);
+        controller.close();
+      },
+    }),
+    bodyUsed: false,
+    arrayBuffer: async () => payload.buffer.slice(0),
+    bytes: async () => payload,
+    text: async () => new TextDecoder().decode(payload),
+    json: async () => JSON.parse(new TextDecoder().decode(payload)),
+    blob: async () => new Blob([payload]),
+  } as unknown as R2ObjectBody;
+}
+
 function createEnv(overrides?: Partial<AppEnv>): AppEnv {
   return {
     APP_BASE_URL: "http://localhost:3000",
@@ -24,25 +61,29 @@ function createEnv(overrides?: Partial<AppEnv>): AppEnv {
     GOOGLE_OAUTH_REDIRECT_URI: "http://localhost/callback",
     TURNSTILE_SECRET_KEY: "turnstile-secret",
     TURNSTILE_SITE_KEY: "turnstile-site-key",
-    ASSETS: {
-      fetch: async () =>
-        new Response(new Uint8Array([0, 1, 2, 3, 4, 5]), {
-          status: 200,
-          headers: {
-            "content-type": "application/octet-stream",
-            "cache-control": "public, max-age=3600",
-            etag: '"pmtiles-etag"',
-          },
-        }),
-    },
     DB: {} as D1Database,
-    QRIS_IMAGES: {} as R2Bucket,
+    QRIS_IMAGES: {
+      head: vi.fn(async () => createObject([0, 1, 2, 3, 4, 5])),
+      get: vi.fn(async (_key: string, options?: R2GetOptions) => {
+        if (options?.range && "offset" in options.range) {
+          const start = options.range.offset ?? 0;
+          const length = options.range.length ?? 6 - start;
+          const end = start + length - 1;
+          return createObject([0, 1, 2, 3, 4, 5].slice(start, end + 1), {
+            offset: start,
+            length,
+          });
+        }
+
+        return createObject([0, 1, 2, 3, 4, 5]);
+      }),
+    } as unknown as R2Bucket,
     ...overrides,
   };
 }
 
 describe("/api/pmtiles/$archive", () => {
-  it("serves byte ranges with 206", async () => {
+  it("serves byte ranges with 206 from R2", async () => {
     const { GET } = getHandlers();
     const response = await GET({
       context: {
@@ -67,7 +108,7 @@ describe("/api/pmtiles/$archive", () => {
     ).resolves.toEqual([1, 2, 3]);
   });
 
-  it("supports HEAD without a response body", async () => {
+  it("supports HEAD without streaming a body", async () => {
     const { HEAD } = getHandlers();
     const response = await HEAD({
       context: {

@@ -9,9 +9,6 @@ export type AppEnv = {
   TURNSTILE_SECRET_KEY: string;
   TURNSTILE_SITE_KEY: string;
   TURNSTILE_BYPASS?: string;
-  ASSETS?: {
-    fetch: (request: Request) => Promise<Response>;
-  };
   DB: D1Database;
   QRIS_IMAGES: R2Bucket;
 };
