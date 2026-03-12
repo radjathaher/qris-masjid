@@ -243,6 +243,7 @@ FROM filtered;
 
 export function buildReconciliationSql(options: NominatimDbQueryOptions): string {
   const escapedCountryCode = escapeSqlLiteral(options.countryCode);
+  const exportCtes = buildExportCtes(options).replace(/^WITH\s+/i, "");
 
   return `
 WITH broad_candidates AS (
@@ -267,7 +268,7 @@ WITH broad_candidates AS (
       ) ~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)'
     )
 ),
-${buildExportCtes(options)}
+${exportCtes}
 SELECT json_build_object(
   'broadSourceCount', (SELECT count FROM broad_candidates),
   'baseCandidateCount', (SELECT COUNT(*) FROM base_candidates),
