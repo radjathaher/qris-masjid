@@ -6,6 +6,9 @@ export type NominatimDbQueryOptions = {
   sourceVersion: string;
 };
 
+const PRAYER_PLACE_REGEX =
+  "(masjid|mesjid|mosque|musholla|mushola|musolla|musola|musholo|mussalla|musala|mushala|surau|langgar)";
+
 function escapeSqlLiteral(value: string): string {
   return value.replaceAll("'", "''");
 }
@@ -98,7 +101,7 @@ filtered_candidates AS (
   FROM base_candidates
   WHERE name IS NOT NULL
     AND name !~ '^[[:space:][:punct:][:digit:]]+$'
-    AND name_haystack ~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)'
+    AND name_haystack ~ '${PRAYER_PLACE_REGEX}'
     AND lat IS NOT NULL
     AND lon IS NOT NULL
 ),
@@ -265,7 +268,7 @@ WITH broad_candidates AS (
           COALESCE(p.type, ''),
           COALESCE(p.class, '')
         )
-      ) ~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)'
+      ) ~ '${PRAYER_PLACE_REGEX}'
     )
 ),
 ${exportCtes},
@@ -275,7 +278,7 @@ candidate_rejections AS (
       WHEN name IS NULL THEN 'missing-name'
       WHEN name ~ '^[[:space:][:punct:][:digit:]]+$' THEN 'invalid-name'
       WHEN lat IS NULL OR lon IS NULL THEN 'missing-coordinates'
-      WHEN name_haystack !~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)' THEN 'missing-prayer-terms'
+      WHEN name_haystack !~ '${PRAYER_PLACE_REGEX}' THEN 'missing-prayer-terms'
       ELSE 'kept'
     END AS reason,
     class,
@@ -323,7 +326,7 @@ building_yes_recovery_preview AS (
     AND type = 'yes'
     AND name IS NOT NULL
     AND name !~ '^[[:space:][:punct:][:digit:]]+$'
-    AND name_haystack !~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)'
+    AND name_haystack !~ '${PRAYER_PLACE_REGEX}'
   GROUP BY bucket
 )
 SELECT json_build_object(

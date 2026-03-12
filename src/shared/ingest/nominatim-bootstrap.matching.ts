@@ -14,13 +14,30 @@ const EXCLUDED_CLASS_TYPE_PAIRS = new Set([
 
 const PRAYER_PLACE_TERMS = [
   "masjid",
+  "mesjid",
   "mosque",
   "musholla",
+  "mushola",
+  "musolla",
+  "musola",
+  "musholo",
+  "mussalla",
   "musala",
   "mushala",
   "surau",
   "langgar",
 ] as const;
+const MUSHOLLA_TERMS = [
+  "musholla",
+  "mushola",
+  "musolla",
+  "musola",
+  "musholo",
+  "mussalla",
+  "musala",
+  "mushala",
+] as const;
+const MASJID_TERMS = ["masjid", "mesjid", "mosque"] as const;
 const ACCEPTED_CLASS_TYPE_PAIRS = new Set([
   "amenity:place_of_worship",
   "building:yes",
@@ -28,9 +45,13 @@ const ACCEPTED_CLASS_TYPE_PAIRS = new Set([
 ]);
 const GENERIC_NAME_PATTERNS = [
   /^masjid$/i,
+  /^mesjid$/i,
   /^mosque$/i,
   /^mushol+?a$/i,
   /^mushol+?ah$/i,
+  /^musolla$/i,
+  /^musola$/i,
+  /^mussalla$/i,
   /^mushala$/i,
   /^musala$/i,
   /^surau$/i,
@@ -73,6 +94,10 @@ function buildSubtypeHaystack(input: {
   return [input.name, input.displayName ?? "", input.type ?? ""].join(" ").toLowerCase();
 }
 
+function includesAnyTerm(haystack: string, terms: readonly string[]): boolean {
+  return terms.some((term) => haystack.includes(term));
+}
+
 export function inferSubtype(input: {
   name: string;
   displayName: string | null;
@@ -88,15 +113,11 @@ export function inferSubtype(input: {
     return "surau";
   }
 
-  if (
-    haystack.includes("musholla") ||
-    haystack.includes("musala") ||
-    haystack.includes("mushala")
-  ) {
+  if (includesAnyTerm(haystack, MUSHOLLA_TERMS)) {
     return "musholla";
   }
 
-  if (haystack.includes("masjid") || haystack.includes("mosque")) {
+  if (includesAnyTerm(haystack, MASJID_TERMS)) {
     return "masjid";
   }
 
