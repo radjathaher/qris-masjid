@@ -19,6 +19,7 @@
     "check": "bun run typecheck && bun run lint && bun run format:check",
     "ingest:nominatim": "bun scripts/ingest-nominatim-bootstrap.ts",
     "export:nominatim-db": "bun scripts/export-nominatim-db.ts",
+    "reconcile:nominatim-db": "bun scripts/reconcile-nominatim-export.ts",
     "run:wave2": "bun scripts/run-wave-2-data-pipeline.ts",
     "run:wave2:db": "bun scripts/run-wave-2-from-nominatim-db.ts",
     "build:d1-sync": "bun scripts/build-masjid-d1-sync.ts",
