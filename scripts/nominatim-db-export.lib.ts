@@ -299,6 +299,32 @@ excluded_class_type_counts AS (
   GROUP BY class, type
   ORDER BY count DESC, class ASC, type ASC
   LIMIT 20
+),
+building_yes_reason_counts AS (
+  SELECT
+    reason,
+    COUNT(*) AS count
+  FROM candidate_rejections
+  WHERE class = 'building' AND type = 'yes'
+  GROUP BY reason
+),
+building_yes_recovery_preview AS (
+  SELECT
+    CASE
+      WHEN name_haystack ~ '(kantor|office|aula|dewan|bilik air|toilet|wc|gudang|parkir|pengelola|hall|gedung)' THEN 'facility-admin'
+      WHEN name_haystack ~ '(mesjid|mushola|musholo|mussalla|musolla|musola)' THEN 'spelling-variant'
+      WHEN name_haystack ~ '(baiturrahman|baiturrohman|baiturrahim|baitul|baitus|at taqwa|attaqwa|nurul|jami|jami''|muhajirin|mujahidin)' THEN 'religious-name-only'
+      WHEN name_haystack ~ '(islamic center)' THEN 'islamic-center'
+      ELSE 'other'
+    END AS bucket,
+    COUNT(*) AS count
+  FROM base_candidates
+  WHERE class = 'building'
+    AND type = 'yes'
+    AND name IS NOT NULL
+    AND name !~ '^[[:space:][:punct:][:digit:]]+$'
+    AND name_haystack !~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)'
+  GROUP BY bucket
 )
 SELECT json_build_object(
   'broadSourceCount', (SELECT count FROM broad_candidates),
@@ -322,6 +348,14 @@ SELECT json_build_object(
       '[]'::json
     )
     FROM excluded_class_type_counts
+  ),
+  'buildingYesReasonCounts', (
+    SELECT COALESCE(json_object_agg(reason, count), '{}'::json)
+    FROM building_yes_reason_counts
+  ),
+  'buildingYesRecoveryPreview', (
+    SELECT COALESCE(json_object_agg(bucket, count), '{}'::json)
+    FROM building_yes_recovery_preview
   )
 );
 `.trim();
