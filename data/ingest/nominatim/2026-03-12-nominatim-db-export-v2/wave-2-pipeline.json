@@ -1,0 +1,12 @@
+{
+  "sourceVersion": "2026-03-12-nominatim-db-export-v2",
+  "normalizedPath": "data/ingest/nominatim/2026-03-12-nominatim-db-export-v2/normalized-pois.json",
+  "d1SyncPath": "data/ingest/nominatim/2026-03-12-nominatim-db-export-v2/d1-sync.sql",
+  "pmtilesPath": "public/data/masjids.pmtiles",
+  "clusterPmtilesPath": "public/data/masjid-clusters.pmtiles",
+  "geojsonPath": "data/ingest/nominatim/2026-03-12-nominatim-db-export-v2/masjids.geojson",
+  "clusterGeojsonPath": "data/ingest/nominatim/2026-03-12-nominatim-db-export-v2/masjid-clusters.geojson",
+  "d1Target": "local",
+  "pmtilesBuilt": true,
+  "clusterPmtilesBuilt": true
+}

@@ -1,0 +1,11 @@
+{
+  "sourceVersion": "2026-03-12-nominatim-db-export-v2",
+  "baseUrl": "https://nominatim.cakrawala.ai",
+  "querySource": "file:/Users/radjathaher/github.com/radjathaher/qris-masjid/data/ingest/nominatim/2026-03-12-nominatim-db-export-v2-structured-export.json",
+  "reverseEnrich": false,
+  "queryCount": 0,
+  "limitPerQuery": 50,
+  "throttleMs": 250,
+  "generatedAt": "2026-03-12T16:31:39.295Z",
+  "mode": "structured-export"
+}
