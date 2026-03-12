@@ -46,6 +46,13 @@ const ACCEPTED_CLASS_TYPE_PAIRS = new Set([
 const GENERIC_NAME_PATTERNS = [
   /^lokasi\b/i,
   /^lokasi evakuasi\b/i,
+  /^balai\b/i,
+  /^dayah\b/i,
+  /^\s*menara\b/i,
+  /\bkanto?r\b/i,
+  /\baula\b/i,
+  /\bmadrasah\b/i,
+  /\bdewan\b/i,
   /^masjid$/i,
   /^mesjid$/i,
   /^mosque$/i,
