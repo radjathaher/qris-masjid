@@ -169,9 +169,12 @@ async function writePipelineManifest(
     normalizedPath: string;
     d1SyncPath: string;
     pmtilesPath: string;
+    clusterPmtilesPath: string;
     geojsonPath: string;
+    clusterGeojsonPath: string;
     d1Target: "local" | "remote" | "skipped";
     pmtilesBuilt: boolean;
+    clusterPmtilesBuilt: boolean;
   },
 ) {
   await mkdir(dirname(join(outputDir, "wave-2-pipeline.json")), { recursive: true });
@@ -189,7 +192,9 @@ async function main() {
   const normalizedPath = join(ingestJson.outputDir, "normalized-pois.json");
   const d1SyncPath = join(ingestJson.outputDir, "d1-sync.sql");
   const geojsonPath = join(ingestJson.outputDir, "masjids.geojson");
+  const clusterGeojsonPath = join(ingestJson.outputDir, "masjid-clusters.geojson");
   const pmtilesPath = "public/data/masjids.pmtiles";
+  const clusterPmtilesPath = "public/data/masjid-clusters.pmtiles";
 
   await runCommand("bun", [
     "scripts/build-masjid-d1-sync.ts",
@@ -222,9 +227,10 @@ async function main() {
   }
 
   let pmtilesBuilt = false;
+  let clusterPmtilesBuilt = false;
 
   if (!options.skipPmtiles) {
-    const args = [
+    const pointArgs = [
       "scripts/build-masjid-pmtiles.ts",
       `--input=${normalizedPath}`,
       `--geojson-output=${geojsonPath}`,
@@ -232,11 +238,25 @@ async function main() {
     ];
 
     if (!options.skipTippecanoe) {
-      args.push(`--output=${pmtilesPath}`);
+      pointArgs.push(`--output=${pmtilesPath}`);
     }
 
-    await runCommand("bun", args);
+    await runCommand("bun", pointArgs);
     pmtilesBuilt = !options.skipTippecanoe;
+
+    const clusterArgs = [
+      "scripts/build-masjid-cluster-pmtiles.ts",
+      `--input=${normalizedPath}`,
+      `--geojson-output=${clusterGeojsonPath}`,
+      `--skip-tippecanoe=${String(options.skipTippecanoe)}`,
+    ];
+
+    if (!options.skipTippecanoe) {
+      clusterArgs.push(`--output=${clusterPmtilesPath}`);
+    }
+
+    await runCommand("bun", clusterArgs);
+    clusterPmtilesBuilt = !options.skipTippecanoe;
   }
 
   await writePipelineManifest(ingestJson.outputDir, {
@@ -244,9 +264,12 @@ async function main() {
     normalizedPath,
     d1SyncPath,
     pmtilesPath,
+    clusterPmtilesPath,
     geojsonPath,
+    clusterGeojsonPath,
     d1Target,
     pmtilesBuilt,
+    clusterPmtilesBuilt,
   });
 
   console.log(
@@ -261,6 +284,9 @@ async function main() {
         geojsonPath,
         pmtilesPath,
         pmtilesBuilt,
+        clusterGeojsonPath,
+        clusterPmtilesPath,
+        clusterPmtilesBuilt,
       },
       null,
       2,

@@ -16,7 +16,7 @@ const config = defineConfig({
     tailwindcss(),
     tanstackStart({
       router: {
-        routeFileIgnorePattern: "\\.test\\.(ts|tsx)$",
+        routeFileIgnorePattern: "\\.test(?:-helpers)?\\.(ts|tsx)$",
       },
       prerender: {
         enabled: true,

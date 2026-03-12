@@ -23,6 +23,7 @@
     "run:wave2:db": "bun scripts/run-wave-2-from-nominatim-db.ts",
     "build:d1-sync": "bun scripts/build-masjid-d1-sync.ts",
     "build:pmtiles": "bun scripts/build-masjid-pmtiles.ts",
+    "build:cluster-pmtiles": "bun scripts/build-masjid-cluster-pmtiles.ts",
     "db:migrate:local": "wrangler d1 execute qris-masjid --local --file=./drizzle/0000_init.sql",
     "db:generate": "drizzle-kit generate",
     "deploy": "bun run build && wrangler deploy"
