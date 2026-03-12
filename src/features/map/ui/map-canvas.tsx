@@ -89,12 +89,12 @@ export function MapCanvas({ selectedMasjid, onSelectMasjid }: MapCanvasProps) {
     map.on("load", () => {
       map.addSource(MASJID_CLUSTER_SOURCE_ID, {
         type: "vector",
-        url: "pmtiles:///data/masjid-clusters.pmtiles",
+        url: "pmtiles:///api/pmtiles/masjid-clusters",
       });
 
       map.addSource(MASJID_SOURCE_ID, {
         type: "vector",
-        url: "pmtiles:///data/masjids.pmtiles",
+        url: "pmtiles:///api/pmtiles/masjids",
       });
 
       map.addSource(MASJID_SELECTED_SOURCE_ID, {
