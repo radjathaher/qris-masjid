@@ -44,6 +44,8 @@ const ACCEPTED_CLASS_TYPE_PAIRS = new Set([
   "building:mosque",
 ]);
 const GENERIC_NAME_PATTERNS = [
+  /^lokasi\b/i,
+  /^lokasi evakuasi\b/i,
   /^masjid$/i,
   /^mesjid$/i,
   /^mosque$/i,
