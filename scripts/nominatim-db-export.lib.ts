@@ -268,13 +268,61 @@ WITH broad_candidates AS (
       ) ~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)'
     )
 ),
-${exportCtes}
+${exportCtes},
+candidate_rejections AS (
+  SELECT
+    CASE
+      WHEN name IS NULL THEN 'missing-name'
+      WHEN name ~ '^[[:space:][:punct:][:digit:]]+$' THEN 'invalid-name'
+      WHEN lat IS NULL OR lon IS NULL THEN 'missing-coordinates'
+      WHEN name_haystack !~ '(masjid|mosque|musholla|musala|mushala|surau|langgar)' THEN 'missing-prayer-terms'
+      ELSE 'kept'
+    END AS reason,
+    class,
+    type
+  FROM base_candidates
+),
+rejection_reason_counts AS (
+  SELECT
+    reason,
+    COUNT(*) AS count
+  FROM candidate_rejections
+  GROUP BY reason
+),
+excluded_class_type_counts AS (
+  SELECT
+    class,
+    type,
+    COUNT(*) AS count
+  FROM candidate_rejections
+  WHERE reason <> 'kept'
+  GROUP BY class, type
+  ORDER BY count DESC, class ASC, type ASC
+  LIMIT 20
+)
 SELECT json_build_object(
   'broadSourceCount', (SELECT count FROM broad_candidates),
   'baseCandidateCount', (SELECT COUNT(*) FROM base_candidates),
   'filteredCandidateCount', (SELECT COUNT(*) FROM filtered_candidates),
   'addressEnrichedCount', (SELECT COUNT(*) FROM address_enrichment),
-  'exportedItemCount', (SELECT COUNT(*) FROM filtered)
+  'exportedItemCount', (SELECT COUNT(*) FROM filtered),
+  'rejectionReasonCounts', (
+    SELECT COALESCE(json_object_agg(reason, count), '{}'::json)
+    FROM rejection_reason_counts
+  ),
+  'excludedClassTypeCounts', (
+    SELECT COALESCE(
+      json_agg(
+        json_build_object(
+          'class', class,
+          'type', type,
+          'count', count
+        )
+      ),
+      '[]'::json
+    )
+    FROM excluded_class_type_counts
+  )
 );
 `.trim();
 }
