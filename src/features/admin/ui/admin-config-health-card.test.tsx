@@ -26,6 +26,11 @@ function buildHealth(
               ? "not-a-url"
               : "",
     },
+    qrisBackfill: {
+      pendingLegacyRows: 0,
+      pendingActiveLegacyRows: 0,
+      status: "clear",
+    },
     ...overrides,
   } satisfies AdminConfigHealth;
 }
@@ -147,5 +152,27 @@ describe("AdminConfigHealthCard", () => {
 
     expect(screen.getByText("Bootstrap Domain")).toBeTruthy();
     expect(screen.getByText("cakrawala.ai")).toBeTruthy();
+  });
+
+  it("renders qris backfill warning when legacy rows remain", () => {
+    render(
+      <AdminConfigHealthCard
+        data={buildHealth("public-custom-domain", {
+          qrisBackfill: {
+            pendingLegacyRows: 4,
+            pendingActiveLegacyRows: 2,
+            status: "backfill-needed",
+          },
+        })}
+        error={null}
+        loading={false}
+      />,
+    );
+
+    expect(screen.getByText("Action Needed")).toBeTruthy();
+    expect(screen.getByText("Legacy Rows:")).toBeTruthy();
+    expect(screen.getByText("4")).toBeTruthy();
+    expect(screen.getByText("Active Legacy Rows:")).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
   });
 });

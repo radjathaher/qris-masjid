@@ -39,6 +39,11 @@ const adminConfigHealthResponseSchema = z.object({
     mode: z.enum(["unconfigured", "invalid", "public-custom-domain", "public-r2-dev"]),
     baseUrl: z.string(),
   }),
+  qrisBackfill: z.object({
+    pendingLegacyRows: z.number().int().nonnegative(),
+    pendingActiveLegacyRows: z.number().int().nonnegative(),
+    status: z.enum(["clear", "backfill-needed"]),
+  }),
 });
 
 const adminPendingQrisSchema = z.object({

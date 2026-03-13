@@ -106,9 +106,31 @@ function renderImageDeliverySection(imageDelivery: AdminConfigHealth["imageDeliv
   );
 }
 
+function renderQrisBackfillSection(qrisBackfill: AdminConfigHealth["qrisBackfill"]) {
+  return (
+    <>
+      <p className="pt-1">
+        <strong>QRIS Backfill:</strong> {qrisBackfill.status === "clear" ? "Clear" : "Action Needed"}
+      </p>
+      <p>
+        {qrisBackfill.status === "clear"
+          ? "Semua row QRIS sudah punya payload canonical di D1."
+          : "Masih ada row QRIS lama yang perlu dipulihkan dari gambar audit R2."}
+      </p>
+      <p>
+        <strong>Legacy Rows:</strong> {qrisBackfill.pendingLegacyRows}
+      </p>
+      <p>
+        <strong>Active Legacy Rows:</strong> {qrisBackfill.pendingActiveLegacyRows}
+      </p>
+    </>
+  );
+}
+
 export function AdminConfigHealthCard({ data, error, loading }: AdminConfigHealthCardProps) {
   const adminAccess = data?.adminAccess;
   const imageDelivery = data?.imageDelivery;
+  const qrisBackfill = data?.qrisBackfill;
 
   return (
     <Card>
@@ -123,6 +145,7 @@ export function AdminConfigHealthCard({ data, error, loading }: AdminConfigHealt
         {loading ? <p className="text-emerald-900/70">Memuat status konfigurasi...</p> : null}
         {adminAccess ? renderAdminAccessSection(adminAccess) : null}
         {imageDelivery ? renderImageDeliverySection(imageDelivery) : null}
+        {qrisBackfill ? renderQrisBackfillSection(qrisBackfill) : null}
       </CardContent>
     </Card>
   );
