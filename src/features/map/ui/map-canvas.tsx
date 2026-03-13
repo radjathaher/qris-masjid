@@ -1,7 +1,11 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
 import maplibregl, { type GeoJSONSource, type Map, type Popup } from "maplibre-gl";
 import { Protocol } from "pmtiles";
-import type { Masjid, MasjidSubtype } from "#/entities/masjid/model/types";
+import {
+  formatMasjidSubtypeLabel,
+  type Masjid,
+  type MasjidSubtype,
+} from "#/entities/masjid/model/types";
 import {
   CLUSTER_ZOOMS,
   MASJID_CLUSTER_SOURCE_ID,
@@ -16,6 +20,7 @@ import {
   SEARCH_TARGET_ZOOM,
   addClusterLayers,
   buildMasjidClusterFilter,
+  buildMasjidSubtypeColorExpression,
   buildMasjidSubtypeFilter,
   buildSelectedMasjidFeatureCollection,
   clusterCountLayerId,
@@ -144,7 +149,7 @@ export function MapCanvas({
         minzoom: 12,
         paint: {
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 12, 8, 15, 11],
-          "circle-color": "#0f766e",
+          "circle-color": buildMasjidSubtypeColorExpression(),
           "circle-stroke-width": 2,
           "circle-stroke-color": "#e6fffa",
           "circle-opacity": 0.94,
@@ -171,7 +176,7 @@ export function MapCanvas({
         source: MASJID_SELECTED_SOURCE_ID,
         paint: {
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 12, 12, 14, 15, 16],
-          "circle-color": "#0f766e",
+          "circle-color": buildMasjidSubtypeColorExpression(),
           "circle-stroke-width": 3,
           "circle-stroke-color": "#f0fdfa",
           "circle-opacity": 0.98,
@@ -215,7 +220,7 @@ export function MapCanvas({
         })
           .setLngLat([masjid.lon, masjid.lat])
           .setHTML(
-            `<div class="masjid-popup-card"><p class="masjid-popup-title">${masjid.name}</p><p class="masjid-popup-subtitle">${masjid.subtype}</p></div>`,
+            `<div class="masjid-popup-card"><p class="masjid-popup-title">${masjid.name}</p><p class="masjid-popup-subtitle">${formatMasjidSubtypeLabel(masjid.subtype)}</p></div>`,
           )
           .addTo(map);
       };

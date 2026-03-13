@@ -2,8 +2,8 @@ import { Search, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import {
   formatMasjidLocation,
+  formatMasjidSubtypeLabel,
   type Masjid,
-  type MasjidSubtype,
 } from "#/entities/masjid/model/types";
 import type {
   SearchQrisFilter,
@@ -25,14 +25,6 @@ type MasjidSearchPanelProps = {
   onSubtypeFilterChange: (filter: SearchSubtypeFilter) => void;
   onQrisFilterChange: (filter: SearchQrisFilter) => void;
   onSelectMasjid: (masjid: Masjid) => void;
-};
-
-const SUBTYPE_LABELS: Record<MasjidSubtype, string> = {
-  masjid: "Masjid",
-  musholla: "Musholla",
-  surau: "Surau",
-  langgar: "Langgar",
-  unknown: "POI Muslim",
 };
 
 const QRIS_STATE_LABELS = {
@@ -222,7 +214,7 @@ export function MasjidSearchPanel({
                     </span>
                     <span className="map-search-result-meta">
                       <span className="map-search-result-badge">
-                        {SUBTYPE_LABELS[masjid.subtype]}
+                        {formatMasjidSubtypeLabel(masjid.subtype)}
                       </span>
                       <span className={`map-search-result-badge qris-${masjid.qrisState}`}>
                         {QRIS_STATE_LABELS[masjid.qrisState]}

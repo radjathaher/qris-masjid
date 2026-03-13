@@ -27,6 +27,33 @@ export const EMPTY_SELECTED_FEATURE_COLLECTION = {
   features: [],
 } satisfies GeoJSON.FeatureCollection<GeoJSON.Point>;
 
+export const MASJID_SUBTYPE_COLORS: Record<MasjidSubtype | "all", string> = {
+  all: "#115e59",
+  masjid: "#0f766e",
+  musholla: "#2563eb",
+  surau: "#d97706",
+  langgar: "#be123c",
+  unknown: "#475569",
+};
+
+export function buildMasjidSubtypeColorExpression(): ExpressionSpecification {
+  return [
+    "match",
+    ["get", "subtype"],
+    "masjid",
+    MASJID_SUBTYPE_COLORS.masjid,
+    "musholla",
+    MASJID_SUBTYPE_COLORS.musholla,
+    "surau",
+    MASJID_SUBTYPE_COLORS.surau,
+    "langgar",
+    MASJID_SUBTYPE_COLORS.langgar,
+    "unknown",
+    MASJID_SUBTYPE_COLORS.unknown,
+    MASJID_SUBTYPE_COLORS.all,
+  ];
+}
+
 export function clusterLayerId(clusterZoom: number): string {
   return `masjid-clusters-z${clusterZoom}`;
 }
@@ -127,6 +154,7 @@ export function buildSelectedMasjidFeatureCollection(
         },
         properties: {
           id: masjid.id,
+          subtype: masjid.subtype,
         },
       },
     ],
@@ -157,7 +185,7 @@ export function addClusterLayers(map: Map) {
           200,
           34,
         ],
-        "circle-color": "#115e59",
+        "circle-color": buildMasjidSubtypeColorExpression(),
         "circle-stroke-width": 2,
         "circle-stroke-color": "#ccfbf1",
         "circle-opacity": 0.86,

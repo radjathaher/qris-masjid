@@ -1,4 +1,8 @@
-import { formatMasjidLocation, type Masjid } from "#/entities/masjid/model/types";
+import {
+  formatMasjidLocation,
+  formatMasjidSubtypeLabel,
+  type Masjid,
+} from "#/entities/masjid/model/types";
 import type { MasjidQrisResponse } from "#/entities/qris/model/contracts";
 import { ReportFormCard } from "#/features/masjid-detail/ui/report-form-card";
 import { QrisItemsList } from "#/features/masjid-detail/ui/qris-items-list";
@@ -81,21 +85,6 @@ function renderActions(input: {
   );
 }
 
-function formatSubtypeLabel(masjid: Masjid | null): string {
-  switch (masjid?.subtype) {
-    case "masjid":
-      return "Masjid";
-    case "musholla":
-      return "Musholla";
-    case "surau":
-      return "Surau";
-    case "langgar":
-      return "Langgar";
-    default:
-      return "POI Muslim";
-  }
-}
-
 function formatQrisStateLabel(qrisData: MasjidQrisResponse | null): string {
   if (!qrisData) {
     return "Memuat status QRIS";
@@ -155,7 +144,9 @@ export function MasjidDetailDialogBody({
             : "Pilih marker masjid untuk melihat data QRIS saat ini."}
         </DialogDescription>
         <div className="masjid-detail-classifications">
-          <span className="detail-classification-chip">{formatSubtypeLabel(masjid)}</span>
+          <span className="detail-classification-chip">
+            {formatMasjidSubtypeLabel(masjid?.subtype)}
+          </span>
           <span className={`detail-classification-chip ${qrisStateTone(qrisData)}`}>
             {formatQrisStateLabel(qrisData)}
           </span>

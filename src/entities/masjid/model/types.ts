@@ -23,6 +23,21 @@ export type MasjidListResponse = z.infer<typeof masjidListResponseSchema>;
 export type MasjidSubtype = z.infer<typeof masjidSubtypeSchema>;
 export type MasjidQrisState = z.infer<typeof masjidQrisStateSchema>;
 
+export function formatMasjidSubtypeLabel(subtype: MasjidSubtype | null | undefined): string {
+  switch (subtype) {
+    case "masjid":
+      return "Masjid";
+    case "musholla":
+      return "Musholla";
+    case "surau":
+      return "Surau";
+    case "langgar":
+      return "Langgar";
+    default:
+      return "POI Muslim";
+  }
+}
+
 export function formatMasjidLocation(masjid: Pick<Masjid, "city" | "province">): string {
   const parts = [masjid.city, masjid.province].filter(
     (value): value is string => typeof value === "string" && value.length > 0,
