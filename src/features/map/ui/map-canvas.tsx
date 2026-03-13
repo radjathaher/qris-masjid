@@ -15,8 +15,10 @@ import {
   MASJID_SOURCE_LAYER,
   SEARCH_TARGET_ZOOM,
   addClusterLayers,
+  buildMasjidClusterFilter,
   buildMasjidSubtypeFilter,
   buildSelectedMasjidFeatureCollection,
+  clusterCountLayerId,
   clusterLayerId,
   createMasjidIconMarkup,
   handleClusterClick,
@@ -290,9 +292,20 @@ export function MapCanvas({
       return;
     }
 
-    const filter = buildMasjidSubtypeFilter(subtypeFilter);
-    map.setFilter(MASJID_LAYER_ID, filter);
-    map.setFilter(MASJID_ICON_LAYER_ID, filter);
+    const pointFilter = buildMasjidSubtypeFilter(subtypeFilter);
+    map.setFilter(MASJID_LAYER_ID, pointFilter);
+    map.setFilter(MASJID_ICON_LAYER_ID, pointFilter);
+
+    for (const clusterZoom of CLUSTER_ZOOMS) {
+      map.setFilter(
+        clusterLayerId(clusterZoom),
+        buildMasjidClusterFilter(clusterZoom, subtypeFilter),
+      );
+      map.setFilter(
+        clusterCountLayerId(clusterZoom),
+        buildMasjidClusterFilter(clusterZoom, subtypeFilter),
+      );
+    }
   }, [subtypeFilter]);
 
   useEffect(() => {

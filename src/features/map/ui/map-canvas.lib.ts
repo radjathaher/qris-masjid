@@ -140,7 +140,7 @@ export function addClusterLayers(map: Map) {
       type: "circle",
       source: MASJID_CLUSTER_SOURCE_ID,
       "source-layer": MASJID_CLUSTER_SOURCE_LAYER,
-      filter: ["==", ["get", "clusterZoom"], clusterZoom],
+      filter: buildMasjidClusterFilter(clusterZoom, "all"),
       minzoom: clusterZoom,
       maxzoom: clusterZoom + 1,
       paint: {
@@ -169,7 +169,7 @@ export function addClusterLayers(map: Map) {
       type: "symbol",
       source: MASJID_CLUSTER_SOURCE_ID,
       "source-layer": MASJID_CLUSTER_SOURCE_LAYER,
-      filter: ["==", ["get", "clusterZoom"], clusterZoom],
+      filter: buildMasjidClusterFilter(clusterZoom, "all"),
       minzoom: clusterZoom,
       maxzoom: clusterZoom + 1,
       layout: {
@@ -194,6 +194,17 @@ export function buildMasjidSubtypeFilter(
   }
 
   return ["==", ["get", "subtype"], subtypeFilter];
+}
+
+export function buildMasjidClusterFilter(
+  clusterZoom: number,
+  subtypeFilter: MasjidSubtype | "all",
+): ExpressionSpecification {
+  return [
+    "all",
+    ["==", ["get", "clusterZoom"], clusterZoom],
+    ["==", ["get", "subtype"], subtypeFilter],
+  ];
 }
 
 export function registerPointerCursor(map: Map, layerId: string) {

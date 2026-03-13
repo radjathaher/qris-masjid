@@ -27,11 +27,17 @@ type FeatureCollection = {
   }>;
 };
 
+type SubtypeClusterBucket = {
+  count: number;
+  latSum: number;
+  lonSum: number;
+};
+
 type ClusterBucket = {
   count: number;
   latSum: number;
   lonSum: number;
-  subtypeCounts: Partial<Record<BootstrapSubtype, number>>;
+  subtypeBuckets: Partial<Record<BootstrapSubtype, SubtypeClusterBucket>>;
 };
 
 const VALID_SUBTYPES = new Set(["masjid", "musholla", "surau", "langgar", "unknown"] as const);
@@ -146,7 +152,7 @@ function latitudeToTileY(lat: number, zoom: number): number {
   return Math.floor(((1 - mercator / Math.PI) / 2) * scale);
 }
 
-function buildClusterFeatures(
+export function buildClusterFeatures(
   rows: CanonicalMasjidRow[],
   minClusterZoom: number,
   maxClusterZoom: number,
@@ -166,7 +172,18 @@ function buildClusterFeatures(
         bucket.count += 1;
         bucket.latSum += row.lat;
         bucket.lonSum += row.lon;
-        bucket.subtypeCounts[row.subtype] = (bucket.subtypeCounts[row.subtype] ?? 0) + 1;
+        const subtypeBucket = bucket.subtypeBuckets[row.subtype];
+        if (subtypeBucket) {
+          subtypeBucket.count += 1;
+          subtypeBucket.latSum += row.lat;
+          subtypeBucket.lonSum += row.lon;
+        } else {
+          bucket.subtypeBuckets[row.subtype] = {
+            count: 1,
+            latSum: row.lat,
+            lonSum: row.lon,
+          };
+        }
         continue;
       }
 
@@ -174,15 +191,17 @@ function buildClusterFeatures(
         count: 1,
         latSum: row.lat,
         lonSum: row.lon,
-        subtypeCounts: { [row.subtype]: 1 },
+        subtypeBuckets: {
+          [row.subtype]: {
+            count: 1,
+            latSum: row.lat,
+            lonSum: row.lon,
+          },
+        },
       });
     }
 
     for (const [bucketKey, bucket] of buckets.entries()) {
-      const dominantSubtype =
-        Object.entries(bucket.subtypeCounts).sort((left, right) => right[1] - left[1])[0]?.[0] ??
-        "unknown";
-
       features.push({
         type: "Feature",
         geometry: {
@@ -190,12 +209,35 @@ function buildClusterFeatures(
           coordinates: [bucket.lonSum / bucket.count, bucket.latSum / bucket.count],
         },
         properties: {
-          clusterId: bucketKey,
+          clusterId: `${bucketKey}:all`,
           clusterZoom: zoom,
           pointCount: bucket.count,
-          dominantSubtype,
+          subtype: "all",
         },
       });
+
+      for (const [subtype, subtypeBucket] of Object.entries(bucket.subtypeBuckets)) {
+        if (!subtypeBucket || subtypeBucket.count === 0) {
+          continue;
+        }
+
+        features.push({
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [
+              subtypeBucket.lonSum / subtypeBucket.count,
+              subtypeBucket.latSum / subtypeBucket.count,
+            ],
+          },
+          properties: {
+            clusterId: `${bucketKey}:${subtype}`,
+            clusterZoom: zoom,
+            pointCount: subtypeBucket.count,
+            subtype,
+          },
+        });
+      }
     }
   }
 
@@ -296,4 +338,6 @@ async function main() {
   );
 }
 
-await main();
+if (import.meta.main) {
+  await main();
+}
