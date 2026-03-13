@@ -191,7 +191,13 @@ describe("/admin", () => {
       updated: 2,
       failed: 1,
       done: false,
-      items: [],
+      items: [
+        {
+          qrisId: "qris-legacy-1",
+          status: "failed",
+          reason: "Objek R2 tidak ditemukan",
+        },
+      ],
     });
     fetchAdminConfigHealthMock.mockResolvedValue({
       adminAccess: {
@@ -224,5 +230,8 @@ describe("/admin", () => {
     expect(
       await screen.findByText("Backfill selesai: 2 updated, 1 failed, 3 scanned."),
     ).toBeTruthy();
+    expect(await screen.findByText("Baris yang gagal dibackfill:")).toBeTruthy();
+    expect(await screen.findByText("qris-legacy-1")).toBeTruthy();
+    expect(await screen.findByText(/Objek R2 tidak ditemukan/)).toBeTruthy();
   });
 });

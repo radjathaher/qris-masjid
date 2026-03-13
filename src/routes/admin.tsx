@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
+  type AdminQrisBackfillResponse,
   type AdminReportStatus,
   fetchAdminConfigHealth,
   fetchAdminPendingQris,
@@ -155,6 +156,7 @@ function renderReportsSection({
 function AdminReportsPage() {
   const [status, setStatus] = useState<AdminReportStatus>("open");
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
+  const [backfillResult, setBackfillResult] = useState<AdminQrisBackfillResponse | null>(null);
   const queryClient = useQueryClient();
 
   const reportsQuery = useQuery({
@@ -217,6 +219,7 @@ function AdminReportsPage() {
   const backfillMutation = useMutation({
     mutationFn: async () => runAdminQrisBackfill(25),
     onSuccess: async (result) => {
+      setBackfillResult(result);
       setBackfillMessage(
         `Backfill selesai: ${result.updated} updated, ${result.failed} failed, ${result.scanned} scanned.`,
       );
@@ -225,6 +228,7 @@ function AdminReportsPage() {
       });
     },
     onError: (error) => {
+      setBackfillResult(null);
       setBackfillMessage(error instanceof Error ? error.message : "Backfill QRIS gagal");
     },
   });
@@ -273,16 +277,31 @@ function AdminReportsPage() {
             <Button
               onClick={() => {
                 setBackfillMessage(null);
+                setBackfillResult(null);
                 backfillMutation.mutate();
               }}
               disabled={backfillMutation.isPending}
             >
               {backfillMutation.isPending ? "Menjalankan backfill..." : "Jalankan Backfill QRIS"}
             </Button>
-            {backfillMessage ? (
-              <p className="text-sm text-emerald-900/80">{backfillMessage}</p>
-            ) : null}
           </CardContent>
+          {backfillMessage ? (
+            <CardContent className="pt-0 text-sm text-emerald-900/80">{backfillMessage}</CardContent>
+          ) : null}
+          {backfillResult && backfillResult.failed > 0 ? (
+            <CardContent className="pt-0 text-sm">
+              <p className="font-medium text-red-700">Baris yang gagal dibackfill:</p>
+              <ul className="mt-2 space-y-1 text-red-700">
+                {backfillResult.items
+                  .filter((item) => item.status === "failed")
+                  .map((item) => (
+                    <li key={item.qrisId}>
+                      <code>{item.qrisId}</code>: {item.reason ?? "Gagal tanpa alasan"}
+                    </li>
+                  ))}
+              </ul>
+            </CardContent>
+          ) : null}
         </Card>
 
         <AdminConfigHealthCard
