@@ -252,12 +252,18 @@ export function handleClusterClick(map: Map, feature: MapGeoJSONFeature) {
     return;
   }
 
+  const currentZoom = map.getZoom();
   map.easeTo({
     center: [coordinates.lon, coordinates.lat],
-    zoom: Math.max(clusterZoom + 1, RAW_POINT_MIN_ZOOM),
+    zoom: computeClusterTargetZoom(currentZoom, clusterZoom),
     duration: 650,
     essential: true,
   });
+}
+
+export function computeClusterTargetZoom(currentZoom: number, clusterZoom: number): number {
+  const step = currentZoom >= 9 ? 1 : 2;
+  return Math.min(Math.max(currentZoom + step, clusterZoom + 1), RAW_POINT_MIN_ZOOM);
 }
 
 export function createMasjidIconMarkup() {

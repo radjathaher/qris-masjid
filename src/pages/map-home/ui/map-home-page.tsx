@@ -1,5 +1,6 @@
 import { ContributeModal } from "#/features/contribute/ui/contribute-modal";
 import { MapCanvas } from "#/features/map/ui/map-canvas";
+import { MasjidMapLegend } from "#/features/map/ui/masjid-map-legend";
 import { MasjidSearchPanel } from "#/features/map/ui/masjid-search-panel";
 import { MapWelcomeModal } from "#/features/map/ui/map-welcome-modal";
 import { MasjidDetailModal } from "#/features/masjid-detail/ui/masjid-detail-modal";
@@ -68,6 +69,7 @@ export function MapHomePage() {
         locateRequestNonce={locateRequestNonce}
         onSelectMasjid={onSelectMasjid}
       />
+      <MasjidMapLegend activeSubtypeFilter={subtypeFilter} />
 
       <MapWelcomeModal
         open={welcomeOpen}
