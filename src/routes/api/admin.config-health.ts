@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { isNull, sql } from "drizzle-orm";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { createDb } from "#/shared/db/client";
