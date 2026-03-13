@@ -322,6 +322,12 @@ Use matching values in `wrangler.jsonc` and secret storage.
 bun run deploy
 ```
 
+Reality check:
+
+- Production deploy is currently manual.
+- `git push origin main` alone does not publish a new Cloudflare Worker version unless separate automation is configured and verified.
+- After deploy, re-verify a live API route such as `/api/masjids/:masjidId/qris` before assuming production is on the new build.
+
 ## API routes
 
 - `GET /api/auth/google/start`
