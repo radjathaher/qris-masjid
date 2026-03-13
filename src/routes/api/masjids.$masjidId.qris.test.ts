@@ -189,4 +189,47 @@ describe("/api/masjids/$masjidId/qris", () => {
       items: [],
     });
   });
+
+  it("hides legacy active rows without canonical payload while still blocking new uploads", async () => {
+    createDbMock.mockReturnValue({
+      select: vi.fn(() => ({
+        from: () => ({
+          where: () => ({
+            orderBy: async () => [
+              {
+                id: "qris-legacy",
+                payload: null,
+                payloadHash: "hash-legacy",
+                merchantName: "Masjid Istiqlal",
+                merchantCity: "Jakarta",
+                pointOfInitiationMethod: "11",
+                nmid: "ID303030",
+                isActive: 1,
+                reviewStatus: "active",
+                updatedAt: "2026-03-12T00:00:00.000Z",
+              },
+            ],
+          }),
+        }),
+      })),
+    });
+
+    const response = await getGetHandler()({
+      context: {
+        env: createEnv(),
+      },
+      params: {
+        masjidId: "masjid-1",
+      },
+    } as never);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      masjidId: "masjid-1",
+      hasActiveQris: true,
+      canUpload: false,
+      uploadPolicy: "report-first",
+      items: [],
+    });
+  });
 });

@@ -228,7 +228,7 @@ Current smoke coverage includes:
 - QRIS report form submit path
 - contribution API conflict path
 - masjid list API response shape
-- masjid QRIS API active/upload/image-url shape
+- masjid QRIS API active/upload/payload shape
 - report API idempotent existing-open path
 - report API fresh create path
 
@@ -237,18 +237,28 @@ Current smoke coverage includes:
 SQL migration is in:
 
 - `drizzle/0000_init.sql`
+- `drizzle/0001_qris_payload_normalized.sql`
 
 Apply locally after creating D1 DB binding:
 
 ```bash
 wrangler d1 execute qris-masjid --local --file=./drizzle/0000_init.sql
+wrangler d1 execute qris-masjid --local --file=./drizzle/0001_qris_payload_normalized.sql
 ```
 
 Apply remotely:
 
 ```bash
 wrangler d1 execute qris-masjid --remote --file=./drizzle/0000_init.sql
+wrangler d1 execute qris-masjid --remote --file=./drizzle/0001_qris_payload_normalized.sql
 ```
+
+Rollout note:
+
+- Fresh installs can run both migrations in order.
+- Existing `qris` rows created before `0001_qris_payload_normalized.sql` will have `payload_normalized = NULL`.
+- New public QR rendering now depends on canonical payload text from D1, so legacy rows should be backfilled or re-submitted before relying on them in public detail views.
+- Original audit images remain in R2, so future backfill from source images is still possible.
 
 ## Cloudflare deployment (human steps)
 

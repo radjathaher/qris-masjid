@@ -28,9 +28,12 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
           .where(eq(qris.masjidId, params.masjidId))
           .orderBy(desc(qris.updatedAt));
 
-        const rows = allRows.filter((row) => row.reviewStatus === "active");
+        const rows = allRows.filter(
+          (row): row is typeof row & { payload: string } =>
+            row.reviewStatus === "active" && typeof row.payload === "string" && row.payload.length > 0,
+        );
         const hasPendingQris = allRows.some((row) => row.reviewStatus === "pending");
-        const hasActiveQris = rows.some((row) => row.isActive === 1);
+        const hasActiveQris = allRows.some((row) => row.reviewStatus === "active" && row.isActive === 1);
         const uploadPolicy = hasActiveQris
           ? "report-first"
           : hasPendingQris
