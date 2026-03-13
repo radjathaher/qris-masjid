@@ -6,6 +6,7 @@ import {
   fetchAdminConfigHealth,
   fetchAdminPendingQris,
   fetchAdminReports,
+  runAdminQrisBackfill,
   resolveAdminPendingQris,
   resolveAdminReport,
 } from "#/features/admin/api/client";
@@ -153,6 +154,7 @@ function renderReportsSection({
 
 function AdminReportsPage() {
   const [status, setStatus] = useState<AdminReportStatus>("open");
+  const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const reportsQuery = useQuery({
@@ -212,6 +214,20 @@ function AdminReportsPage() {
       });
     },
   });
+  const backfillMutation = useMutation({
+    mutationFn: async () => runAdminQrisBackfill(25),
+    onSuccess: async (result) => {
+      setBackfillMessage(
+        `Backfill selesai: ${result.updated} updated, ${result.failed} failed, ${result.scanned} scanned.`,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["admin-pending-qris"],
+      });
+    },
+    onError: (error) => {
+      setBackfillMessage(error instanceof Error ? error.message : "Backfill QRIS gagal");
+    },
+  });
 
   const reports = useMemo(() => reportsQuery.data?.items ?? [], [reportsQuery.data?.items]);
   const pendingQris = useMemo(
@@ -243,6 +259,30 @@ function AdminReportsPage() {
               ))}
             </div>
           </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">QRIS Payload Backfill</CardTitle>
+            <CardDescription>
+              Isi `payload_normalized` untuk row lama dari gambar audit di R2. Aman diulang sampai
+              habis.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              onClick={() => {
+                setBackfillMessage(null);
+                backfillMutation.mutate();
+              }}
+              disabled={backfillMutation.isPending}
+            >
+              {backfillMutation.isPending ? "Menjalankan backfill..." : "Jalankan Backfill QRIS"}
+            </Button>
+            {backfillMessage ? (
+              <p className="text-sm text-emerald-900/80">{backfillMessage}</p>
+            ) : null}
+          </CardContent>
         </Card>
 
         <AdminConfigHealthCard

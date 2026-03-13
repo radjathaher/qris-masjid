@@ -69,10 +69,26 @@ const resolveAdminPendingQrisResponseSchema = z.object({
   status: z.enum(["approved", "rejected"]),
 });
 
+const adminQrisBackfillItemSchema = z.object({
+  qrisId: z.string(),
+  status: z.enum(["updated", "failed"]),
+  reason: z.string().optional(),
+});
+
+const adminQrisBackfillResponseSchema = z.object({
+  ok: z.literal(true),
+  scanned: z.number().int().nonnegative(),
+  updated: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  done: z.boolean(),
+  items: z.array(adminQrisBackfillItemSchema),
+});
+
 export type AdminReport = z.infer<typeof adminReportSchema>;
 export type AdminReportStatus = AdminReport["status"];
 export type AdminConfigHealth = z.infer<typeof adminConfigHealthResponseSchema>;
 export type AdminPendingQris = z.infer<typeof adminPendingQrisSchema>;
+export type AdminQrisBackfillResponse = z.infer<typeof adminQrisBackfillResponseSchema>;
 
 export type ResolveAdminReportInput = {
   decision: "dismissed" | "confirmed";
@@ -164,4 +180,23 @@ export async function resolveAdminPendingQris(qrisId: string, input: ResolveAdmi
 
   const data = await response.json();
   return resolveAdminPendingQrisResponseSchema.parse(data);
+}
+
+export async function runAdminQrisBackfill(limit = 25) {
+  const response = await fetch("/api/admin/qris-backfill", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ limit }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Gagal menjalankan backfill QRIS");
+  }
+
+  const data = await response.json();
+  return adminQrisBackfillResponseSchema.parse(data);
 }

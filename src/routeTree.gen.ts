@@ -20,6 +20,7 @@ import { Route as ApiMasjidsMasjidIdRouteImport } from './routes/api/masjids.$ma
 import { Route as ApiContributionsUpsertRouteImport } from './routes/api/contributions.upsert'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth.session'
 import { Route as ApiAdminReportsRouteImport } from './routes/api/admin.reports'
+import { Route as ApiAdminQrisBackfillRouteImport } from './routes/api/admin.qris-backfill'
 import { Route as ApiAdminPendingQrisRouteImport } from './routes/api/admin.pending-qris'
 import { Route as ApiAdminConfigHealthRouteImport } from './routes/api/admin.config-health'
 import { Route as ApiQrisQrisIdReportsRouteImport } from './routes/api/qris.$qrisId.reports'
@@ -84,6 +85,11 @@ const ApiAdminReportsRoute = ApiAdminReportsRouteImport.update({
   path: '/api/admin/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminQrisBackfillRoute = ApiAdminQrisBackfillRouteImport.update({
+  id: '/api/admin/qris-backfill',
+  path: '/api/admin/qris-backfill',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminPendingQrisRoute = ApiAdminPendingQrisRouteImport.update({
   id: '/api/admin/pending-qris',
   path: '/api/admin/pending-qris',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/api/masjids': typeof ApiMasjidsRouteWithChildren
   '/api/admin/config-health': typeof ApiAdminConfigHealthRoute
   '/api/admin/pending-qris': typeof ApiAdminPendingQrisRouteWithChildren
+  '/api/admin/qris-backfill': typeof ApiAdminQrisBackfillRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/api/masjids': typeof ApiMasjidsRouteWithChildren
   '/api/admin/config-health': typeof ApiAdminConfigHealthRoute
   '/api/admin/pending-qris': typeof ApiAdminPendingQrisRouteWithChildren
+  '/api/admin/qris-backfill': typeof ApiAdminQrisBackfillRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/api/masjids': typeof ApiMasjidsRouteWithChildren
   '/api/admin/config-health': typeof ApiAdminConfigHealthRoute
   '/api/admin/pending-qris': typeof ApiAdminPendingQrisRouteWithChildren
+  '/api/admin/qris-backfill': typeof ApiAdminQrisBackfillRoute
   '/api/admin/reports': typeof ApiAdminReportsRouteWithChildren
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/contributions/upsert': typeof ApiContributionsUpsertRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/api/masjids'
     | '/api/admin/config-health'
     | '/api/admin/pending-qris'
+    | '/api/admin/qris-backfill'
     | '/api/admin/reports'
     | '/api/auth/session'
     | '/api/contributions/upsert'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/api/masjids'
     | '/api/admin/config-health'
     | '/api/admin/pending-qris'
+    | '/api/admin/qris-backfill'
     | '/api/admin/reports'
     | '/api/auth/session'
     | '/api/contributions/upsert'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/api/masjids'
     | '/api/admin/config-health'
     | '/api/admin/pending-qris'
+    | '/api/admin/qris-backfill'
     | '/api/admin/reports'
     | '/api/auth/session'
     | '/api/contributions/upsert'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   ApiMasjidsRoute: typeof ApiMasjidsRouteWithChildren
   ApiAdminConfigHealthRoute: typeof ApiAdminConfigHealthRoute
   ApiAdminPendingQrisRoute: typeof ApiAdminPendingQrisRouteWithChildren
+  ApiAdminQrisBackfillRoute: typeof ApiAdminQrisBackfillRoute
   ApiAdminReportsRoute: typeof ApiAdminReportsRouteWithChildren
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiContributionsUpsertRoute: typeof ApiContributionsUpsertRoute
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/api/admin/reports'
       fullPath: '/api/admin/reports'
       preLoaderRoute: typeof ApiAdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/qris-backfill': {
+      id: '/api/admin/qris-backfill'
+      path: '/api/admin/qris-backfill'
+      fullPath: '/api/admin/qris-backfill'
+      preLoaderRoute: typeof ApiAdminQrisBackfillRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/pending-qris': {
@@ -466,6 +486,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMasjidsRoute: ApiMasjidsRouteWithChildren,
   ApiAdminConfigHealthRoute: ApiAdminConfigHealthRoute,
   ApiAdminPendingQrisRoute: ApiAdminPendingQrisRouteWithChildren,
+  ApiAdminQrisBackfillRoute: ApiAdminQrisBackfillRoute,
   ApiAdminReportsRoute: ApiAdminReportsRouteWithChildren,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiContributionsUpsertRoute: ApiContributionsUpsertRoute,

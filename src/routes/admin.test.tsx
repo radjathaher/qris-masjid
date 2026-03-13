@@ -6,12 +6,14 @@ const {
   fetchAdminReportsMock,
   fetchAdminConfigHealthMock,
   fetchAdminPendingQrisMock,
+  runAdminQrisBackfillMock,
   resolveAdminPendingQrisMock,
   resolveAdminReportMock,
 } = vi.hoisted(() => ({
   fetchAdminReportsMock: vi.fn(),
   fetchAdminConfigHealthMock: vi.fn(),
   fetchAdminPendingQrisMock: vi.fn(),
+  runAdminQrisBackfillMock: vi.fn(),
   resolveAdminPendingQrisMock: vi.fn(),
   resolveAdminReportMock: vi.fn(),
 }));
@@ -20,6 +22,7 @@ vi.mock("#/features/admin/api/client", () => ({
   fetchAdminReports: fetchAdminReportsMock,
   fetchAdminConfigHealth: fetchAdminConfigHealthMock,
   fetchAdminPendingQris: fetchAdminPendingQrisMock,
+  runAdminQrisBackfill: runAdminQrisBackfillMock,
   resolveAdminPendingQris: resolveAdminPendingQrisMock,
   resolveAdminReport: resolveAdminReportMock,
 }));
@@ -52,6 +55,14 @@ function renderRoute() {
 
 describe("/admin", () => {
   it("renders config health and resolves an open report", async () => {
+    runAdminQrisBackfillMock.mockResolvedValue({
+      ok: true,
+      scanned: 0,
+      updated: 0,
+      failed: 0,
+      done: true,
+      items: [],
+    });
     fetchAdminConfigHealthMock.mockResolvedValue({
       adminAccess: {
         configured: false,
@@ -133,6 +144,14 @@ describe("/admin", () => {
   });
 
   it("renders config-health fetch errors without hiding the report queue", async () => {
+    runAdminQrisBackfillMock.mockResolvedValue({
+      ok: true,
+      scanned: 0,
+      updated: 0,
+      failed: 0,
+      done: true,
+      items: [],
+    });
     fetchAdminConfigHealthMock.mockRejectedValue(
       new Error("Gagal memuat status konfigurasi admin"),
     );
@@ -163,5 +182,47 @@ describe("/admin", () => {
 
     expect(await screen.findByText("Gagal memuat status konfigurasi admin")).toBeTruthy();
     expect(await screen.findByText("Report report-1")).toBeTruthy();
+  });
+
+  it("runs qris backfill from the admin page", async () => {
+    runAdminQrisBackfillMock.mockResolvedValue({
+      ok: true,
+      scanned: 3,
+      updated: 2,
+      failed: 1,
+      done: false,
+      items: [],
+    });
+    fetchAdminConfigHealthMock.mockResolvedValue({
+      adminAccess: {
+        configured: true,
+        mode: "configured",
+        count: 1,
+        bootstrapDomain: null,
+      },
+      imageDelivery: {
+        configured: false,
+        mode: "unconfigured",
+        baseUrl: "",
+      },
+    });
+    fetchAdminPendingQrisMock.mockResolvedValue({
+      items: [],
+    });
+    fetchAdminReportsMock.mockResolvedValue({
+      items: [],
+    });
+
+    renderRoute();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Jalankan Backfill QRIS" }));
+
+    await waitFor(() => {
+      expect(runAdminQrisBackfillMock).toHaveBeenCalledWith(25);
+    });
+
+    expect(
+      await screen.findByText("Backfill selesai: 2 updated, 1 failed, 3 scanned."),
+    ).toBeTruthy();
   });
 });
