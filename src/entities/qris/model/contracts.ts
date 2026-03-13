@@ -2,12 +2,12 @@ import { z } from "zod";
 
 export const qrisItemSchema = z.object({
   id: z.string(),
+  payload: z.string(),
   payloadHash: z.string(),
   merchantName: z.string(),
   merchantCity: z.string(),
   pointOfInitiationMethod: z.string().nullable(),
   nmid: z.string().nullable(),
-  imageUrl: z.string().nullable(),
   isActive: z.boolean(),
   updatedAt: z.string(),
 });
@@ -17,14 +17,6 @@ export const masjidQrisResponseSchema = z.object({
   hasActiveQris: z.boolean(),
   canUpload: z.boolean(),
   uploadPolicy: z.enum(["open-upload", "report-first", "review-pending"]),
-  imageDeliveryConfigured: z.boolean(),
-  imageDeliveryMode: z.enum([
-    "worker-proxy",
-    "unconfigured",
-    "invalid",
-    "public-custom-domain",
-    "public-r2-dev",
-  ]),
   items: z.array(qrisItemSchema),
 });
 

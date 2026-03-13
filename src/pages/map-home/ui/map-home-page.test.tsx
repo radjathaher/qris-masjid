@@ -121,8 +121,6 @@ describe("MapHomePage", () => {
       hasActiveQris: false,
       canUpload: true,
       uploadPolicy: "report-first",
-      imageDeliveryConfigured: true,
-      imageDeliveryMode: "worker-proxy",
       items: [],
     }));
   });

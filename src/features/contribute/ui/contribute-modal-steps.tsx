@@ -166,8 +166,8 @@ export function ContributeModalStepContent({
   return (
     <div className="space-y-4">
       <p className="text-sm text-emerald-900/80">
-        Kontribusi berhasil dikirim dan masuk antrean review admin. Terima kasih sudah membantu
-        memperbaiki data QRIS masjid.
+        Kontribusi berhasil dikirim. QRIS valid langsung dipublikasikan agar jamaah bisa segera
+        menggunakannya.
       </p>
       <DialogFooter>
         <Button onClick={onClose}>Tutup</Button>

@@ -137,6 +137,7 @@ export const Route = createFileRoute("/api/contributions/upsert")({
           const saveResult = await saveQrisIfAllowed(env, {
             contributorId: userId,
             masjidId: input.masjidId,
+            payloadNormalized: validated.normalizedPayload,
             payloadHash,
             image: validated.image,
             merchantName: validated.merchantName,

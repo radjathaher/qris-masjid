@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS masjids (
 CREATE TABLE IF NOT EXISTS qris (
   id TEXT PRIMARY KEY NOT NULL,
   masjid_id TEXT NOT NULL,
+  payload_normalized TEXT NOT NULL,
   payload_hash TEXT NOT NULL,
   merchant_name TEXT NOT NULL,
   merchant_city TEXT NOT NULL,

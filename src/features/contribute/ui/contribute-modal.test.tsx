@@ -58,7 +58,7 @@ describe("ContributeModal", () => {
       created: true,
       qrisId: "qris-1",
       masjidId: masjid.id,
-      reviewStatus: "pending",
+      reviewStatus: "active",
     });
   });
 
@@ -92,7 +92,7 @@ describe("ContributeModal", () => {
       });
     });
 
-    expect(await screen.findByText(/masuk antrean review admin/i)).toBeTruthy();
+    expect(await screen.findByText(/langsung dipublikasikan/i)).toBeTruthy();
     expect(onSuccess).toHaveBeenCalled();
   });
 });

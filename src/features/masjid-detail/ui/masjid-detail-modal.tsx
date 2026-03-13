@@ -22,7 +22,7 @@ export function MasjidDetailModal({
   onClose,
 }: MasjidDetailModalProps) {
   const activeQrisItemId = qrisData?.items.find((item) => item.isActive)?.id ?? null;
-  const canContribute = Boolean(qrisData && !loading && !error && qrisData.items.length === 0);
+  const canContribute = Boolean(qrisData && !loading && !error && qrisData.canUpload);
   const reportForm = useQrisReportForm(Boolean(masjid), activeQrisItemId);
 
   return (

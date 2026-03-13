@@ -7,6 +7,7 @@ import type { DecodedBase64Image } from "#/shared/lib/server/image";
 export type SaveQrisInput = {
   contributorId: string;
   masjidId: string;
+  payloadNormalized: string;
   payloadHash: string;
   image: DecodedBase64Image;
   merchantName: string;
@@ -16,7 +17,7 @@ export type SaveQrisInput = {
 };
 
 export type SaveQrisResult =
-  | { kind: "created"; qrisId: string; reviewStatus: "pending" | "active" }
+  | { kind: "created"; qrisId: string; reviewStatus: "active" }
   | { kind: "duplicate"; qrisId: string; reviewStatus: "pending" | "active" | "rejected" }
   | { kind: "pending"; pendingQrisId: string }
   | { kind: "conflict"; activeQrisId: string };
@@ -65,7 +66,7 @@ function resolveExistingQrisConflict(
   return null;
 }
 
-async function insertPendingQris(
+async function insertPublishedQris(
   db: ReturnType<typeof createDb>,
   input: SaveQrisInput & {
     qrisId: string;
@@ -76,6 +77,7 @@ async function insertPendingQris(
   await db.insert(qris).values({
     id: input.qrisId,
     masjidId: input.masjidId,
+    payloadNormalized: input.payloadNormalized,
     payloadHash: input.payloadHash,
     merchantName: input.merchantName,
     merchantCity: input.merchantCity,
@@ -83,13 +85,13 @@ async function insertPendingQris(
     nmidNullable: input.nmid,
     imageR2Key: input.imageKey,
     contributorId: input.contributorId,
-    reviewStatus: "pending",
+    reviewStatus: "active",
     reviewedByNullable: null,
     reviewNoteNullable: null,
     reviewedAtNullable: null,
     createdAt: input.now,
     updatedAt: input.now,
-    isActive: 0,
+    isActive: 1,
   });
 }
 
@@ -171,7 +173,7 @@ export async function saveQrisIfAllowed(
   });
 
   try {
-    await insertPendingQris(db, {
+    await insertPublishedQris(db, {
       ...input,
       qrisId,
       imageKey,
@@ -181,5 +183,5 @@ export async function saveQrisIfAllowed(
     return resolveSaveRace(db, input, imageKey, env.QRIS_IMAGES);
   }
 
-  return { kind: "created", qrisId, reviewStatus: "pending" };
+  return { kind: "created", qrisId, reviewStatus: "active" };
 }

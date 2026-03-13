@@ -1,6 +1,5 @@
 import { desc, eq } from "drizzle-orm";
 import { createFileRoute } from "@tanstack/react-router";
-import { buildQrisImageUrl } from "#/entities/qris/lib/image-url";
 import { masjidQrisResponseSchema } from "#/entities/qris/model/contracts";
 import { createDb } from "#/shared/db/client";
 import { qris } from "#/shared/db/schema";
@@ -15,12 +14,12 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
         const allRows = await db
           .select({
             id: qris.id,
+            payload: qris.payloadNormalized,
             payloadHash: qris.payloadHash,
             merchantName: qris.merchantName,
             merchantCity: qris.merchantCity,
             pointOfInitiationMethod: qris.pointOfInitiationMethod,
             nmid: qris.nmidNullable,
-            imageR2Key: qris.imageR2Key,
             isActive: qris.isActive,
             reviewStatus: qris.reviewStatus,
             updatedAt: qris.updatedAt,
@@ -44,16 +43,14 @@ export const Route = createFileRoute("/api/masjids/$masjidId/qris")({
             hasActiveQris,
             canUpload: uploadPolicy === "open-upload",
             uploadPolicy,
-            imageDeliveryConfigured: true,
-            imageDeliveryMode: "worker-proxy",
             items: rows.map((row) => ({
               id: row.id,
+              payload: row.payload,
               payloadHash: row.payloadHash,
               merchantName: row.merchantName,
               merchantCity: row.merchantCity,
               pointOfInitiationMethod: row.pointOfInitiationMethod,
               nmid: row.nmid,
-              imageUrl: buildQrisImageUrl(row.id),
               isActive: row.isActive === 1,
               updatedAt: row.updatedAt,
             })),

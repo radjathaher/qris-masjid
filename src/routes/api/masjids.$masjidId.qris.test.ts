@@ -37,7 +37,7 @@ function createEnv(overrides?: Partial<AppEnv>) {
 }
 
 describe("/api/masjids/$masjidId/qris", () => {
-  it("returns qris items with active flags and public image urls", async () => {
+  it("returns qris items with active flags and canonical payloads", async () => {
     createDbMock.mockReturnValue({
       select: vi.fn(() => ({
         from: () => ({
@@ -45,24 +45,24 @@ describe("/api/masjids/$masjidId/qris", () => {
             orderBy: async () => [
               {
                 id: "qris-active",
+                payload: "00020101021226ACTIVE",
                 payloadHash: "hash-1",
                 merchantName: "Masjid Istiqlal",
                 merchantCity: "Jakarta",
                 pointOfInitiationMethod: "11",
                 nmid: "ID102030",
-                imageR2Key: "qris/masjid-1/active.png",
                 isActive: 1,
                 reviewStatus: "active",
                 updatedAt: "2026-03-10T00:00:00.000Z",
               },
               {
                 id: "qris-old",
+                payload: "00020101021226OLD",
                 payloadHash: "hash-0",
                 merchantName: "Masjid Istiqlal",
                 merchantCity: "Jakarta",
                 pointOfInitiationMethod: null,
                 nmid: null,
-                imageR2Key: "qris/masjid-1/old.png",
                 isActive: 0,
                 reviewStatus: "rejected",
                 updatedAt: "2026-03-09T00:00:00.000Z",
@@ -88,17 +88,15 @@ describe("/api/masjids/$masjidId/qris", () => {
       hasActiveQris: true,
       canUpload: false,
       uploadPolicy: "report-first",
-      imageDeliveryConfigured: true,
-      imageDeliveryMode: "worker-proxy",
       items: [
         {
           id: "qris-active",
+          payload: "00020101021226ACTIVE",
           payloadHash: "hash-1",
           merchantName: "Masjid Istiqlal",
           merchantCity: "Jakarta",
           pointOfInitiationMethod: "11",
           nmid: "ID102030",
-          imageUrl: "/api/qris-images/qris-active",
           isActive: true,
           updatedAt: "2026-03-10T00:00:00.000Z",
         },
@@ -106,7 +104,7 @@ describe("/api/masjids/$masjidId/qris", () => {
     });
   });
 
-  it("keeps image urls null and upload open when no active qris exists", async () => {
+  it("keeps upload open when no active qris exists", async () => {
     createDbMock.mockReturnValue({
       select: vi.fn(() => ({
         from: () => ({
@@ -114,12 +112,12 @@ describe("/api/masjids/$masjidId/qris", () => {
             orderBy: async () => [
               {
                 id: "qris-old",
+                payload: "00020101021226OLD",
                 payloadHash: "hash-0",
                 merchantName: "Masjid Istiqlal",
                 merchantCity: "Jakarta",
                 pointOfInitiationMethod: null,
                 nmid: null,
-                imageR2Key: "qris/masjid-1/old.png",
                 isActive: 0,
                 reviewStatus: "rejected",
                 updatedAt: "2026-03-09T00:00:00.000Z",
@@ -145,8 +143,6 @@ describe("/api/masjids/$masjidId/qris", () => {
       hasActiveQris: false,
       canUpload: true,
       uploadPolicy: "open-upload",
-      imageDeliveryConfigured: true,
-      imageDeliveryMode: "worker-proxy",
       items: [],
     });
   });
@@ -159,12 +155,12 @@ describe("/api/masjids/$masjidId/qris", () => {
             orderBy: async () => [
               {
                 id: "qris-pending",
+                payload: "00020101021226PENDING",
                 payloadHash: "hash-2",
                 merchantName: "Masjid Istiqlal",
                 merchantCity: "Jakarta",
                 pointOfInitiationMethod: "11",
                 nmid: "ID202020",
-                imageR2Key: "qris/masjid-1/pending.png",
                 isActive: 0,
                 reviewStatus: "pending",
                 updatedAt: "2026-03-11T00:00:00.000Z",
@@ -190,8 +186,6 @@ describe("/api/masjids/$masjidId/qris", () => {
       hasActiveQris: false,
       canUpload: false,
       uploadPolicy: "review-pending",
-      imageDeliveryConfigured: true,
-      imageDeliveryMode: "worker-proxy",
       items: [],
     });
   });

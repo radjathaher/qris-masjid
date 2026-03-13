@@ -28,17 +28,15 @@ const qrisData: MasjidQrisResponse = {
   hasActiveQris: true,
   canUpload: false,
   uploadPolicy: "report-first",
-  imageDeliveryConfigured: true,
-  imageDeliveryMode: "worker-proxy",
   items: [
     {
       id: "qris-1",
+      payload: "00020101021226TESTPAYLOAD",
       payloadHash: "hash-1",
       merchantName: "Masjid Istiqlal",
       merchantCity: "Jakarta",
       pointOfInitiationMethod: null,
       nmid: null,
-      imageUrl: "/api/qris-images/qris-1",
       isActive: true,
       updatedAt: "2026-03-10T00:00:00.000Z",
     },
@@ -64,8 +62,8 @@ describe("MasjidDetailModal", () => {
       />,
     );
 
-    expect(screen.getByRole("img", { name: "QRIS Masjid Istiqlal" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Buka gambar QR Masjid Istiqlal" })).toBeTruthy();
+    expect(await screen.findByRole("img", { name: "QRIS Masjid Istiqlal" })).toBeTruthy();
+    expect(screen.getByText("QRIS direkonstruksi dari payload")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Laporkan QRIS" }));
     fireEvent.change(screen.getByLabelText("Kenapa QRIS ini perlu ditinjau?"), {
@@ -83,21 +81,11 @@ describe("MasjidDetailModal", () => {
     expect(await screen.findByText("Laporan terkirim. Menunggu peninjauan admin.")).toBeTruthy();
   });
 
-  it("warns when image delivery uses an r2.dev url", () => {
+  it("explains that the displayed QR is reconstructed from stored payload text", () => {
     render(
       <MasjidDetailModal
         masjid={masjid}
-        qrisData={{
-          ...qrisData,
-          imageDeliveryConfigured: true,
-          imageDeliveryMode: "public-r2-dev",
-          items: [
-            {
-              ...qrisData.items[0],
-              imageUrl: null,
-            },
-          ],
-        }}
+        qrisData={qrisData}
         loading={false}
         error={null}
         onContributeQris={() => {}}
@@ -106,66 +94,9 @@ describe("MasjidDetailModal", () => {
     );
 
     expect(
-      screen.getByText((_, element) => {
-        return (
-          element?.textContent ===
-          "URL gambar memakai domain .r2.dev. Aman untuk dev, bukan jalur produksi."
-        );
-      }),
+      screen.getByText(
+        "Gambar ini dirender ulang dari payload QRIS tersimpan, bukan foto unggahan pengguna.",
+      ),
     ).toBeTruthy();
-  });
-
-  it("warns when image delivery config is invalid", () => {
-    render(
-      <MasjidDetailModal
-        masjid={masjid}
-        qrisData={{
-          ...qrisData,
-          imageDeliveryConfigured: false,
-          imageDeliveryMode: "invalid",
-          items: [
-            {
-              ...qrisData.items[0],
-              imageUrl: null,
-            },
-          ],
-        }}
-        loading={false}
-        error={null}
-        onContributeQris={() => {}}
-        onClose={() => {}}
-      />,
-    );
-
-    expect(
-      screen.getByText((_, element) => {
-        return (
-          element?.textContent === "URL publik R2 tidak valid. Periksa nilai R2_PUBLIC_BASE_URL."
-        );
-      }),
-    ).toBeTruthy();
-  });
-
-  it("renders a neutral message when proxy mode has no image url", () => {
-    render(
-      <MasjidDetailModal
-        masjid={masjid}
-        qrisData={{
-          ...qrisData,
-          items: [
-            {
-              ...qrisData.items[0],
-              imageUrl: null,
-            },
-          ],
-        }}
-        loading={false}
-        error={null}
-        onContributeQris={() => {}}
-        onClose={() => {}}
-      />,
-    );
-
-    expect(screen.getByText("Gambar QR belum tersedia.")).toBeTruthy();
   });
 });

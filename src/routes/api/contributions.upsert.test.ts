@@ -242,7 +242,7 @@ describe("/api/contributions/upsert", () => {
       created: true,
       qrisId: "00000000-0000-0000-0000-000000000999",
       masjidId: "masjid-1",
-      reviewStatus: "pending",
+      reviewStatus: "active",
     });
     expect(putSpy).toHaveBeenCalledWith(
       "qris/masjid-1/00000000-0000-0000-0000-000000000999.png",
@@ -257,13 +257,14 @@ describe("/api/contributions/upsert", () => {
       expect.objectContaining({
         id: "00000000-0000-0000-0000-000000000999",
         masjidId: "masjid-1",
+        payloadNormalized: "normalized-payload",
         payloadHash: "new-payload-hash",
         merchantName: "Masjid Istiqlal",
         merchantCity: "Jakarta",
         contributorId: "user-1",
         imageR2Key: "qris/masjid-1/00000000-0000-0000-0000-000000000999.png",
-        reviewStatus: "pending",
-        isActive: 0,
+        reviewStatus: "active",
+        isActive: 1,
       }),
     );
 

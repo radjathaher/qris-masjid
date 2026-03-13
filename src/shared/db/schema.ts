@@ -38,6 +38,7 @@ export const qris = sqliteTable(
     masjidId: text("masjid_id")
       .notNull()
       .references(() => masjids.id),
+    payloadNormalized: text("payload_normalized").notNull(),
     payloadHash: text("payload_hash").notNull(),
     merchantName: text("merchant_name").notNull(),
     merchantCity: text("merchant_city").notNull(),
