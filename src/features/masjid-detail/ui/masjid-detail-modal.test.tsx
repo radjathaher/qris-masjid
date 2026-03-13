@@ -64,7 +64,8 @@ describe("MasjidDetailModal", () => {
       />,
     );
 
-    expect(screen.getByText("Buka gambar QR")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "QRIS Masjid Istiqlal" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Buka gambar QR Masjid Istiqlal" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Laporkan QRIS" }));
     fireEvent.change(screen.getByLabelText("Kenapa QRIS ini perlu ditinjau?"), {

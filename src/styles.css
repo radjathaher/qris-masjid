@@ -482,6 +482,49 @@ body {
   color: rgb(226 232 240 / 0.9);
 }
 
+.qris-active-card-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.qris-active-card-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.qris-active-card-image {
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background: linear-gradient(180deg, rgb(248 250 252 / 0.98) 0%, #e2e8f0 100%);
+  object-fit: cover;
+  box-shadow:
+    0 16px 28px rgb(15 23 42 / 0.22),
+    inset 0 0 0 1px rgb(255 255 255 / 0.18);
+}
+
+.qris-active-card-preview-label {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 0.7rem;
+  background: rgb(255 255 255 / 0.08);
+  padding: 0.65rem 0.8rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.qris-active-card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
 .qris-active-card-content strong {
   color: #f8fafc;
 }
@@ -550,5 +593,9 @@ body {
   .masjid-detail-modal {
     width: calc(100% - 1rem);
     padding: 1.25rem;
+  }
+
+  .qris-active-card-layout {
+    grid-template-columns: 1fr;
   }
 }
