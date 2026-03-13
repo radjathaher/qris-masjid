@@ -1,6 +1,7 @@
 import { ContributeModal } from "#/features/contribute/ui/contribute-modal";
 import { MapCanvas } from "#/features/map/ui/map-canvas";
 import { MasjidSearchPanel } from "#/features/map/ui/masjid-search-panel";
+import { MapWelcomeModal } from "#/features/map/ui/map-welcome-modal";
 import { MasjidDetailModal } from "#/features/masjid-detail/ui/masjid-detail-modal";
 import { useMapHomeState } from "#/pages/map-home/model/use-map-home-state";
 
@@ -15,7 +16,11 @@ function renderMasjidLoadError(error: unknown) {
 export function MapHomePage() {
   const {
     searchQuery,
-    setSearchQuery,
+    searchOpen,
+    subtypeFilter,
+    qrisFilter,
+    welcomeOpen,
+    locateRequestNonce,
     searchResults,
     searchResultsQuery,
     authSessionQuery,
@@ -28,6 +33,13 @@ export function MapHomePage() {
     onOpenContributeModal,
     onCloseContributeModal,
     onContributionSuccess,
+    onOpenSearch,
+    onCloseSearch,
+    onSearchQueryChange,
+    onDismissWelcome,
+    onLocateNearbyMasjids,
+    setSubtypeFilter,
+    setQrisFilter,
   } = useMapHomeState();
 
   return (
@@ -35,15 +47,33 @@ export function MapHomePage() {
       {renderMasjidLoadError(searchResultsQuery.error)}
 
       <MasjidSearchPanel
+        open={searchOpen}
         query={searchQuery}
         loading={searchResultsQuery.isLoading}
         results={searchResults}
+        subtypeFilter={subtypeFilter}
+        qrisFilter={qrisFilter}
         selectedMasjidId={selectedMasjid?.id ?? null}
-        onQueryChange={setSearchQuery}
+        onOpen={onOpenSearch}
+        onClose={onCloseSearch}
+        onQueryChange={onSearchQueryChange}
+        onSubtypeFilterChange={setSubtypeFilter}
+        onQrisFilterChange={setQrisFilter}
         onSelectMasjid={onSelectMasjid}
       />
 
-      <MapCanvas selectedMasjid={selectedMasjid} onSelectMasjid={onSelectMasjid} />
+      <MapCanvas
+        selectedMasjid={selectedMasjid}
+        subtypeFilter={subtypeFilter}
+        locateRequestNonce={locateRequestNonce}
+        onSelectMasjid={onSelectMasjid}
+      />
+
+      <MapWelcomeModal
+        open={welcomeOpen}
+        onClose={onDismissWelcome}
+        onLocateNearbyMasjids={onLocateNearbyMasjids}
+      />
 
       <MasjidDetailModal
         masjid={selectedMasjid}

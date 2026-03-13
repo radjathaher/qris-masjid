@@ -50,6 +50,7 @@ describe("/api/masjids", () => {
               city: null,
               province: "Aceh",
               subtype: "masjid",
+              qrisState: "unknown",
             },
             {
               id: "musholla-bandung",
@@ -59,6 +60,7 @@ describe("/api/masjids", () => {
               city: "Bandung",
               province: null,
               subtype: "musholla",
+              qrisState: "unknown",
             },
           ],
         }),
@@ -82,6 +84,7 @@ describe("/api/masjids", () => {
           city: null,
           province: "Aceh",
           subtype: "masjid",
+          qrisState: "unknown",
         },
         {
           id: "musholla-bandung",
@@ -91,6 +94,7 @@ describe("/api/masjids", () => {
           city: "Bandung",
           province: null,
           subtype: "musholla",
+          qrisState: "unknown",
         },
       ],
     });

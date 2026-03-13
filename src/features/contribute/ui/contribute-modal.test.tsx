@@ -41,6 +41,7 @@ const masjid: Masjid = {
   city: "Jakarta Pusat",
   province: "DKI Jakarta",
   subtype: "masjid",
+  qrisState: "none",
 };
 
 describe("ContributeModal", () => {

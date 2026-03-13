@@ -9,17 +9,15 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
   return (
     <div className="space-y-3">
       {data.items.map((item) => (
-        <Card key={item.id}>
-          <CardHeader>
-            <CardTitle className="text-sm">Data QRIS #{item.id}</CardTitle>
+        <Card key={item.id} className="qris-active-card">
+          <CardHeader className="qris-active-card-header">
+            <div className="qris-active-card-heading">
+              <CardTitle className="qris-active-card-title">{item.merchantName}</CardTitle>
+              <p className="qris-active-card-city">{item.merchantCity}</p>
+            </div>
+            <span className="qris-active-pill">QRIS aktif</span>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <strong>Nama Merchant:</strong> {item.merchantName}
-            </p>
-            <p>
-              <strong>Kota:</strong> {item.merchantCity}
-            </p>
+          <CardContent className="qris-active-card-content">
             <p>
               <strong>Hash Payload:</strong> {item.payloadHash}
             </p>
@@ -31,29 +29,29 @@ export function QrisItemsList({ data }: QrisItemsListProps) {
                 href={item.imageUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-emerald-700 underline"
+                className="qris-active-card-link"
               >
                 Buka gambar QR
               </a>
             ) : data.imageDeliveryMode === "worker-proxy" ? (
-              <p className="text-emerald-900/70">Gambar QR belum tersedia.</p>
+              <p className="qris-active-card-muted">Gambar QR belum tersedia.</p>
             ) : !data.imageDeliveryConfigured ? (
               data.imageDeliveryMode === "invalid" ? (
-                <p className="text-amber-800/80">
+                <p className="qris-active-card-warning">
                   URL publik R2 tidak valid. Periksa nilai <code>R2_PUBLIC_BASE_URL</code>.
                 </p>
               ) : (
-                <p className="text-amber-800/80">
+                <p className="qris-active-card-warning">
                   Gambar QR tersimpan, tapi URL publik R2 belum dikonfigurasi.
                 </p>
               )
             ) : data.imageDeliveryMode === "public-r2-dev" ? (
-              <p className="text-amber-800/80">
+              <p className="qris-active-card-warning">
                 URL gambar memakai domain <code>.r2.dev</code>. Aman untuk dev, bukan jalur
                 produksi.
               </p>
             ) : (
-              <p className="text-emerald-900/70">URL gambar belum tersedia.</p>
+              <p className="qris-active-card-muted">URL gambar belum tersedia.</p>
             )}
           </CardContent>
         </Card>

@@ -53,6 +53,12 @@ function renderRoute() {
 describe("/admin", () => {
   it("renders config health and resolves an open report", async () => {
     fetchAdminConfigHealthMock.mockResolvedValue({
+      adminAccess: {
+        configured: false,
+        mode: "bootstrap-domain",
+        count: 0,
+        bootstrapDomain: "cakrawala.ai",
+      },
       imageDelivery: {
         configured: true,
         mode: "public-custom-domain",
@@ -93,9 +99,11 @@ describe("/admin", () => {
     renderRoute();
 
     expect(await screen.findByText("Config Health")).toBeTruthy();
-    expect(await screen.findByText("Production Ready")).toBeTruthy();
+    expect(await screen.findByText("Direct Delivery Ready")).toBeTruthy();
     expect(
-      screen.getByText("Delivery gambar memakai custom domain dan siap dipakai di produksi."),
+      screen.getByText(
+        "Direct bucket delivery memakai custom domain. Ini opsional karena Worker proxy sudah bisa melayani gambar.",
+      ),
     ).toBeTruthy();
     expect(await screen.findByText("public-custom-domain")).toBeTruthy();
     expect(await screen.findByText("https://cdn.example.com")).toBeTruthy();

@@ -20,6 +20,7 @@ export const Route = createFileRoute("/api/masjids")({
             city: masjids.city,
             province: masjids.province,
             subtype: masjids.subtype,
+            qrisState: sql<string>`'unknown'`,
           })
           .from(masjids)
           .orderBy(

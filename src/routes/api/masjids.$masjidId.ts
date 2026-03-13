@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { createFileRoute } from "@tanstack/react-router";
 import { masjidSchema } from "#/entities/masjid/model/types";
 import { createDb } from "#/shared/db/client";
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/api/masjids/$masjidId")({
             city: masjids.city,
             province: masjids.province,
             subtype: masjids.subtype,
+            qrisState: sql<string>`'unknown'`,
           })
           .from(masjids)
           .where(eq(masjids.id, params.masjidId))

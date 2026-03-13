@@ -34,13 +34,33 @@ body {
   top: 1rem;
   left: 1rem;
   z-index: 10;
-  width: min(24rem, calc(100vw - 2rem));
+  width: min(26rem, calc(100vw - 2rem));
+}
+
+.map-search-shell.is-collapsed {
+  width: auto;
+}
+
+.map-search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid color-mix(in oklab, #115e59 16%, transparent);
+  background: color-mix(in oklab, white 94%, transparent);
+  border-radius: 9999px;
+  box-shadow:
+    0 14px 30px color-mix(in oklab, #022c22 14%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 85%, transparent);
+  padding: 0.8rem 1rem;
+  color: #115e59;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
 }
 
 .map-search-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.75rem;
   border: 1px solid color-mix(in oklab, #115e59 16%, transparent);
   background: linear-gradient(
     180deg,
@@ -48,24 +68,73 @@ body {
     color-mix(in oklab, #ecfdf5 88%, transparent)
   );
   backdrop-filter: blur(14px);
-  border-radius: 1.25rem;
+  border-radius: 1rem;
   box-shadow:
     0 18px 40px color-mix(in oklab, #022c22 18%, transparent),
     inset 0 1px 0 color-mix(in oklab, white 85%, transparent);
   padding: 0.85rem;
 }
 
-.map-search-label {
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #115e59;
+.map-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 .map-search-input {
   height: 2.85rem;
-  border-radius: 0.95rem;
+  flex: 1;
+  border-radius: 0.85rem;
   background: color-mix(in oklab, white 92%, transparent);
+}
+
+.map-search-close {
+  display: inline-flex;
+  height: 2.85rem;
+  width: 2.85rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklab, #115e59 18%, transparent);
+  background: color-mix(in oklab, white 86%, transparent);
+  border-radius: 0.85rem;
+  color: #115e59;
+  cursor: pointer;
+}
+
+.map-search-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.map-search-filter-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #0f766e;
+}
+
+.map-search-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.map-filter-chip {
+  border: 1px solid color-mix(in oklab, #0f766e 18%, transparent);
+  background: color-mix(in oklab, white 84%, transparent);
+  border-radius: 9999px;
+  padding: 0.42rem 0.72rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #115e59;
+  cursor: pointer;
+}
+
+.map-filter-chip.is-active {
+  border-color: transparent;
+  background: #0f766e;
+  color: #f0fdfa;
 }
 
 .map-search-results {
@@ -84,7 +153,7 @@ body {
   width: 100%;
   border: 1px solid color-mix(in oklab, #0f766e 12%, transparent);
   background: color-mix(in oklab, white 80%, transparent);
-  border-radius: 1rem;
+  border-radius: 0.85rem;
   padding: 0.75rem 0.85rem;
   text-align: left;
   cursor: pointer;
@@ -128,6 +197,13 @@ body {
   color: #0f766e;
 }
 
+.map-search-result-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
 .map-search-result-badge {
   flex-shrink: 0;
   border-radius: 9999px;
@@ -139,6 +215,26 @@ body {
   color: #115e59;
 }
 
+.map-search-result-badge.qris-none {
+  background: color-mix(in oklab, #d1d5db 50%, white);
+  color: #475569;
+}
+
+.map-search-result-badge.qris-active {
+  background: #111827;
+  color: #f9fafb;
+}
+
+.map-search-result-badge.qris-pending {
+  background: color-mix(in oklab, #f59e0b 34%, white);
+  color: #92400e;
+}
+
+.map-search-result-badge.qris-unknown {
+  background: color-mix(in oklab, #cbd5e1 44%, white);
+  color: #475569;
+}
+
 .map-search-state {
   margin: 0;
   font-size: 0.8rem;
@@ -146,70 +242,8 @@ body {
   color: #115e59;
 }
 
-@media (max-width: 640px) {
-  .map-search-shell {
-    top: auto;
-    bottom: 1rem;
-  }
-
-  .map-search-panel {
-    border-radius: 1.1rem;
-    padding: 0.75rem;
-  }
-
-  .map-search-results {
-    max-height: min(15rem, 34dvh);
-  }
-}
-
-.masjid-marker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  padding: 0;
-}
-
-.masjid-marker-core {
-  display: flex;
-  height: 1.9rem;
-  width: 1.9rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  border: 1px solid color-mix(in oklab, #042f2e 20%, transparent);
-  background: radial-gradient(circle at 30% 20%, #14b8a6 0%, #0f766e 70%);
-  box-shadow:
-    0 8px 18px color-mix(in oklab, #042f2e 32%, transparent),
-    0 0 0 3px color-mix(in oklab, white 78%, transparent);
-  transition: transform 120ms ease;
-}
-
-.masjid-marker:hover .masjid-marker-core {
-  transform: translateY(-1px) scale(1.03);
-}
-
-.masjid-marker svg {
-  width: 1.08rem;
-  height: 1.08rem;
-  fill: #f0fdfa;
-}
-
-.masjid-marker-tail {
-  width: 0.42rem;
-  height: 0.42rem;
-  margin-top: -0.18rem;
-  border-radius: 0.1rem;
-  transform: rotate(45deg);
-  background: #0f766e;
-  box-shadow: 0 4px 10px color-mix(in oklab, #042f2e 28%, transparent);
-}
-
 .maplibregl-popup.masjid-popup .maplibregl-popup-content {
-  border-radius: 1.15rem;
+  border-radius: 0.95rem;
   border: 1px solid color-mix(in oklab, #115e59 20%, transparent);
   background: linear-gradient(160deg, #ffffff 0%, #ecfdf5 100%);
   box-shadow:
@@ -241,5 +275,222 @@ body {
   margin: 0;
   font-size: 0.75rem;
   line-height: 1rem;
+  text-transform: capitalize;
   color: #0f766e;
+}
+
+.map-welcome-modal {
+  width: min(26rem, calc(100vw - 2rem));
+  border-radius: 1rem;
+  padding: 1.35rem;
+}
+
+.map-welcome-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklab, #115e59 18%, transparent);
+  background: color-mix(in oklab, white 90%, transparent);
+  border-radius: 0.75rem;
+  color: #115e59;
+  cursor: pointer;
+}
+
+.map-welcome-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 2.5rem;
+}
+
+.map-welcome-title {
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+
+.map-welcome-description {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.map-welcome-cta {
+  margin-top: 1rem;
+  width: 100%;
+  gap: 0.55rem;
+  border-radius: 0.85rem;
+}
+
+.masjid-detail-modal {
+  max-width: 64rem;
+  border-radius: 0.8rem;
+  padding: 2rem;
+}
+
+.masjid-detail-header {
+  gap: 0.65rem;
+}
+
+.masjid-detail-classifications {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.detail-classification-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  background: color-mix(in oklab, #d1fae5 52%, white);
+  padding: 0.42rem 0.72rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #0f766e;
+}
+
+.detail-classification-chip.qris-state-active {
+  background: #111827;
+  color: #f9fafb;
+}
+
+.detail-classification-chip.qris-state-empty {
+  background: #e5e7eb;
+  color: #475569;
+}
+
+.detail-classification-chip.qris-state-pending {
+  background: color-mix(in oklab, #f59e0b 34%, white);
+  color: #92400e;
+}
+
+.detail-classification-chip.qris-state-loading {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.qris-placeholder-card {
+  border-color: transparent;
+  background: linear-gradient(180deg, #f3f4f6 0%, #e5e7eb 100%);
+  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.18);
+}
+
+.qris-placeholder-card-content {
+  padding-top: 1rem;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.qris-active-card {
+  border-color: rgb(15 23 42 / 0.16);
+  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  color: #f8fafc;
+  box-shadow: 0 18px 34px rgb(15 23 42 / 0.18);
+}
+
+.qris-active-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.qris-active-card-heading {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.qris-active-card-title {
+  font-size: 1rem;
+  line-height: 1.35;
+  color: #f8fafc;
+}
+
+.qris-active-card-city {
+  margin: 0;
+  font-size: 0.84rem;
+  color: rgb(226 232 240 / 0.78);
+}
+
+.qris-active-pill {
+  display: inline-flex;
+  border-radius: 9999px;
+  background: rgb(52 211 153 / 0.16);
+  padding: 0.35rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #a7f3d0;
+}
+
+.qris-active-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  font-size: 0.88rem;
+  color: rgb(226 232 240 / 0.9);
+}
+
+.qris-active-card-content strong {
+  color: #f8fafc;
+}
+
+.qris-active-card-link {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 0.7rem;
+  background: rgb(255 255 255 / 0.08);
+  padding: 0.65rem 0.8rem;
+  font-weight: 700;
+  color: #f8fafc;
+  text-decoration: none;
+}
+
+.qris-active-card-muted {
+  color: rgb(226 232 240 / 0.72);
+}
+
+.qris-active-card-warning {
+  color: #fde68a;
+}
+
+@media (max-width: 640px) {
+  .map-search-shell {
+    top: auto;
+    bottom: 1rem;
+    left: 0.5rem;
+    width: calc(100vw - 1rem);
+  }
+
+  .map-search-panel {
+    border-radius: 1rem;
+    padding: 0.75rem;
+  }
+
+  .map-search-result {
+    align-items: flex-start;
+  }
+
+  .map-search-result-meta {
+    align-items: flex-start;
+  }
+
+  .map-search-results {
+    max-height: min(15rem, 34dvh);
+  }
+
+  .map-welcome-modal {
+    padding: 1.1rem;
+  }
+
+  .masjid-detail-modal {
+    width: calc(100% - 1rem);
+    padding: 1.25rem;
+  }
 }

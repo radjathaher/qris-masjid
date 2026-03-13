@@ -80,7 +80,7 @@ function parseCliOptions(): CliOptions {
   }
 
   const minClusterZoom = parseIntegerOption("min-cluster-zoom", 4);
-  const maxClusterZoom = parseIntegerOption("max-cluster-zoom", 9);
+  const maxClusterZoom = parseIntegerOption("max-cluster-zoom", 11);
   if (minClusterZoom < 0 || maxClusterZoom < minClusterZoom) {
     throw new Error("Expected 0 <= min-cluster-zoom <= max-cluster-zoom");
   }

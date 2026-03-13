@@ -8,7 +8,14 @@ import { MapHomePage } from "#/pages/map-home/ui/map-home-page";
 
 const { searchMasjidsMock, fetchMasjidByIdMock, fetchAuthSessionStatusMock, fetchMasjidQrisMock } =
   vi.hoisted(() => ({
-    searchMasjidsMock: vi.fn<(query: string) => Promise<MasjidListResponse>>(),
+    searchMasjidsMock:
+      vi.fn<
+        (input: {
+          query: string;
+          subtype?: string;
+          qrisState?: string;
+        }) => Promise<MasjidListResponse>
+      >(),
     fetchMasjidByIdMock: vi.fn<(masjidId: string) => Promise<Masjid>>(),
     fetchAuthSessionStatusMock: vi.fn<() => Promise<{ authenticated: boolean }>>(),
     fetchMasjidQrisMock: vi.fn<(masjidId: string) => Promise<MasjidQrisResponse>>(),
@@ -60,6 +67,7 @@ const masjids: MasjidListResponse = {
       city: "Jakarta Pusat",
       province: "DKI Jakarta",
       subtype: "masjid",
+      qrisState: "none",
     },
     {
       id: "masjid-raya-bandung",
@@ -69,6 +77,7 @@ const masjids: MasjidListResponse = {
       city: "Bandung",
       province: "Jawa Barat",
       subtype: "masjid",
+      qrisState: "active",
     },
   ],
 };
@@ -93,7 +102,8 @@ describe("MapHomePage", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
     window.sessionStorage.clear();
-    searchMasjidsMock.mockImplementation(async (query) => ({
+    window.localStorage.setItem("map-welcome-seen", "1");
+    searchMasjidsMock.mockImplementation(async ({ query }) => ({
       items: masjids.items.filter((item) => item.name.toLowerCase().includes(query.toLowerCase())),
     }));
     fetchMasjidByIdMock.mockImplementation(async (masjidId) => {
@@ -120,6 +130,7 @@ describe("MapHomePage", () => {
   it("loads masjids, narrows search results, and opens detail for the selected masjid", async () => {
     renderWithProviders();
 
+    fireEvent.click(screen.getByRole("button", { name: "Cari masjid" }));
     const searchInput = await screen.findByLabelText("Cari masjid, kota, provinsi");
     fireEvent.change(searchInput, { target: { value: "Istiqlal" } });
 
@@ -135,6 +146,7 @@ describe("MapHomePage", () => {
 
     expect(await screen.findByRole("heading", { name: "Masjid Istiqlal" })).toBeTruthy();
     expect(screen.getByTestId("map-canvas").textContent).toBe("masjid-istiqlal");
+    expect(screen.queryByLabelText("Cari masjid, kota, provinsi")).toBeNull();
 
     await waitFor(() => {
       expect(fetchMasjidQrisMock).toHaveBeenCalledWith("masjid-istiqlal");

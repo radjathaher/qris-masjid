@@ -1,5 +1,5 @@
-import type { Map, MapGeoJSONFeature } from "maplibre-gl";
-import type { Masjid } from "#/entities/masjid/model/types";
+import type { ExpressionSpecification, Map, MapGeoJSONFeature } from "maplibre-gl";
+import type { Masjid, MasjidSubtype } from "#/entities/masjid/model/types";
 
 export const TRACKPAD_PAN_DELTA_THRESHOLD = 40;
 export const MASJID_SOURCE_ID = "masjids-pmtiles";
@@ -8,7 +8,10 @@ export const MASJID_SELECTED_SOURCE_ID = "selected-masjid";
 export const MASJID_SOURCE_LAYER = "masjids";
 export const MASJID_CLUSTER_SOURCE_LAYER = "masjid_clusters";
 export const MASJID_LAYER_ID = "masjid-points";
+export const MASJID_ICON_LAYER_ID = "masjid-point-icons";
 export const MASJID_SELECTED_LAYER_ID = "masjid-points-selected";
+export const MASJID_SELECTED_ICON_LAYER_ID = "masjid-point-selected-icon";
+export const MASJID_ICON_ID = "masjid-icon";
 export const VALID_SUBTYPES = new Set([
   "masjid",
   "musholla",
@@ -16,8 +19,8 @@ export const VALID_SUBTYPES = new Set([
   "langgar",
   "unknown",
 ] as const);
-export const CLUSTER_ZOOMS = [4, 5, 6, 7, 8, 9] as const;
-export const RAW_POINT_MIN_ZOOM = 10;
+export const CLUSTER_ZOOMS = [4, 5, 6, 7, 8, 9, 10, 11] as const;
+export const RAW_POINT_MIN_ZOOM = 12;
 export const SEARCH_TARGET_ZOOM = 12;
 export const EMPTY_SELECTED_FEATURE_COLLECTION = {
   type: "FeatureCollection",
@@ -90,6 +93,7 @@ export function resolveMasjidFromFeature(feature: MapGeoJSONFeature): Masjid | n
     city: coerceFeatureString(properties.city),
     province: coerceFeatureString(properties.province),
     subtype: coerceMasjidSubtype(properties.subtype),
+    qrisState: "unknown",
   };
 }
 
@@ -182,6 +186,16 @@ export function addClusterLayers(map: Map) {
   }
 }
 
+export function buildMasjidSubtypeFilter(
+  subtypeFilter: MasjidSubtype | "all",
+): ExpressionSpecification | undefined {
+  if (subtypeFilter === "all") {
+    return undefined;
+  }
+
+  return ["==", ["get", "subtype"], subtypeFilter];
+}
+
 export function registerPointerCursor(map: Map, layerId: string) {
   map.on("mouseenter", layerId, () => {
     map.getCanvas().style.cursor = "pointer";
@@ -205,4 +219,18 @@ export function handleClusterClick(map: Map, feature: MapGeoJSONFeature) {
     duration: 650,
     essential: true,
   });
+}
+
+export function createMasjidIconMarkup() {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+      <path
+        d="M6.25 18.5h11.5M7.2 18.5V11.8l4.8-3.3 4.8 3.3v6.7M10.2 18.5v-3.2c0-.99.81-1.8 1.8-1.8s1.8.81 1.8 1.8v3.2M9.6 8.3c0-1.33 1.08-2.4 2.4-2.4s2.4 1.07 2.4 2.4M12 3.4v2.1M16.35 7.45l1.55 1.05M7.65 7.45 6.1 8.5"
+        stroke="#ecfeff"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  `.trim();
 }

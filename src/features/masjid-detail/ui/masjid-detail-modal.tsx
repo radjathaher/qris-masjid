@@ -27,7 +27,7 @@ export function MasjidDetailModal({
 
   return (
     <Dialog open={Boolean(masjid)} onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent>
+      <DialogContent className="masjid-detail-modal">
         <MasjidDetailDialogBody
           masjid={masjid}
           qrisData={qrisData}

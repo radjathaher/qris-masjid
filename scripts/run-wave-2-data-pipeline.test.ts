@@ -218,9 +218,12 @@ describe("run:wave2", () => {
       normalizedPath: string;
       d1SyncPath: string;
       pmtilesPath: string;
+      clusterPmtilesPath: string;
       geojsonPath: string;
+      clusterGeojsonPath: string;
       d1Target: string;
       pmtilesBuilt: boolean;
+      clusterPmtilesBuilt: boolean;
     };
 
     expect(normalized).toHaveLength(2);
@@ -232,9 +235,12 @@ describe("run:wave2", () => {
       normalizedPath,
       d1SyncPath,
       pmtilesPath: "public/data/masjids.pmtiles",
+      clusterPmtilesPath: "public/data/masjid-clusters.pmtiles",
       geojsonPath,
+      clusterGeojsonPath: join(outputDir, "masjid-clusters.geojson"),
       d1Target: "skipped",
       pmtilesBuilt: false,
+      clusterPmtilesBuilt: false,
     });
   }, 15000);
 

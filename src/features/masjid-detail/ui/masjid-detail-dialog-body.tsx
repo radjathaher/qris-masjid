@@ -43,8 +43,8 @@ function renderQrisContent(
 
   if (qrisData.items.length === 0) {
     return (
-      <Card>
-        <CardContent className="pt-4 text-sm text-emerald-900/70">
+      <Card className="qris-placeholder-card">
+        <CardContent className="qris-placeholder-card-content">
           Belum ada QRIS yang dikirim untuk masjid ini.
         </CardContent>
       </Card>
@@ -81,6 +81,53 @@ function renderActions(input: {
   );
 }
 
+function formatSubtypeLabel(masjid: Masjid | null): string {
+  switch (masjid?.subtype) {
+    case "masjid":
+      return "Masjid";
+    case "musholla":
+      return "Musholla";
+    case "surau":
+      return "Surau";
+    case "langgar":
+      return "Langgar";
+    default:
+      return "POI Muslim";
+  }
+}
+
+function formatQrisStateLabel(qrisData: MasjidQrisResponse | null): string {
+  if (!qrisData) {
+    return "Memuat status QRIS";
+  }
+
+  if (qrisData.hasActiveQris) {
+    return "QRIS tersedia";
+  }
+
+  if (qrisData.uploadPolicy === "review-pending") {
+    return "Sedang ditinjau";
+  }
+
+  return "Belum ada QRIS";
+}
+
+function qrisStateTone(qrisData: MasjidQrisResponse | null): string {
+  if (!qrisData) {
+    return "qris-state-loading";
+  }
+
+  if (qrisData.hasActiveQris) {
+    return "qris-state-active";
+  }
+
+  if (qrisData.uploadPolicy === "review-pending") {
+    return "qris-state-pending";
+  }
+
+  return "qris-state-empty";
+}
+
 export function MasjidDetailDialogBody({
   masjid,
   qrisData,
@@ -100,13 +147,19 @@ export function MasjidDetailDialogBody({
 }: MasjidDetailDialogBodyProps) {
   return (
     <>
-      <DialogHeader>
+      <DialogHeader className="masjid-detail-header">
         <DialogTitle>{masjid?.name ?? "Detail Masjid"}</DialogTitle>
         <DialogDescription>
           {masjid
             ? formatMasjidLocation(masjid)
             : "Pilih marker masjid untuk melihat data QRIS saat ini."}
         </DialogDescription>
+        <div className="masjid-detail-classifications">
+          <span className="detail-classification-chip">{formatSubtypeLabel(masjid)}</span>
+          <span className={`detail-classification-chip ${qrisStateTone(qrisData)}`}>
+            {formatQrisStateLabel(qrisData)}
+          </span>
+        </div>
       </DialogHeader>
 
       {renderQrisContent(loading, error, qrisData)}

@@ -1,4 +1,9 @@
-import { masjidListResponseSchema, masjidSchema } from "#/entities/masjid/model/types";
+import {
+  masjidListResponseSchema,
+  masjidSchema,
+  type MasjidQrisState,
+  type MasjidSubtype,
+} from "#/entities/masjid/model/types";
 
 export async function fetchMasjids() {
   const response = await fetch("/api/masjids", {
@@ -13,13 +18,35 @@ export async function fetchMasjids() {
   return masjidListResponseSchema.parse(data);
 }
 
-export async function searchMasjids(query: string, limit = 8) {
-  const response = await fetch(
-    `/api/masjids/search?q=${encodeURIComponent(query)}&limit=${encodeURIComponent(String(limit))}`,
-    {
-      credentials: "include",
-    },
-  );
+type SearchMasjidsInput = {
+  query: string;
+  limit?: number;
+  subtype?: MasjidSubtype | "all";
+  qrisState?: Exclude<MasjidQrisState, "unknown"> | "all";
+};
+
+export async function searchMasjids({
+  query,
+  limit = 8,
+  subtype = "all",
+  qrisState = "all",
+}: SearchMasjidsInput) {
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(limit),
+  });
+
+  if (subtype !== "all") {
+    params.set("subtype", subtype);
+  }
+
+  if (qrisState !== "all") {
+    params.set("qrisState", qrisState);
+  }
+
+  const response = await fetch(`/api/masjids/search?${params.toString()}`, {
+    credentials: "include",
+  });
 
   if (!response.ok) {
     throw new Error("Gagal mencari masjid");
