@@ -260,6 +260,21 @@ Rollout note:
 - New public QR rendering now depends on canonical payload text from D1, so legacy rows should be backfilled or re-submitted before relying on them in public detail views.
 - Original audit images remain in R2, so future backfill from source images is still possible.
 
+Legacy QRIS backfill:
+
+1. Deploy app code that includes the admin backfill route.
+2. Apply `drizzle/0001_qris_payload_normalized.sql` to the target D1 database.
+3. Sign in to `/admin`.
+4. Click `Jalankan Backfill QRIS`.
+5. Repeat until the summary reaches `0 scanned` or all legacy rows are updated.
+
+Notes:
+
+- The backfill reads original audit images from R2 and re-runs QR decode + QRIS validation.
+- It is safe to rerun in batches.
+- Per-row failures do not abort the whole batch.
+- Rows whose R2 image is missing or unreadable will remain failed until manually corrected or re-submitted.
+
 ## Cloudflare deployment (human steps)
 
 ### 1) Create D1 and R2 resources
