@@ -126,6 +126,8 @@ export function MasjidSearchPanel({
         </button>
       ) : (
         <div className="map-search-panel" role="search" aria-label="Pencarian masjid">
+          <div className="map-search-sheet-handle" aria-hidden />
+
           <div className="map-search-row">
             <label className="sr-only" htmlFor="masjid-search">
               Cari masjid, kota, provinsi

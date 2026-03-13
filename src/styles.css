@@ -75,6 +75,10 @@ body {
   box-shadow: 0 0 0 1px color-mix(in oklab, #ecfeff 70%, transparent);
 }
 
+.map-search-backdrop {
+  display: none;
+}
+
 .map-search-shell {
   position: absolute;
   top: 1rem;
@@ -119,6 +123,10 @@ body {
     0 18px 40px color-mix(in oklab, #022c22 18%, transparent),
     inset 0 1px 0 color-mix(in oklab, white 85%, transparent);
   padding: 0.85rem;
+}
+
+.map-search-sheet-handle {
+  display: none;
 }
 
 .map-search-row {
@@ -550,16 +558,40 @@ body {
 }
 
 @media (max-width: 640px) {
+  .map-search-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    display: block;
+    background: linear-gradient(180deg, rgb(4 47 46 / 0.08) 0%, rgb(4 47 46 / 0.2) 100%);
+    backdrop-filter: blur(4px);
+  }
+
   .map-search-shell {
     top: auto;
-    bottom: 1rem;
+    bottom: 0.5rem;
     left: 0.5rem;
+    right: 0.5rem;
     width: calc(100vw - 1rem);
   }
 
   .map-search-panel {
-    border-radius: 1rem;
+    max-height: min(30rem, 70dvh);
+    overflow: hidden;
+    border-radius: 1.35rem;
     padding: 0.75rem;
+    box-shadow:
+      0 22px 48px color-mix(in oklab, #022c22 24%, transparent),
+      inset 0 1px 0 color-mix(in oklab, white 85%, transparent);
+  }
+
+  .map-search-sheet-handle {
+    display: block;
+    height: 0.3rem;
+    width: 3rem;
+    margin: 0 auto 0.15rem;
+    border-radius: 9999px;
+    background: color-mix(in oklab, #115e59 18%, white);
   }
 
   .map-search-result {

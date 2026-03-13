@@ -153,6 +153,19 @@ describe("MapHomePage", () => {
     });
   });
 
+  it("closes the search sheet when the backdrop is pressed", async () => {
+    renderWithProviders();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cari masjid" }));
+    expect(await screen.findByLabelText("Cari masjid, kota, provinsi")).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId("map-search-backdrop"));
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Cari masjid, kota, provinsi")).toBeNull();
+    });
+  });
+
   it("reopens contribute flow after auth return for the pending masjid", async () => {
     window.history.replaceState({}, "", "/?auth=ok");
     window.sessionStorage.setItem(PENDING_CONTRIBUTE_MASJID_ID_KEY, "masjid-istiqlal");

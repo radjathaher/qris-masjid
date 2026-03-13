@@ -14,6 +14,22 @@ function renderMasjidLoadError(error: unknown) {
   return <p className="px-4 pt-4 text-sm text-red-600">{error.message}</p>;
 }
 
+function renderSearchBackdrop(open: boolean, onClose: () => void) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <button
+      type="button"
+      className="map-search-backdrop"
+      aria-label="Tutup pencarian"
+      data-testid="map-search-backdrop"
+      onClick={onClose}
+    />
+  );
+}
+
 export function MapHomePage() {
   const {
     searchQuery,
@@ -46,6 +62,7 @@ export function MapHomePage() {
   return (
     <main className="map-page">
       {renderMasjidLoadError(searchResultsQuery.error)}
+      {renderSearchBackdrop(searchOpen, onCloseSearch)}
 
       <MasjidSearchPanel
         open={searchOpen}
