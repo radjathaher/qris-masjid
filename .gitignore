@@ -13,3 +13,5 @@ dist-ssr
 __unconfig*
 todos.json
 data/ingest
+.paperclip/
+data/run-logs/
